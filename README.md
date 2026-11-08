@@ -166,5 +166,6 @@ En un Ubuntu/WSL limpio basta con repetir, en orden, las secciones **2 → 3 →
 | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
 | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
 | `./mvnw test` falla | Las pruebas arrancan Spring y se conectan a MySQL: debe estar encendido y con `init.sql` ejecutado |
-=======
+
 # desarrollo-web
+305251cbf381a93854ff52546cb26435d28aab31
