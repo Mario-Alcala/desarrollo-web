@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * Manejo centralizado de errores de la API REST.
- * Los servicios lanzan NoSuchElementException (no existe el registro) e
- * IllegalArgumentException (dato invalido); aqui se traducen al codigo HTTP
- * correcto en lugar de dejar que terminen como un 500.
  */
+
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -57,16 +55,27 @@ public class ApiExceptionHandler {
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Map<String, Object>> baseDeDatos(DataAccessException ex) {
         log.error("Error de acceso a la base de datos", ex);
+        // "detalle" muestra la causa real para diagnosticar en desarrollo.
+        // Quitar antes de entregar/publicar si no se quiere exponer.
+        String detalle = ex.getClass().getSimpleName() + ": " + ex.getMostSpecificCause().getMessage();
         return respuesta(HttpStatus.INTERNAL_SERVER_ERROR,
                 "No se pudo acceder a la base de datos. Verifica que MySQL este encendido "
-                        + "y que se haya ejecutado database/init.sql");
+                        + "y que se haya ejecutado database/init.sql",
+                detalle);
     }
 
     private ResponseEntity<Map<String, Object>> respuesta(HttpStatus estado, String mensaje) {
+        return respuesta(estado, mensaje, null);
+    }
+
+    private ResponseEntity<Map<String, Object>> respuesta(HttpStatus estado, String mensaje, String detalle) {
         Map<String, Object> cuerpo = new LinkedHashMap<>();
         cuerpo.put("fecha", LocalDateTime.now().toString());
         cuerpo.put("estado", estado.value());
         cuerpo.put("mensaje", mensaje);
+        if (detalle != null) {
+            cuerpo.put("detalle", detalle);
+        }
         return ResponseEntity.status(estado).body(cuerpo);
     }
 }

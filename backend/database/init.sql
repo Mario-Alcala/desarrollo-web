@@ -17,7 +17,10 @@ CREATE DATABASE IF NOT EXISTS gestion_cultivos
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-CREATE USER IF NOT EXISTS 'cultivos_user'@'localhost' IDENTIFIED BY 'Cultivos_2026!';
+CREATE USER IF NOT EXISTS 'cultivos_user'@'localhost' IDENTIFIED BY 'cultivos-web';
+-- Si el usuario ya existia con otra contrasena, CREATE USER no la cambia:
+-- ALTER USER la deja igual a la del application.yaml.
+ALTER USER 'cultivos_user'@'localhost' IDENTIFIED BY 'cultivos-web';
 GRANT ALL PRIVILEGES ON gestion_cultivos.* TO 'cultivos_user'@'localhost';
 FLUSH PRIVILEGES;
 
