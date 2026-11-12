@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import com.cultivos.gestioncultivos_backend.model.cultivo;
+import com.cultivos.gestioncultivos_backend.model.Cultivo;
 
 /** Capa de datos: SQL puro con JdbcClient (sin Hibernate). */
 
