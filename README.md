@@ -1,7 +1,7 @@
 
 # Gestión de Cultivos · `desarrollo-web`
 
-Plataforma web para gestionar cultivos y el banco de semillas, con arquitectura de 3 capas:
+Plataforma web para gestionar cultivos, el banco de semillas, terrenos y herramientas, con arquitectura de 3 capas:
 
 |   Capa   | Tecnología                          |
 |----------|-------------------------------------|
@@ -16,22 +16,21 @@ Todo el proyecto se desarrolla y ejecuta desde **WSL (Ubuntu)**.
 ```
 desarrollo-web/
 ├── README.md
-├── database/
-│   └── init.sql                 # crea la base de datos y el usuario de MySQL
 ├── backend/                     # Spring Boot (puerto 8080)
 │   ├── pom.xml
 │   ├── mvnw                     # Maven Wrapper 
+│   ├── database/
+│   │   └── init.sql             # crea la base, el usuario y las tablas de MySQL
 │   └── src/main/
 │       ├── java/com/cultivos/gestioncultivos_backend/
 │       │   ├── controller/      # API REST (+ página de inicio)
 │       │   ├── service/         # lógica de negocio y validaciones
 │       │   ├── repository/      # SQL con JdbcClient
-│       │   ├── model/           # Cultivo, Semilla
+│       │   ├── model/           # Cultivo, Semilla, Terreno, Herramienta
 │       │   ├── config/          # CORS
 │       │   └── exception/       # errores en JSON
 │       └── resources/
 │           ├── application.yaml # conexión a MySQL
-│           ├── schema.sql       # tablas (se ejecuta al arrancar)
 │           └── templates/       # plantilla Thymeleaf
 └── frontend/                    # sitio estático (puerto 5500)
     ├── index.html
@@ -71,12 +70,13 @@ cd desarrollo-web
 ## 4. Preparar la base de datos
 
 ```bash
+cd ~/desarrollo-web/backend
 sudo service mysql start
 sudo mysql < database/init.sql
 ```
 
-Esto crea la base `gestion_cultivos` y el usuario `cultivos_user` (credenciales de desarrollo en `database/init.sql`).
-Las **tablas las crea el backend** al arrancar (`backend/src/main/resources/schema.sql`).
+Esto crea la base `gestion_cultivos`, el usuario `cultivos_user`, las tablas `cultivos`, `semillas`, `terrenos` y `herramientas`, y algunos datos de ejemplo.
+Las credenciales de desarrollo están en `backend/database/init.sql` y deben coincidir con las de `application.yaml`. Es seguro volver a ejecutarlo: no duplica datos.
 
 Si prefieres otro usuario o clave, el backend lee las variables de entorno `DB_USER` y `DB_PASSWORD`.
 
@@ -94,8 +94,8 @@ La primera vez tarda unos minutos (descarga Maven y las dependencias). Está lis
 Comprobar que funciona y que está conectado a MySQL:
 
 ```bash
-curl http://localhost:8080/api/cultivos          # responde []  (lista vacía)
-mysql -u cultivos_user -p gestion_cultivos -e "SHOW TABLES;"   # clave: Cultivos_2026!
+curl http://localhost:8080/api/cultivos          # responde la lista de cultivos de ejemplo
+mysql -u cultivos_user -p gestion_cultivos -e "SHOW TABLES;"   # clave: cultivos-web
 ```
 
 También puedes abrir <http://localhost:8080> en el navegador (página de inicio con plantilla Thymeleaf).
@@ -126,8 +126,10 @@ Base: `http://localhost:8080/api`
 | PUT | `/cultivos/{id}` | Actualiza un cultivo |
 | DELETE | `/cultivos/{id}` | Elimina un cultivo (204) |
 | GET · POST · PUT · DELETE | `/semillas`, `/semillas/{id}` | Igual que cultivos, para el banco de semillas |
+| GET · POST · PUT · DELETE | `/terrenos`, `/terrenos/{id}` | Igual que cultivos, para terrenos. Estados válidos: Disponible, En uso, En descanso |
+| GET · POST · PUT · DELETE | `/herramientas`, `/herramientas/{id}` | Igual que cultivos, para herramientas. Estados válidos: Disponible, En uso, Mantenimiento |
 
-Los errores se devuelven como JSON: `{"error": "mensaje"}` (400 datos inválidos, 404 no encontrado).
+Los errores se devuelven como JSON: `{"fecha": "...", "estado": 404, "mensaje": "..."}` (400 datos inválidos, 404 no encontrado, 500 error de base de datos).
 
 Ejemplos con `curl`:
 
@@ -147,6 +149,14 @@ curl -X DELETE http://localhost:8080/api/cultivos/1
 curl -X POST http://localhost:8080/api/semillas \
   -H "Content-Type: application/json" \
   -d '{"variedad":"Tomate cherry","stockDisponible":25,"proveedorOrigen":"AgroSur","fechaCaducidad":"2027-05-01"}'
+
+curl -X POST http://localhost:8080/api/terrenos \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Parcela Este","ubicacion":"Veracruz, Ver.","superficieHa":1.5,"tipoSuelo":"Franco","estado":"Disponible"}'
+
+curl -X POST http://localhost:8080/api/herramientas \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Azadón","tipo":"Manual","cantidad":6,"estado":"Disponible","fechaAdquisicion":"2026-02-01"}'
 ```
 
 
@@ -161,11 +171,8 @@ En un Ubuntu/WSL limpio basta con repetir, en orden, las secciones **2 → 3 →
 |---------|----------|
 | `Permission denied` al ejecutar `./mvnw` | `chmod +x mvnw` |
 | `Communications link failure` / `Connection refused` | MySQL está apagado: `sudo service mysql start` |
-| `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta raíz del proyecto) |
+| `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta `backend/`) |
 | `Port 8080 was already in use` | Cierra el otro proceso (ver cuál es con `sudo ss -ltnp \| grep :8080`) |
 | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
 | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
 | `./mvnw test` falla | Las pruebas arrancan Spring y se conectan a MySQL: debe estar encendido y con `init.sql` ejecutado |
-
-# desarrollo-web
-305251cbf381a93854ff52546cb26435d28aab31

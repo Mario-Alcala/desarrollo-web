@@ -17,7 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cultivos.gestioncultivos_backend.model.Cultivo;
 import com.cultivos.gestioncultivos_backend.service.CultivoService;
 
-/** API REST de cultivos: GET, POST, PUT y DELETE sobre /api/cultivos. */
+/** API REST de cultivos: GET, POST, PUT y DELETE sobre /api/cultivos. 
+ *  GET /api/cultivos               -> todos
+ *  GET /api/cultivos?etapa=Siembra -> filtrados por Query String
+**/
+
 @RestController
 @RequestMapping("/api/cultivos")
 public class CultivoController {
@@ -27,9 +31,6 @@ public class CultivoController {
     public CultivoController(CultivoService servicio) {
         this.servicio = servicio;
     }
-
-    // GET /api/cultivos               -> todos
-    // GET /api/cultivos?etapa=Siembra -> filtrados por Query String
     
     @GetMapping
     public List<Cultivo> listar(@RequestParam(name = "etapa", required = false) String etapa) {

@@ -10,7 +10,8 @@ import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Semilla;
 
-/** Capa de datos: SQL puro con JdbcClient (sin Hibernate). */
+/** Capa de datos: SQL puro con JdbcClient. */
+
 @Repository
 public class SemillaRepository {
 

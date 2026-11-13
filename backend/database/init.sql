@@ -1,5 +1,5 @@
 -- =====================================================================
--- Gestión de Cultivos - script de inicialización (cultivos y semillas)
+-- Gestión de Cultivos - script de inicialización (cultivos, semillas, terrenos y herramientas)
 --
 -- Uso, parado en la carpeta backend/ (desde WSL):
 --     sudo mysql < database/init.sql
@@ -51,6 +51,32 @@ CREATE TABLE IF NOT EXISTS semillas (
 );
 
 -- ---------------------------------------------------------------------
+-- Terrenos  (model/Terreno.java, repository/TerrenoRepository.java)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS terrenos (
+    id             BIGINT        NOT NULL AUTO_INCREMENT,
+    nombre         VARCHAR(100)  NOT NULL,
+    ubicacion      VARCHAR(255),
+    superficie_ha  DECIMAL(10,2),
+    tipo_suelo     VARCHAR(100),
+    estado         VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
+    PRIMARY KEY (id)
+);
+
+-- ---------------------------------------------------------------------
+-- Herramientas  (model/Herramienta.java, repository/HerramientaRepository.java)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS herramientas (
+    id                 BIGINT        NOT NULL AUTO_INCREMENT,
+    nombre             VARCHAR(100)  NOT NULL,
+    tipo               VARCHAR(100),
+    cantidad           INT           NOT NULL DEFAULT 1,
+    estado             VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
+    fecha_adquisicion  DATE,
+    PRIMARY KEY (id)
+);
+
+-- ---------------------------------------------------------------------
 -- Datos de ejemplo (solo se insertan si la tabla está vacía)
 -- ---------------------------------------------------------------------
 INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
@@ -72,3 +98,23 @@ SELECT * FROM (
     SELECT 'Tomate Río Grande',              45,                      'Agroinsumos del Golfo',                     '2026-12-31'
 ) AS datos
 WHERE NOT EXISTS (SELECT 1 FROM semillas);
+
+INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
+SELECT * FROM (
+    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion, 2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo, 'Disponible' AS estado
+    UNION ALL
+    SELECT 'Parcela Sur',             'Veracruz, Ver.',              1.80,                     'Arenoso',                       'En uso'
+    UNION ALL
+    SELECT 'Invernadero 1',           'Boca del Río, Ver.',          0.30,                     'Sustrato',                      'En descanso'
+) AS datos
+WHERE NOT EXISTS (SELECT 1 FROM terrenos);
+
+INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
+SELECT * FROM (
+    SELECT 'Pala de punta' AS nombre, 'Manual' AS tipo, 10 AS cantidad, 'Disponible' AS estado, '2026-01-15' AS fecha_adquisicion
+    UNION ALL
+    SELECT 'Tractor agrícola',        'Maquinaria',      1,             'En uso',                '2025-08-20'
+    UNION ALL
+    SELECT 'Riego por goteo',         'Riego',           4,             'Mantenimiento',         '2026-03-10'
+) AS datos
+WHERE NOT EXISTS (SELECT 1 FROM herramientas);

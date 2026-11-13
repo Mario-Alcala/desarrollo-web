@@ -17,6 +17,7 @@ import com.cultivos.gestioncultivos_backend.model.Terreno;
 import com.cultivos.gestioncultivos_backend.service.TerrenoService;
 
 /** API REST de terrenos: GET, POST, PUT y DELETE sobre /api/terrenos. */
+
 @RestController
 @RequestMapping("/api/terrenos")
 public class TerrenoController {

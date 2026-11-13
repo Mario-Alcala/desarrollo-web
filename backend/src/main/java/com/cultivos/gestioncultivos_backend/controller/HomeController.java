@@ -24,7 +24,17 @@ public class HomeController {
                 "GET /api/semillas/{id}",
                 "POST /api/semillas",
                 "PUT /api/semillas/{id}",
-                "DELETE /api/semillas/{id}"));
+                "DELETE /api/semillas/{id}",
+                "GET /api/terrenos",
+                "GET /api/terrenos/{id}",
+                "POST /api/terrenos",
+                "PUT /api/terrenos/{id}",
+                "DELETE /api/terrenos/{id}",
+                "GET /api/herramientas",
+                "GET /api/herramientas/{id}",
+                "POST /api/herramientas",
+                "PUT /api/herramientas/{id}",
+                "DELETE /api/herramientas/{id}"));
         return "index";
     }
 }
