@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre_usuario VARCHAR(100) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
-    rol ENUM('administrador', 'empleado', 'cliente') NOT NULL
+    rol ENUM('agricultor', 'trabajador', 'cliente') NOT NULL
 )
 
 CREATE TABLE IF NOT EXISTS(
