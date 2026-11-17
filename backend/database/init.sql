@@ -76,6 +76,115 @@ CREATE TABLE IF NOT EXISTS herramientas (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS proveedores (
+    id_proveedor INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_empresa VARCHAR(100) NOT NULL,
+    contacto VARCHAR(100),
+    telefono VARCHAR(20),
+    direccion VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS inventario (
+    id_inventario INT PRIMARY KEY AUTO_INCREMENT,
+    cantidad INT NOT NULL,
+    fecha_ingreso DATE NOT NULL,
+    fecha_caducidad DATE NULL
+    categoria VARCHAR(50) NOT NULL,
+    id_proveedor INT,
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+);
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario (
+    id_movimiento INT PRIMARY KEY AUTO_INCREMENT,
+    id_inventario INT NOT NULL,
+    tipo_movimiento ENUM('entrada', 'salida') NOT NULL,
+    cantidad INT NOT NULL,
+    fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_inventario) REFERENCES inventario(id_inventario)
+);
+
+CREATE TABLE IF NOT EXISTS fertilizantes(
+    id_fertilizante INT PRIMARY KEY AUTO_INCREMENTE,
+    nombre_fertilizante VARCHAR(100) NOT NULL,
+    tipo_fertilizante VARCHAR(50) NOT NULL,
+    fecha_caducidad DATE NOT NULL,
+    id_proveedor INT,
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+)
+
+CREATE TABLE IF NOT EXISTS abonos(
+    id_abono INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_abono VARCHAR(100) NOT NULL,
+    tipo_abono VARCHAR(50) NOT NULL,
+    fecha_caducidad DATE NOT NULL,
+    id_proveedor INT,
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+)
+
+CREATE TABLE IF NOT EXISTS cosechas(
+    id_cosecha INT PRIMARY KEY AUTO_INCREMENT,
+    id_cultivo INT NOT NULL,
+    fecha_cosecha DATE NOT NULL,
+    cantidad_cosechada DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id)
+
+);
+
+CREATE TABLE IF NOT EXISTS distribucion (
+    id_distribucion INT PRIMARY KEY AUTO_INCREMENT,
+    fecha_salida DATE NOT NULL,
+    fecha_entrega DATE NULL,
+    destino VARCHAR(100) NOT NULL,
+    responsable VARCHAR(100) NOT NULL,
+    estado ENUM('pendiente', 'en_transito', 'entregado') NOT NULL DEFAULT 'pendiente',
+    FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
+
+);
+
+CREATE TABLE IF NOT EXISTS detalle_distribucion (
+    id_detalle INT PRIMARY KEY AUTO_INCREMENT,
+    id_distribucion INT NOT NULL,
+    id_cosecha INT NOT NULL,
+    cantidad INT NOT NULL,
+    FOREIGN KEY (id_distribucion) REFERENCES distribucion(id_distribucion),
+    FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
+)
+
+CREATE TABLE IF NOT EXISTS riesgos (
+    id_riesgo INT PRIMARY KEY AUTO_INCREMENT,
+    descripcion VARCHAR(255) NOT NULL,
+    nivel_riesgo ENUM('bajo', 'medio', 'alto') NOT NULL,
+    fecha_identificacion DATE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS observaciones_cultivos(
+    id_observacion INT PRIMARY KEY AUTO_INCREMENT,
+    id_cultivo INT NOT NULL, --LLAVE FORANEA
+    id_usuario INT NOT NULL, --LLAVE FORANEA
+    fecha_observacion DATE NOT NULL,
+    descripcion TEXT NOT NULL,
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)    
+);
+
+CREATE TABLE IF NOT EXISTS incidencias_cultivo (
+    id_incidencia INT PRIMARY KEY AUTO_INCREMENT,
+    id_cultivo INT NOT NULL, --LLAVE FORANEA
+    id_usuario INT NOT NULL, --LLAVE FORANEA
+    fecha_incidencia DATE NOT NULL,
+    descripcion TEXT NOT NULL,
+    nivel_gravedad ENUM('bajo', 'medio', 'alto') NOT NULL,
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_usuario VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    rol ENUM('administrador', 'empleado', 'cliente') NOT NULL
+)
 -- ---------------------------------------------------------------------
 -- Datos de ejemplo (solo se insertan si la tabla está vacía)
 -- ---------------------------------------------------------------------
