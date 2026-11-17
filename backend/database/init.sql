@@ -185,6 +185,18 @@ CREATE TABLE IF NOT EXISTS usuarios (
     contrasena VARCHAR(255) NOT NULL,
     rol ENUM('administrador', 'empleado', 'cliente') NOT NULL
 )
+
+CREATE TABLE IF NOT EXISTS(
+    id_riego INT PRIMARY KEY AUTO_INCREMENT,
+    id_cultivo INT NOT NULL,
+    fecha_riego DATE NOT NULL,
+    cantidad_agua DECIMAL(10,2) NOT NULL,
+    unidad_medida VARCHAR(20) NOT NULL,
+    metodo VARCHAR(50) NULL,
+    observaciones VARCHAR(255),
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id)
+    FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
+);
 -- ---------------------------------------------------------------------
 -- Datos de ejemplo (solo se insertan si la tabla está vacía)
 -- ---------------------------------------------------------------------
