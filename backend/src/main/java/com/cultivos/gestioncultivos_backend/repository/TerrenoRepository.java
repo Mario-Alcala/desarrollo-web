@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Terreno;
 
-/** Capa de datos: SQL puro con JdbcClient. */
-
 @Repository
 public class TerrenoRepository {
 
@@ -34,36 +32,51 @@ public class TerrenoRepository {
                 .optional();
     }
 
-    /** Inserta el terreno y devuelve el id generado por MySQL. */
-    public Long insertar(Terreno t) {
+    public Long insertar(Terreno terreno) {
         KeyHolder llaves = new GeneratedKeyHolder();
+
         jdbc.sql("""
-                INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
-                VALUES (:nombre, :ubicacion, :superficie, :suelo, :estado)
+                INSERT INTO terrenos
+                (nombre, ubicacion, superficie_ha, tipo_suelo, estado,
+                 latitud, longitud)
+                VALUES
+                (:nombre, :ubicacion, :superficie, :suelo, :estado,
+                 :latitud, :longitud)
                 """)
-                .param("nombre", t.getNombre())
-                .param("ubicacion", t.getUbicacion())
-                .param("superficie", t.getSuperficieHa())
-                .param("suelo", t.getTipoSuelo())
-                .param("estado", t.getEstado())
+                .param("nombre", terreno.getNombre())
+                .param("ubicacion", terreno.getUbicacion())
+                .param("superficie", terreno.getSuperficieHa())
+                .param("suelo", terreno.getTipoSuelo())
+                .param("estado", terreno.getEstado())
+                .param("latitud", terreno.getLatitud())
+                .param("longitud", terreno.getLongitud())
                 .update(llaves);
+
         return llaves.getKey().longValue();
     }
 
-    public boolean actualizar(Terreno t) {
+    public boolean actualizar(Terreno terreno) {
         int filas = jdbc.sql("""
                 UPDATE terrenos
-                   SET nombre = :nombre, ubicacion = :ubicacion, superficie_ha = :superficie,
-                       tipo_suelo = :suelo, estado = :estado
-                 WHERE id = :id
+                SET nombre = :nombre,
+                    ubicacion = :ubicacion,
+                    superficie_ha = :superficie,
+                    tipo_suelo = :suelo,
+                    estado = :estado,
+                    latitud = :latitud,
+                    longitud = :longitud
+                WHERE id = :id
                 """)
-                .param("nombre", t.getNombre())
-                .param("ubicacion", t.getUbicacion())
-                .param("superficie", t.getSuperficieHa())
-                .param("suelo", t.getTipoSuelo())
-                .param("estado", t.getEstado())
-                .param("id", t.getId())
+                .param("nombre", terreno.getNombre())
+                .param("ubicacion", terreno.getUbicacion())
+                .param("superficie", terreno.getSuperficieHa())
+                .param("suelo", terreno.getTipoSuelo())
+                .param("estado", terreno.getEstado())
+                .param("latitud", terreno.getLatitud())
+                .param("longitud", terreno.getLongitud())
+                .param("id", terreno.getId())
                 .update();
+
         return filas > 0;
     }
 
@@ -71,6 +84,7 @@ public class TerrenoRepository {
         int filas = jdbc.sql("DELETE FROM terrenos WHERE id = :id")
                 .param("id", id)
                 .update();
+
         return filas > 0;
     }
 }

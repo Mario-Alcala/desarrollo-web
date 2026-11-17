@@ -8,11 +8,14 @@ import org.springframework.stereotype.Service;
 import com.cultivos.gestioncultivos_backend.model.Terreno;
 import com.cultivos.gestioncultivos_backend.repository.TerrenoRepository;
 
-/** Capa de logica de negocio: validaciones y reglas de los terrenos. */
+/**
+ * Capa de lógica de negocio: validaciones y reglas de los terrenos.
+ */
 @Service
 public class TerrenoService {
 
-    private static final List<String> ESTADOS = List.of("Disponible", "En uso", "En descanso");
+    private static final List<String> ESTADOS =
+            List.of("Disponible", "En uso", "En descanso");
 
     private final TerrenoRepository repositorio;
 
@@ -26,7 +29,8 @@ public class TerrenoService {
 
     public Terreno obtener(Long id) {
         return repositorio.buscarPorId(id)
-                .orElseThrow(() -> new NoSuchElementException("No existe el terreno con id " + id));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No existe el terreno con id " + id));
     }
 
     public Terreno crear(Terreno terreno) {
@@ -36,8 +40,8 @@ public class TerrenoService {
     }
 
     public Terreno actualizar(Long id, Terreno terreno) {
-        validar(terreno);
         obtener(id);
+        validar(terreno);
         terreno.setId(id);
         repositorio.actualizar(terreno);
         return terreno;
@@ -45,26 +49,67 @@ public class TerrenoService {
 
     public void eliminar(Long id) {
         if (!repositorio.eliminar(id)) {
-            throw new NoSuchElementException("No existe el terreno con id " + id);
+            throw new NoSuchElementException(
+                    "No existe el terreno con id " + id);
         }
     }
 
     private void validar(Terreno terreno) {
-        if (terreno.getNombre() == null || terreno.getNombre().isBlank()) {
-            throw new IllegalArgumentException("El nombre del terreno es obligatorio");
+        if (terreno == null) {
+            throw new IllegalArgumentException(
+                    "Los datos del terreno son obligatorios");
         }
+
+        if (terreno.getNombre() == null
+                || terreno.getNombre().isBlank()) {
+            throw new IllegalArgumentException(
+                    "El nombre del terreno es obligatorio");
+        }
+
         terreno.setNombre(terreno.getNombre().trim());
+
         if (terreno.getNombre().length() > 100) {
-            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
+            throw new IllegalArgumentException(
+                    "El nombre no puede pasar de 100 caracteres");
         }
-        if (terreno.getSuperficieHa() != null && terreno.getSuperficieHa() < 0) {
-            throw new IllegalArgumentException("La superficie no puede ser negativa");
+
+        if (terreno.getSuperficieHa() != null
+                && terreno.getSuperficieHa() < 0) {
+            throw new IllegalArgumentException(
+                    "La superficie no puede ser negativa");
         }
-        if (terreno.getEstado() == null || terreno.getEstado().isBlank()) {
+
+        if (terreno.getEstado() == null
+                || terreno.getEstado().isBlank()) {
             terreno.setEstado("Disponible");
         }
+
         if (!ESTADOS.contains(terreno.getEstado())) {
-            throw new IllegalArgumentException("Estado inválido. Valores permitidos: " + String.join(", ", ESTADOS));
+            throw new IllegalArgumentException(
+                    "Estado inválido. Valores permitidos: "
+                            + String.join(", ", ESTADOS));
+        }
+
+        boolean faltaLatitud = terreno.getLatitud() == null;
+        boolean faltaLongitud = terreno.getLongitud() == null;
+
+        if (faltaLatitud != faltaLongitud) {
+            throw new IllegalArgumentException(
+                    "Debes proporcionar latitud y longitud juntas");
+        }
+
+        if (!faltaLatitud
+                && (terreno.getLatitud() < -90
+                || terreno.getLatitud() > 90)) {
+            throw new IllegalArgumentException(
+                    "La latitud debe estar entre -90 y 90");
+        }
+
+        if (!faltaLongitud
+                && (terreno.getLongitud() < -180
+                || terreno.getLongitud() > 180)) {
+            throw new IllegalArgumentException(
+                    "La longitud debe estar entre -180 y 180");
         }
     }
 }

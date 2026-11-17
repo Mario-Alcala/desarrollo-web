@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.cultivos.gestioncultivos_backend.model.Proveedor;
 import com.cultivos.gestioncultivos_backend.repository.ProveedorRepository;
+import com.cultivos.gestioncultivos_backend.service.ProveedorService;
 
 @Service
 public class ProveedorService {

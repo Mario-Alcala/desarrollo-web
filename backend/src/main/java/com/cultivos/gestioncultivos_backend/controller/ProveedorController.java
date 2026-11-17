@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cultivos.gestioncultivos_backend.model.Proveedor;
+import com.cultivos.gestioncultivos_backend.service.ProveedorService;
 
 @RestController 
 @RequestMapping("/api/proveedores")

@@ -8,6 +8,8 @@ public class Terreno {
     private Double superficieHa;
     private String tipoSuelo;
     private String estado;
+    private Double latitud;
+    private Double longitud;
 
     public Terreno() {
     }
@@ -58,5 +60,21 @@ public class Terreno {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public Double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(Double latitud) {
+        this.latitud = latitud;
+    }
+
+    public Double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(Double longitud) {
+        this.longitud = longitud;
     }
 }

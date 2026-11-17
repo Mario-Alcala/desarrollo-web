@@ -1,27 +1,30 @@
 package com.cultivos.gestioncultivos_backend.model;
 
 public class Proveedor {
-    private int id_proveedor;
-    private String nombre_empresa;
+
+    private Integer idProveedor;
+    private String nombreEmpresa;
     private String contacto;
     private String telefono;
     private String direccion;
 
-
-    public int getId_proveedor() {
-        return id_proveedor;
+    public Proveedor() {
     }
 
-    public void setId_proveedor(int id_proveedor) {
-        this.id_proveedor = id_proveedor;
+    public Integer getIdProveedor() {
+        return idProveedor;
     }
 
-    public String getNombre_empresa() {
-        return nombre_empresa;
+    public void setIdProveedor(Integer idProveedor) {
+        this.idProveedor = idProveedor;
     }
 
-    public void setNombre_empresa(String nombre_empresa) {
-        this.nombre_empresa = nombre_empresa;
+    public String getNombreEmpresa() {
+        return nombreEmpresa;
+    }
+
+    public void setNombreEmpresa(String nombreEmpresa) {
+        this.nombreEmpresa = nombreEmpresa;
     }
 
     public String getContacto() {
@@ -43,10 +46,8 @@ public class Proveedor {
     public String getDireccion() {
         return direccion;
     }
-    
+
     public void setDireccion(String direccion) {
         this.direccion = direccion;
     }
-
-    
 }

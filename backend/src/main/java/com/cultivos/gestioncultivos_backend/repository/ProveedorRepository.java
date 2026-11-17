@@ -3,9 +3,11 @@ package com.cultivos.gestioncultivos_backend.repository;
 import java.util.List;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Proveedor;
 
+@Repository 
 public class ProveedorRepository {
 
     private final JdbcClient jdbc;
@@ -31,6 +33,8 @@ public class ProveedorRepository {
         if (resultado.isEmpty()) {
             return null;
         }
+
+        return (Proveedor) resultado;
                 
     }
 
@@ -39,17 +43,16 @@ public class ProveedorRepository {
                 .param("nombre_empresa", p.getNombreEmpresa())
                 .param("contacto", p.getContacto())
                 .param("telefono", p.getTelefono())
-                .param("email", p.getEmail())
+                
                 .param("direccion", p.getDireccion())
                 .update();
     }
 
     public void actualizar(Proveedor p){
-        jdbc.sql("UPDATE proveedores SET nombre_empresa = :nombre_empresa, contacto = :contacto, telefono = :telefono, email = :email, direccion = :direccion WHERE id_proveedor = :id")
+        jdbc.sql("UPDATE proveedores SET nombre_empresa = :nombre_empresa, contacto = :contacto, telefono = :telefono, direccion = :direccion WHERE id_proveedor = :id")
                 .param("nombre_empresa", p.getNombreEmpresa())
                 .param("contacto", p.getContacto())
                 .param("telefono", p.getTelefono())
-                .param("email", p.getEmail())
                 .param("direccion", p.getDireccion())
                 .param("id", p.getIdProveedor())
                 .update();

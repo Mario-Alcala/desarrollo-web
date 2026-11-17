@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cultivos.gestioncultivos_backend.model.Terreno;
 import com.cultivos.gestioncultivos_backend.service.TerrenoService;
 
-/** API REST de terrenos: GET, POST, PUT y DELETE sobre /api/terrenos. */
 
 @RestController
 @RequestMapping("/api/terrenos")
@@ -45,7 +44,9 @@ public class TerrenoController {
     }
 
     @PutMapping("/{id}")
-    public Terreno actualizar(@PathVariable("id") Long id, @RequestBody Terreno terreno) {
+    public Terreno actualizar(
+            @PathVariable("id") Long id,
+            @RequestBody Terreno terreno) {
         return servicio.actualizar(id, terreno);
     }
 
