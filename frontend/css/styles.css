@@ -1,0 +1,217 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #1f2d1f;
+    background: #f4f8f1;
+}
+
+.barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 7%;
+    background: white;
+    border-bottom: 1px solid #d4dfcf;
+}
+
+.marca {
+    color: #2e6b2e;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+nav a {
+    color: #2e6b2e;
+    text-decoration: none;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+.inicio {
+    max-width: 1200px;
+    margin: 70px auto;
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.presentacion {
+    flex: 1;
+    min-width: 0;
+}
+
+h1 {
+    color: #2e6b2e;
+    font-size: 36px;
+    margin: 0 0 20px;
+}
+
+h2 {
+    font-size: 22px;
+    margin-top: 32px;
+}
+
+p {
+    line-height: 1.6;
+}
+
+.eslogan {
+    font-size: 21px;
+}
+
+.acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 240px;
+    margin-top: 28px;
+}
+
+.boton {
+    display: inline-block;
+    padding: 12px 22px;
+    border: 1px solid #2e6b2e;
+    border-radius: 6px;
+    background: #2e6b2e;
+    color: white;
+    font-family: inherit;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.boton:hover {
+    background: #245424;
+    color: white;
+}
+
+.boton-secundario {
+    background: white;
+    color: #2e6b2e;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 3px solid #7b9e60;
+    outline-offset: 3px;
+}
+
+.imagen-proyecto {
+    flex: 1;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #7b9e60;
+    border-radius: 10px;
+    background: #e4eedd;
+    color: #45613a;
+}
+
+.login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 90px);
+    padding: 30px 20px;
+}
+
+.cuadro-login {
+    width: 100%;
+    max-width: 430px;
+    padding: 32px;
+    background: white;
+    border: 1px solid #d4dfcf;
+    border-radius: 10px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 24px;
+    border: 2px dashed #7b9e60;
+    border-radius: 50%;
+    background: #e4eedd;
+    color: #45613a;
+}
+
+.cuadro-login h1 {
+    font-size: 27px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin: 16px 0 8px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #9caa96;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+.mensaje {
+    min-height: 24px;
+    font-size: 14px;
+}
+
+.error {
+    color: #a32929;
+}
+
+/* Ajustes para celulares */
+@media (max-width: 700px) {
+    .barra {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    nav {
+        gap: 16px;
+    }
+
+    .inicio {
+        flex-direction: column;
+        margin: 40px auto;
+        gap: 24px;
+        padding: 0 20px;
+    }
+
+    h1 {
+        font-size: 29px;
+    }
+
+    .imagen-proyecto {
+        width: 100%;
+        min-height: 240px;
+    }
+
+    .cuadro-login {
+        padding: 24px;
+    }
+}
