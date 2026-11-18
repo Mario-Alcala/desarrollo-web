@@ -42,6 +42,6 @@ if (formulario) {
         }
 
         // ruta que envia a la siguiente pantalla
-        window.location.href = 'cultivos.html';
+        window.location.href = 'catalogo.html';
     });
 }
