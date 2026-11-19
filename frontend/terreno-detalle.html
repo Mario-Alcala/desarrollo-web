@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!--
+  CAPA: FRONTEND 
+  BACKEND: usa /api/terrenos/{id}; parcelas, bitácora y cosechas aún no existen en la API.
+  LE FALTA: botón "Editar terreno" sin acción; pestaña Cosechas vacía.
+  AÑADIDO POR BACKEND INCOMPLETO: el script terrenos-datos.js (parcelas y bitácora de ejemplo).
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de terreno - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/terrenos.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="terrenos"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin"></header>
+
+            <main class="pagina">
+                <p class="migas"><a href="terrenos.html">Terrenos</a> / <span id="miga-terreno">…</span></p>
+
+                <div class="encabezado-detalle">
+                    <div>
+                        <h1 id="nombre-terreno">Terreno</h1>
+                        <p id="datos-terreno" class="nota"></p>
+                    </div>
+                    <button class="boton boton-secundario" type="button">Editar terreno</button>
+                </div>
+                <p id="mensaje-detalle" class="mensaje" role="status"></p>
+
+                <div class="fila-resumen">
+                    <section class="panel" aria-label="Resumen del terreno">
+                        <div class="titulo-panel"><h2>Resumen</h2></div>
+                        <div id="resumen-terreno" class="chips"></div>
+                    </section>
+                    <section class="panel" aria-label="Clima de la zona">
+                        <div class="titulo-panel"><h2>Clima de la zona</h2><span>Consulta al abrir el terreno</span></div>
+                        <div class="clima">
+                            <div>
+                                <strong id="clima-lugar"></strong>
+                                <p id="clima-detalle">Consultando el clima…</p>
+                            </div>
+                            <span id="clima-temp" class="temperatura"></span>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="vista-parcelas">
+                    <section class="panel" aria-label="Parcelas">
+                        <div class="titulo-panel"><h2>Parcelas</h2><span>Selecciona una</span></div>
+                        <div id="lista-parcelas"></div>
+                    </section>
+                    <section class="panel" aria-label="Detalle de la parcela">
+                        <div class="titulo-panel">
+                            <h2 id="titulo-parcela">Selecciona una parcela</h2>
+                            <span id="insignia-parcela"></span>
+                        </div>
+                        <p id="info-parcela" class="nota"></p>
+                        <div class="pestanas" id="pestanas-parcela" hidden>
+                            <button type="button" data-tab="resumen">Resumen</button>
+                            <button type="button" data-tab="bitacora" class="activa">Bitácora</button>
+                            <button type="button" data-tab="cosechas">Cosechas</button>
+                        </div>
+                        <div id="contenido-parcela"></div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/terrenos-datos.js"></script>
+    <script src="js/terreno-detalle.js"></script>
+</body>
+</html>

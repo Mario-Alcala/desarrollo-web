@@ -1,0 +1,216 @@
+/*
+ * ARCHIVO: css/admin.css
+ * CAPA: FRONTEND (estilos). CASCARÓN SÍ: solo apariencia, sin lógica.
+ * LE FALTA: estilos de las demás pantallas (Resumen, Cultivos, Catálogo, Bodega, Pedidos);
+ *   los colores son aproximados a la captura del diseño y se ajustan en :root.
+ */
+
+:root {
+    --fondo: #17221c;
+    --sidebar: #1f2f27;
+    --tarjeta: #213229;
+    --tarjeta-2: #2a3d32;
+    --borde: #34493c;
+    --texto: #e6f0e8;
+    --texto-suave: #9db0a3;
+    --acento: #8fcf9b;
+    --acento-oscuro: #123020;
+}
+
+body.admin {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+body.admin a { color: inherit; }
+
+/* ---------- Estructura: columna lateral + contenido ---------- */
+.app-admin {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+}
+
+.contenido-admin {
+    min-width: 0;
+    padding: 0;
+}
+
+body.admin .pagina { padding: 1.5rem; }
+
+/* ---------- Barra superior ---------- */
+.topbar-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.5rem;
+    background: var(--fondo);
+    border-bottom: 1px solid var(--borde);
+}
+
+.topbar-admin input {
+    max-width: 310px;
+}
+
+.topbar-rol {
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar-admin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem 0.9rem;
+    background: var(--sidebar);
+    border-right: 1px solid var(--borde);
+    box-sizing: border-box;
+}
+
+.sidebar-marca {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.4rem 1rem;
+}
+
+.sidebar-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--acento);
+    color: var(--acento-oscuro);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.sidebar-nombre {
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.sidebar-seccion {
+    padding: 0.6rem 0.5rem 0.9rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--texto-suave);
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 0.7rem 0.75rem;
+    border-radius: 8px;
+    color: var(--texto-suave);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.sidebar-menu a:hover {
+    background: var(--tarjeta);
+    color: var(--texto);
+}
+
+.sidebar-menu a[aria-current="page"] {
+    background: var(--tarjeta-2);
+    color: var(--acento);
+    font-weight: 600;
+}
+
+.sidebar-usuario {
+    margin-top: auto;
+    padding: 0.9rem 0.5rem 0;
+    border-top: 1px solid var(--borde);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+}
+
+/* ---------- Base oscura para los componentes compartidos ---------- */
+body.admin h1 { margin: 0 0 0.3rem; font-size: 1.8rem; }
+body.admin .nota,
+body.admin .pagina > p { color: var(--texto-suave); }
+
+body.admin .panel {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    padding: 1.1rem;
+}
+
+body.admin .boton {
+    display: inline-block;
+    padding: 0.65rem 1.1rem;
+    border: 1px solid var(--acento);
+    border-radius: 8px;
+    background: var(--acento);
+    color: var(--acento-oscuro);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+body.admin .boton-secundario {
+    background: var(--tarjeta);
+    border-color: var(--borde);
+    color: var(--texto);
+}
+
+body.admin label { display: block; margin: 0.8rem 0 0.3rem; font-size: 0.9rem; }
+
+body.admin input,
+body.admin select,
+body.admin textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    background: var(--tarjeta);
+    color: var(--texto);
+    font: inherit;
+}
+
+body.admin .mensaje { min-height: 1.2rem; color: var(--texto-suave); }
+body.admin .mensaje.error { color: #f0a0a0; }
+
+body.admin dialog {
+    background: var(--sidebar);
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    padding: 1.4rem;
+    width: min(420px, 92vw);
+}
+body.admin dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+body.admin .botones-pedido { display: flex; gap: 0.6rem; margin-top: 1rem; }
+
+/* ---------- Pantallas pequeñas: el sidebar pasa a ser una franja arriba ---------- */
+@media (max-width: 800px) {
+    .app-admin { grid-template-columns: 1fr; }
+    .sidebar-admin {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .sidebar-seccion, .sidebar-usuario { display: none; }
+    .sidebar-menu { flex-direction: row; flex-wrap: wrap; }
+}
