@@ -1,73 +1,78 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de cultivos - Trabajador</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/cultivos.css">
-    <link rel="stylesheet" href="css/calendario.css">
-</head>
-<body>
-    <header class="barra">
-        <span class="marca">Gestión de Cultivos · Trabajador</span>
-        <nav aria-label="Navegación del trabajador">
-            <a href="catalogo.html">Catálogo</a>
-            <a href="cultivos.html">Cultivos / Carrito</a>
-            <a href="calendario.html" aria-current="page">Calendario</a>
-        </nav>
-    </header>
-    <main class="pagina calendario">
-        <h1>Calendario de cultivos</h1>
-        <p>Registra las etapas de tus plantas y consulta las tareas por fecha de inicio.</p>
-        <section class="panel">
-            <h2>Registrar etapa</h2>
-            <form id="formulario-etapa" novalidate>
-                <div class="campos-calendario">
-                    <div>
-                        <label for="cultivo">Cultivo</label>
-                        <select id="cultivo" required></select>
-                    </div>
-                    <div>
-                        <label for="etapa">Etapa actual</label>
-                        <select id="etapa" required>
-                            <option value="">Selecciona una etapa</option>
-                            <option>Germinación</option>
-                            <option>Siembra</option>
-                            <option>Vegetación/Riego</option>
-                            <option>Floración</option>
-                            <option>Cosecha</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="fecha-inicio">Fecha de inicio de la etapa</label>
-                        <input id="fecha-inicio" type="date" required>
-                    </div>
-                    <div>
-                        <label for="fecha-cosecha">Fecha estimada de cosecha</label>
-                        <input id="fecha-cosecha" type="date" required>
-                    </div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calendario de cultivos</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/cultivos.css">
+        <link rel="stylesheet" href="css/calendario.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <nav aria-label="Navegación del trabajador">
+                <a href="index.html">Inicio</a>
+                <a href="cultivos.html">Cultivos activos</a>
+            </nav>
+        </header>
+        <main class="pagina calendario">
+            <h1>Calendario de cultivos</h1>
+            <p>Consulta las etapas y las próximas tareas de tus cultivos.</p>
+            <div class="filtros-calendario">
+                <div>
+                    <label for="origen">Consultar cultivos</label>
+                    <select id="origen">
+                        <option value="api">Del servidor</option>
+                        <option value="local">Locales anteriores</option>
+                    </select>
                 </div>
-                <label for="notas">Notas de tarea</label>
-                <textarea id="notas" rows="3" maxlength="500" placeholder="Ejemplo: regar por la mañana o aplicar fertilizante"></textarea>
-                <p id="mensaje-etapa" class="mensaje" role="status"></p>
-                <button id="guardar-etapa" class="boton" type="submit">Guardar etapa</button>
-            </form>
-        </section>
-        <section class="panel espacio">
-            <h2>Etapas registradas</h2>
-            <p>Ordenadas de la fecha de inicio más antigua a la más reciente.</p>
-            <div class="tabla-contenedor">
-                <table>
-                    <thead>
-                        <tr><th>Cultivo</th><th>Etapa</th><th>Inicio</th><th>Cosecha estimada</th><th>Notas</th><th>Estado</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody id="lista-etapas"></tbody>
-                </table>
+                <div>
+                    <label for="filtro-cultivo">Cultivo</label>
+                    <select id="filtro-cultivo">
+                        <option value="">Todos los cultivos</option>
+                    </select>
+                </div>
             </div>
-        </section>
-    </main>
-    <script src="js/datos.js"></script>
-    <script src="js/calendario.js"></script>
-</body>
+            <p id="mensaje-etapa" class="mensaje" role="status"></p>
+            <div id="cultivos-seguimiento" class="cultivos-seguimiento" aria-label="Estado de los cultivos"></div>
+            <div class="leyenda">
+                <span class="germinacion">Germinación</span>
+                <span class="siembra">Siembra</span>
+                <span class="riego">Vegetación / Riego</span>
+                <span class="floracion">Floración</span>
+                <span class="cosecha">Cosecha</span>
+            </div>
+            <section class="panel espacio" aria-label="Calendario mensual">
+                <div class="cabecera-mes">
+                    <button id="mes-anterior" class="boton boton-secundario" aria-label="Mes anterior" type="button">←</button>
+                    <h2 id="titulo-mes" aria-live="polite"></h2>
+                    <button id="mes-siguiente" class="boton boton-secundario" aria-label="Mes siguiente" type="button">→</button>
+                    <button id="mes-actual" class="boton boton-secundario" type="button">Hoy</button>
+                </div>
+                <div class="calendario-scroll">
+                    <div class="semana" aria-hidden="true">
+                        <span>Lun</span>
+                        <span>Mar</span>
+                        <span>Mié</span>
+                        <span>Jue</span>
+                        <span>Vie</span>
+                        <span>Sáb</span>
+                        <span>Dom</span>
+                    </div>
+                    <div id="dias-calendario" class="dias-calendario"></div>
+                </div>
+            </section>
+            <section class="panel espacio">
+                <div class="cabecera-mes">
+                    <h2 id="titulo-tareas">Etapas programadas</h2>
+                    <button id="ver-todas" class="boton boton-secundario" type="button">Ver todas las fechas</button>
+                </div>
+                <div id="tareas-calendario"></div>
+            </section>
+            <a class="boton espacio" href="etapas.html">Programar una etapa</a>
+        </main>
+        <script src="js/datos.js"></script>
+        <script src="js/calendario.js"></script>
+    </body>
 </html>
