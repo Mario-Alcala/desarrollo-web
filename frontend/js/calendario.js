@@ -7,12 +7,6 @@ if (fechaEnlace && /^\d{4}-\d{2}-\d{2}$/.test(fechaEnlace)) {
 }
 var diaElegido = '';
 var cultivosCalendario = [];
-var origen = document.getElementById('origen');
-try {
-    origen.value = sessionStorage.getItem('origen-calendario') || 'api';
-} catch (error) {
-    origen.value = 'api';
-}
 var filtroCultivo = document.getElementById('filtro-cultivo');
 var cultivoSeleccionado = document.getElementById('cultivo');
 var mensajeEtapa = document.getElementById('mensaje-etapa');
@@ -48,7 +42,7 @@ function colorEtapa(etapa) {
 }
 function eventosVisibles() {
     return leerCalendario().eventos.filter(function (evento) {
-        return (evento.origen || 'local') === origen.value && (!filtroCultivo.value || String(evento.cultivoId) === filtroCultivo.value);
+        return (evento.origen || 'local') === 'local' && (!filtroCultivo.value || String(evento.cultivoId) === filtroCultivo.value);
     });
 }
 function consultarCultivosBackend() {
@@ -66,7 +60,8 @@ function cargarCultivosCalendario() {
     mensajeEtapa.textContent = '';
     var consulta;
     try {
-        consulta = origen.value === 'api' ? consultarCultivosBackend() : Promise.resolve(leerDatos().productos);
+        // Por ahora los cultivos se cargan siempre desde los datos locales.
+        consulta = Promise.resolve(leerDatos().productos);
     } catch (error) {
         mensajeEtapa.textContent = error.message;
         return;
@@ -91,7 +86,7 @@ function cargarCultivosCalendario() {
         });
         filtroCultivo.value = anterior;
         if (formularioEtapa) { document.getElementById('guardar-etapa').disabled = !cultivosCalendario.length; }
-        mensajeEtapa.textContent = cultivosCalendario.length ? '' : 'No hay cultivos registrados en este origen.';
+        mensajeEtapa.textContent = cultivosCalendario.length ? '' : 'No hay cultivos registrados.';
         dibujarCalendario();
     }).catch(function (error) {
         if (cargaActual !== numeroCarga) {
@@ -185,8 +180,7 @@ function agregarMarca(casilla, evento, etiqueta) {
 function mostrarTareas(eventos) {
     var lista = document.getElementById('tareas-calendario');
     lista.innerHTML = '';
-    document.getElementById('titulo-tareas').textContent = diaElegido ? 'Tareas del ' + diaElegido : 'Etapas programadas';
-    eventos = eventos.filter(function (evento) { return !diaElegido || evento.inicio === diaElegido || evento.cosecha === diaElegido; });
+    document.getElementById('titulo-tareas').textContent = 'Etapas programadas';
     eventos.sort(function (a, b) { return a.inicio.localeCompare(b.inicio) || a.id - b.id; });
     if (!eventos.length) {
         lista.textContent = 'No hay tareas programadas para esta selección.';
@@ -255,7 +249,7 @@ formularioEtapa.addEventListener('submit', function (evento) {
     }
     try {
         var datos = leerCalendario();
-        datos.eventos.push({ id: datos.siguienteId++, origen: origen.value, cultivoId: cultivo.id, cultivoNombre: cultivo.nombre,
+        datos.eventos.push({ id: datos.siguienteId++, origen: 'local', cultivoId: cultivo.id, cultivoNombre: cultivo.nombre,
             etapa: document.getElementById('etapa').value, inicio: inicio, cosecha: cosecha,
             notas: document.getElementById('notas').value.trim(), completada: false });
         guardarCalendario(datos);
@@ -287,28 +281,17 @@ document.getElementById('mes-actual').onclick = function () {
     diaElegido = fechaTexto(fechaVista);
     dibujarCalendario();
 };
-document.getElementById('ver-todas').onclick = function () {
-    diaElegido = '';
-    dibujarCalendario();
-};
 }
 
 filtroCultivo.onchange = function () {
     diaElegido = '';
     dibujarCalendario();
 };
-origen.onchange = function () {
-    try { sessionStorage.setItem('origen-calendario', origen.value); } catch (error) { }
-    filtroCultivo.value = '';
-    diaElegido = '';
-    dibujarCalendario();
-    cargarCultivosCalendario();
-};
 window.addEventListener('storage', function (evento) {
     if (evento.key === claveCalendario || evento.key === null) {
         dibujarCalendario();
     }
-    if (origen.value === 'local' && (evento.key === claveDatos || evento.key === null)) {
+    if (evento.key === claveDatos || evento.key === null) {
         cargarCultivosCalendario();
     }
 });
