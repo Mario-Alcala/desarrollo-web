@@ -31,6 +31,11 @@ public class InventarioController {
         return servicio.listar();
     }
 
+    @GetMapping("/insumo/{idInsumo}")
+    public List<Inventario> listarPorInsumo(@PathVariable("idInsumo") int idInsumo) {
+        return servicio.listarPorInsumo(idInsumo);
+    }
+
     @GetMapping("/{id}")
     public Inventario obtener(@PathVariable("id") int id) {
         return servicio.obtener(id);
@@ -38,16 +43,15 @@ public class InventarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void crear(@RequestBody Inventario producto) {
-        servicio.crear(producto);
+    public Inventario crear(@RequestBody Inventario producto) {
+        return servicio.crear(producto);
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void actualizar(
+    public Inventario actualizar(
             @PathVariable("id") int id,
             @RequestBody Inventario producto) {
-        servicio.actualizar(id, producto);
+        return servicio.actualizar(id, producto);
     }
 
     @DeleteMapping("/{id}")
@@ -59,6 +63,6 @@ public class InventarioController {
     @GetMapping("/categoria/{categoria}")
     public List<Inventario> buscarPorCategoria(
             @PathVariable("categoria") String categoria) {
-        return servicio.buscarPorCategoria(categoria);
+        return servicio.listarPorCategoria(categoria);
     }
 }

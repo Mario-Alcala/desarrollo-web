@@ -6,78 +6,31 @@ import java.time.LocalDate;
 public class Inventario {
 
     private Integer idInventario;
-    private String nombreProducto;
-    private String categoria;
+    private Integer idInsumo;
     private BigDecimal cantidad;
-    private String unidadMedida;
-    private BigDecimal stockMinimo;
+    private LocalDate fechaIngreso;
     private LocalDate fechaCaducidad;
-    private Integer idProveedor;
+    private String nombreInsumo;
+    private String categoria;
+    private String unidadMedida;
 
     public Inventario() {
     }
 
-    public Integer getIdInventario() {
-        return idInventario;
-    }
-
-    public void setIdInventario(Integer idInventario) {
-        this.idInventario = idInventario;
-    }
-
-    public String getNombreProducto() {
-        return nombreProducto;
-    }
-
-    public void setNombreProducto(String nombreProducto) {
-        this.nombreProducto = nombreProducto;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public BigDecimal getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(BigDecimal cantidad) {
-        this.cantidad = cantidad;
-    }
-
-    public String getUnidadMedida() {
-        return unidadMedida;
-    }
-
-    public void setUnidadMedida(String unidadMedida) {
-        this.unidadMedida = unidadMedida;
-    }
-
-    public BigDecimal getStockMinimo() {
-        return stockMinimo;
-    }
-
-    public void setStockMinimo(BigDecimal stockMinimo) {
-        this.stockMinimo = stockMinimo;
-    }
-
-    public LocalDate getFechaCaducidad() {
-        return fechaCaducidad;
-    }
-
-    public void setFechaCaducidad(LocalDate fechaCaducidad) {
-        this.fechaCaducidad = fechaCaducidad;
-    }
-
-    public Integer getIdProveedor() {
-        return idProveedor;
-    }
-
-    public void setIdProveedor(Integer idProveedor) {
-        this.idProveedor = idProveedor;
-    }
+    public Integer getIdInventario() { return idInventario; }
+    public void setIdInventario(Integer idInventario) { this.idInventario = idInventario; }
+    public Integer getIdInsumo() { return idInsumo; }
+    public void setIdInsumo(Integer idInsumo) { this.idInsumo = idInsumo; }
+    public BigDecimal getCantidad() { return cantidad; }
+    public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
+    public LocalDate getFechaIngreso() { return fechaIngreso; }
+    public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+    public LocalDate getFechaCaducidad() { return fechaCaducidad; }
+    public void setFechaCaducidad(LocalDate fechaCaducidad) { this.fechaCaducidad = fechaCaducidad; }
+    public String getNombreInsumo() { return nombreInsumo; }
+    public void setNombreInsumo(String nombreInsumo) { this.nombreInsumo = nombreInsumo; }
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
 }

@@ -1,5 +1,7 @@
 package com.cultivos.gestioncultivos_backend.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -15,8 +17,7 @@ public class MovimientoInventarioService {
 
     private final MovimientoInventarioRepository repositorio;
 
-    public MovimientoInventarioService(
-            MovimientoInventarioRepository repositorio) {
+    public MovimientoInventarioService(MovimientoInventarioRepository repositorio) {
         this.repositorio = repositorio;
     }
 
@@ -26,12 +27,9 @@ public class MovimientoInventarioService {
 
     public MovimientoInventario obtener(int id) {
         MovimientoInventario movimiento = repositorio.buscarPorId(id);
-
         if (movimiento == null) {
-            throw new NoSuchElementException(
-                    "No existe el movimiento con id " + id);
+            throw new NoSuchElementException("No existe el movimiento con id " + id);
         }
-
         return movimiento;
     }
 
@@ -41,68 +39,53 @@ public class MovimientoInventarioService {
     }
 
     @Transactional
-    public void crear(MovimientoInventario movimiento) {
+    public MovimientoInventario crear(MovimientoInventario movimiento) {
         validar(movimiento);
-
-        String tipo = movimiento.getTipoMovimiento()
-                .trim()
-                .toLowerCase();
-
+        String tipo = movimiento.getTipoMovimiento().trim().toLowerCase();
         movimiento.setTipoMovimiento(tipo);
 
-        int filasActualizadas;
-
+        int filas;
         if (tipo.equals("entrada")) {
-            filasActualizadas = repositorio.registrarEntrada(
-                    movimiento.getIdInventario(),
-                    movimiento.getCantidad());
+            filas = repositorio.registrarEntrada(movimiento.getIdInventario(), movimiento.getCantidad());
         } else {
-            filasActualizadas = repositorio.registrarSalida(
-                    movimiento.getIdInventario(),
-                    movimiento.getCantidad());
+            filas = repositorio.registrarSalida(movimiento.getIdInventario(), movimiento.getCantidad());
+        }
+        if (filas == 0) {
+            throw new IllegalArgumentException("No hay cantidad suficiente para registrar la salida");
         }
 
-        if (filasActualizadas == 0) {
-            throw new IllegalArgumentException(
-                    "No se pudo registrar la salida: revisa el inventario y la cantidad disponible");
+        movimiento.setIdMovimiento(repositorio.insertar(movimiento));
+        if (movimiento.getFechaMovimiento() == null) {
+            movimiento.setFechaMovimiento(LocalDateTime.now());
         }
-
-        repositorio.insertar(movimiento);
+        return movimiento;
     }
 
     private void validar(MovimientoInventario movimiento) {
         if (movimiento == null) {
-            throw new IllegalArgumentException(
-                    "El movimiento es obligatorio");
+            throw new IllegalArgumentException("Los datos del movimiento son obligatorios");
         }
-
         if (movimiento.getIdInventario() == null) {
-            throw new IllegalArgumentException(
-                    "El id del inventario es obligatorio");
+            throw new IllegalArgumentException("El id del inventario es obligatorio");
         }
-
         verificarInventario(movimiento.getIdInventario());
-
-        if (movimiento.getTipoMovimiento() == null
-                || (!movimiento.getTipoMovimiento().equalsIgnoreCase("entrada")
-                && !movimiento.getTipoMovimiento().equalsIgnoreCase("salida"))) {
-            throw new IllegalArgumentException(
-                    "El tipo debe ser entrada o salida");
+        if (movimiento.getIdUsuario() == null) {
+            throw new IllegalArgumentException("El usuario que registra el movimiento es obligatorio");
         }
-
+        String tipo = movimiento.getTipoMovimiento();
+        if (tipo == null || (!tipo.equalsIgnoreCase("entrada") && !tipo.equalsIgnoreCase("salida"))) {
+            throw new IllegalArgumentException("El tipo debe ser entrada o salida");
+        }
         if (movimiento.getCantidad() == null
-                || movimiento.getCantidad() <= 0) {
-            throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor que cero");
+                || movimiento.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
         }
     }
 
     private void verificarInventario(int idInventario) {
         Inventario inventario = repositorio.buscarInventario(idInventario);
-
         if (inventario == null) {
-            throw new NoSuchElementException(
-                    "No existe el producto de inventario con id " + idInventario);
+            throw new NoSuchElementException("No existe el registro de inventario con id " + idInventario);
         }
     }
 }

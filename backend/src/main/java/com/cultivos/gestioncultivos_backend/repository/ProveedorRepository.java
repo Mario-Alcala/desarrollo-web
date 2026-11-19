@@ -3,6 +3,8 @@ package com.cultivos.gestioncultivos_backend.repository;
 import java.util.List;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Proveedor;
@@ -34,25 +36,28 @@ public class ProveedorRepository {
             return null;
         }
 
-        return (Proveedor) resultado;
+        return resultado.get(0);
                 
     }
 
-    public void insertar(Proveedor p) {
+    public Integer insertar(Proveedor p) {
+        KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion) VALUES (:nombre_empresa, :contacto, :telefono, :email, :direccion)")
                 .param("nombre_empresa", p.getNombreEmpresa())
                 .param("contacto", p.getContacto())
                 .param("telefono", p.getTelefono())
-                
+                .param("email", p.getEmail())
                 .param("direccion", p.getDireccion())
-                .update();
+                .update(llaves);
+        return llaves.getKey().intValue();
     }
 
     public void actualizar(Proveedor p){
-        jdbc.sql("UPDATE proveedores SET nombre_empresa = :nombre_empresa, contacto = :contacto, telefono = :telefono, direccion = :direccion WHERE id_proveedor = :id")
+        jdbc.sql("UPDATE proveedores SET nombre_empresa = :nombre_empresa, contacto = :contacto, telefono = :telefono, email = :email, direccion = :direccion WHERE id_proveedor = :id")
                 .param("nombre_empresa", p.getNombreEmpresa())
                 .param("contacto", p.getContacto())
                 .param("telefono", p.getTelefono())
+                .param("email", p.getEmail())
                 .param("direccion", p.getDireccion())
                 .param("id", p.getIdProveedor())
                 .update();

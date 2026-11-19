@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import com.cultivos.gestioncultivos_backend.model.Semilla;
 import com.cultivos.gestioncultivos_backend.repository.SemillaRepository;
 
-/** Capa de logica: validaciones y reglas del banco de semillas. */
-
 @Service
 public class SemillaService {
 
@@ -24,8 +22,11 @@ public class SemillaService {
     }
 
     public Semilla obtener(Long id) {
-        return repositorio.buscarPorId(id)
-                .orElseThrow(() -> new NoSuchElementException("No existe la semilla con id " + id));
+        Semilla semilla = repositorio.buscarPorId(id);
+        if (semilla == null) {
+            throw new NoSuchElementException("No existe la semilla con id " + id);
+        }
+        return semilla;
     }
 
     public Semilla crear(Semilla semilla) {
@@ -35,8 +36,8 @@ public class SemillaService {
     }
 
     public Semilla actualizar(Long id, Semilla semilla) {
-        validar(semilla);
         obtener(id);
+        validar(semilla);
         semilla.setId(id);
         repositorio.actualizar(semilla);
         return semilla;
@@ -49,18 +50,16 @@ public class SemillaService {
     }
 
     private void validar(Semilla semilla) {
-        if (semilla.getVariedad() == null || semilla.getVariedad().isBlank()) {
-            throw new IllegalArgumentException("La variedad de la semilla es obligatoria");
+        if (semilla == null) {
+            throw new IllegalArgumentException("Los datos de la semilla son obligatorios");
         }
-        semilla.setVariedad(semilla.getVariedad().trim());
-        if (semilla.getVariedad().length() > 100) {
-            throw new IllegalArgumentException("La variedad no puede pasar de 100 caracteres");
+        if (semilla.getNombre() == null || semilla.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre de la semilla es obligatorio");
         }
-        if (semilla.getStockDisponible() == null) {
-            semilla.setStockDisponible(0);
+        semilla.setNombre(semilla.getNombre().trim());
+        if (semilla.getUnidadMedida() == null || semilla.getUnidadMedida().isBlank()) {
+            throw new IllegalArgumentException("La unidad de medida es obligatoria");
         }
-        if (semilla.getStockDisponible() < 0) {
-            throw new IllegalArgumentException("El stock no puede ser negativo");
-        }
+        semilla.setUnidadMedida(semilla.getUnidadMedida().trim());
     }
 }

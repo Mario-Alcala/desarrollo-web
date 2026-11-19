@@ -1,7 +1,6 @@
 package com.cultivos.gestioncultivos_backend.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,8 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Semilla;
 
-/** Capa de datos: SQL puro con JdbcClient. */
-
+/** Capa de datos: las semillas se guardan como insumos de categoria semilla. */
 @Repository
 public class SemillaRepository {
 
@@ -22,51 +20,67 @@ public class SemillaRepository {
     }
 
     public List<Semilla> buscarTodas() {
-        return jdbc.sql("SELECT * FROM semillas ORDER BY id")
+        return jdbc.sql("""
+                SELECT id_insumo AS id, nombre, unidad_medida AS unidadMedida,
+                       id_proveedor AS idProveedor
+                FROM insumos
+                WHERE categoria = 'semilla'
+                ORDER BY id_insumo
+                """)
                 .query(Semilla.class)
                 .list();
     }
 
-    public Optional<Semilla> buscarPorId(Long id) {
-        return jdbc.sql("SELECT * FROM semillas WHERE id = :id")
+    public Semilla buscarPorId(Long id) {
+        List<Semilla> resultado = jdbc.sql("""
+                SELECT id_insumo AS id, nombre, unidad_medida AS unidadMedida,
+                       id_proveedor AS idProveedor
+                FROM insumos
+                WHERE id_insumo = :id AND categoria = 'semilla'
+                """)
                 .param("id", id)
                 .query(Semilla.class)
-                .optional();
+                .list();
+
+        if (resultado.isEmpty()) {
+            return null;
+        }
+        return resultado.get(0);
     }
 
-    /** Inserta la semilla y devuelve el id generado por MySQL. */
-    public Long insertar(Semilla s) {
+    public Long insertar(Semilla semilla) {
         KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
-                VALUES (:variedad, :stock, :proveedor, :caducidad)
+                INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+                VALUES (:nombre, 'semilla', :unidad, :proveedor)
                 """)
-                .param("variedad", s.getVariedad())
-                .param("stock", s.getStockDisponible())
-                .param("proveedor", s.getProveedorOrigen())
-                .param("caducidad", s.getFechaCaducidad())
+                .param("nombre", semilla.getNombre())
+                .param("unidad", semilla.getUnidadMedida())
+                .param("proveedor", semilla.getIdProveedor())
                 .update(llaves);
         return llaves.getKey().longValue();
     }
 
-    public boolean actualizar(Semilla s) {
+    public boolean actualizar(Semilla semilla) {
         int filas = jdbc.sql("""
-                UPDATE semillas
-                   SET variedad = :variedad, stock_disponible = :stock,
-                       proveedor_origen = :proveedor, fecha_caducidad = :caducidad
-                 WHERE id = :id
+                UPDATE insumos
+                SET nombre = :nombre, unidad_medida = :unidad,
+                    id_proveedor = :proveedor
+                WHERE id_insumo = :id AND categoria = 'semilla'
                 """)
-                .param("variedad", s.getVariedad())
-                .param("stock", s.getStockDisponible())
-                .param("proveedor", s.getProveedorOrigen())
-                .param("caducidad", s.getFechaCaducidad())
-                .param("id", s.getId())
+                .param("nombre", semilla.getNombre())
+                .param("unidad", semilla.getUnidadMedida())
+                .param("proveedor", semilla.getIdProveedor())
+                .param("id", semilla.getId())
                 .update();
         return filas > 0;
     }
 
     public boolean eliminar(Long id) {
-        int filas = jdbc.sql("DELETE FROM semillas WHERE id = :id")
+        int filas = jdbc.sql("""
+                DELETE FROM insumos
+                WHERE id_insumo = :id AND categoria = 'semilla'
+                """)
                 .param("id", id)
                 .update();
         return filas > 0;

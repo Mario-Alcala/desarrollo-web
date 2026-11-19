@@ -1,8 +1,11 @@
 package com.cultivos.gestioncultivos_backend.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.cultivos.gestioncultivos_backend.model.Inventario;
@@ -18,90 +21,70 @@ public class MovimientoInventarioRepository {
     }
 
     public List<MovimientoInventario> buscarTodos() {
-        return jdbc.sql("""
-                SELECT * FROM movimientos_inventario
-                ORDER BY fecha_movimiento DESC
-                """)
-                .query(MovimientoInventario.class)
-                .list();
+        return jdbc.sql("SELECT * FROM movimientos_inventario ORDER BY fecha_movimiento DESC")
+                .query(MovimientoInventario.class).list();
     }
 
     public MovimientoInventario buscarPorId(int id) {
-        List<MovimientoInventario> resultado = jdbc.sql("""
-                SELECT * FROM movimientos_inventario
-                WHERE id_movimiento = :id
-                """)
-                .param("id", id)
-                .query(MovimientoInventario.class)
-                .list();
-
+        List<MovimientoInventario> resultado = jdbc.sql(
+                "SELECT * FROM movimientos_inventario WHERE id_movimiento = :id")
+                .param("id", id).query(MovimientoInventario.class).list();
         if (resultado.isEmpty()) {
             return null;
         }
-
         return resultado.get(0);
     }
 
     public List<MovimientoInventario> buscarPorInventario(int idInventario) {
         return jdbc.sql("""
                 SELECT * FROM movimientos_inventario
-                WHERE id_inventario = :idInventario
+                WHERE id_inventario = :id
                 ORDER BY fecha_movimiento DESC
                 """)
-                .param("idInventario", idInventario)
-                .query(MovimientoInventario.class)
-                .list();
+                .param("id", idInventario).query(MovimientoInventario.class).list();
     }
 
     public Inventario buscarInventario(int idInventario) {
         List<Inventario> resultado = jdbc.sql("""
-                SELECT * FROM inventario
-                WHERE id_inventario = :id
+                SELECT id_inventario, id_insumo, cantidad, fecha_ingreso, fecha_caducidad
+                FROM inventario WHERE id_inventario = :id
                 """)
-                .param("id", idInventario)
-                .query(Inventario.class)
-                .list();
-
+                .param("id", idInventario).query(Inventario.class).list();
         if (resultado.isEmpty()) {
             return null;
         }
-
         return resultado.get(0);
     }
 
-    public int registrarEntrada(int idInventario, int cantidad) {
+    public int registrarEntrada(int idInventario, BigDecimal cantidad) {
         return jdbc.sql("""
-                UPDATE inventario
-                SET cantidad = cantidad + :cantidad
+                UPDATE inventario SET cantidad = cantidad + :cantidad
                 WHERE id_inventario = :id
                 """)
-                .param("cantidad", cantidad)
-                .param("id", idInventario)
-                .update();
+                .param("cantidad", cantidad).param("id", idInventario).update();
     }
 
-    public int registrarSalida(int idInventario, int cantidad) {
+    public int registrarSalida(int idInventario, BigDecimal cantidad) {
         return jdbc.sql("""
-                UPDATE inventario
-                SET cantidad = cantidad - :cantidad
-                WHERE id_inventario = :id
-                  AND cantidad >= :cantidad
+                UPDATE inventario SET cantidad = cantidad - :cantidad
+                WHERE id_inventario = :id AND cantidad >= :cantidad
                 """)
-                .param("cantidad", cantidad)
-                .param("id", idInventario)
-                .update();
+                .param("cantidad", cantidad).param("id", idInventario).update();
     }
 
-    public void insertar(MovimientoInventario movimiento) {
+    public Integer insertar(MovimientoInventario movimiento) {
+        KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
                 INSERT INTO movimientos_inventario
-                (id_inventario, tipo_movimiento, cantidad)
-                VALUES
-                (:idInventario, :tipo, :cantidad)
+                (id_inventario, id_usuario, tipo_movimiento, cantidad, observacion)
+                VALUES (:inventario, :usuario, :tipo, :cantidad, :observacion)
                 """)
-                .param("idInventario", movimiento.getIdInventario())
+                .param("inventario", movimiento.getIdInventario())
+                .param("usuario", movimiento.getIdUsuario())
                 .param("tipo", movimiento.getTipoMovimiento())
                 .param("cantidad", movimiento.getCantidad())
-                .update();
+                .param("observacion", movimiento.getObservacion())
+                .update(llaves);
+        return llaves.getKey().intValue();
     }
 }

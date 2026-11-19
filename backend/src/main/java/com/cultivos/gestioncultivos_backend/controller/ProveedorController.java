@@ -2,6 +2,7 @@ package com.cultivos.gestioncultivos_backend.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cultivos.gestioncultivos_backend.model.Proveedor;
@@ -35,8 +37,9 @@ public class ProveedorController {
     }
 
     @PostMapping
-    public void crear(@RequestBody Proveedor proveedor) {
-        servicio.crear(proveedor);
+    @ResponseStatus(HttpStatus.CREATED)
+    public Proveedor crear(@RequestBody Proveedor proveedor) {
+        return servicio.crear(proveedor);
     }
 
     @PutMapping("/{id}")

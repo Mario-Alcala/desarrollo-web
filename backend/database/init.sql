@@ -26,56 +26,32 @@ FLUSH PRIVILEGES;
 
 USE gestion_cultivos;
 
--- ---------------------------------------------------------------------
--- Cultivos  (model/Cultivo.java, repository/CultivoRepository.java)
--- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS cultivos (
-    id                BIGINT       NOT NULL AUTO_INCREMENT,
-    nombre            VARCHAR(100) NOT NULL,
-    tipo              VARCHAR(100),
-    etapa_fenologica  VARCHAR(100),
-    fecha_registro    DATE,
-    PRIMARY KEY (id)
-);
-
--- ---------------------------------------------------------------------
--- Banco de semillas  (model/Semilla.java, repository/SemillaRepository.java)
--- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS semillas (
-    id                BIGINT       NOT NULL AUTO_INCREMENT,
-    variedad          VARCHAR(100) NOT NULL,
-    stock_disponible  INT          NOT NULL DEFAULT 0,
-    proveedor_origen  VARCHAR(100),
-    fecha_caducidad   DATE,
-    PRIMARY KEY (id)
-);
-
--- ---------------------------------------------------------------------
--- Terrenos  (model/Terreno.java, repository/TerrenoRepository.java)
--- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS terrenos (
-    id             BIGINT        NOT NULL AUTO_INCREMENT,
-    nombre         VARCHAR(100)  NOT NULL,
-    ubicacion      VARCHAR(255),
-    superficie_ha  DECIMAL(10,2),
-    tipo_suelo     VARCHAR(100),
-    estado         VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
-    latitud        DECIMAL(9,6),
-    longitud       DECIMAL(9,6),
-    PRIMARY KEY (id)
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    ubicacion VARCHAR(255),
+    superficie_m2 DECIMAL(10,2) NOT NULL,
+    estado ENUM('disponible', 'ocupado') NOT NULL DEFAULT 'disponible'
 );
 
--- ---------------------------------------------------------------------
--- Herramientas  (model/Herramienta.java, repository/HerramientaRepository.java)
--- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS herramientas (
-    id                 BIGINT        NOT NULL AUTO_INCREMENT,
-    nombre             VARCHAR(100)  NOT NULL,
-    tipo               VARCHAR(100),
-    cantidad           INT           NOT NULL DEFAULT 1,
-    estado             VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
-    fecha_adquisicion  DATE,
-    PRIMARY KEY (id)
+CREATE TABLE IF NOT EXISTS parcelas (
+    id_parcela BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id_terreno BIGINT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    superficie_m2 DECIMAL(10,2) NOT NULL,
+    estado ENUM('disponible', 'ocupada') NOT NULL DEFAULT 'disponible',
+    FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
+);
+
+CREATE TABLE IF NOT EXISTS cultivos (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id_parcela BIGINT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    familia VARCHAR(100),
+    etapa_fenologica VARCHAR(100),
+    fecha_siembra DATE,
+    estado ENUM('activo', 'finalizado') NOT NULL DEFAULT 'activo',
+    FOREIGN KEY (id_parcela) REFERENCES parcelas(id_parcela)
 );
 
 CREATE TABLE IF NOT EXISTS proveedores (
@@ -83,78 +59,60 @@ CREATE TABLE IF NOT EXISTS proveedores (
     nombre_empresa VARCHAR(100) NOT NULL,
     contacto VARCHAR(100),
     telefono VARCHAR(20),
+    email VARCHAR(100),
     direccion VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS insumos (
+    id_insumo INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    categoria ENUM('semilla', 'abono', 'fertilizante') NOT NULL,
+    unidad_medida VARCHAR(30) NOT NULL,
+    id_proveedor INT,
+    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
 );
 
 CREATE TABLE IF NOT EXISTS inventario (
     id_inventario INT PRIMARY KEY AUTO_INCREMENT,
-    cantidad INT NOT NULL,
+    id_insumo INT NOT NULL,
+    cantidad DECIMAL(10,2) NOT NULL DEFAULT 0,
     fecha_ingreso DATE NOT NULL,
-    fecha_caducidad DATE NULL,
-    categoria VARCHAR(50) NOT NULL,
-    id_proveedor INT,
-    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+    fecha_caducidad DATE,
+    FOREIGN KEY (id_insumo) REFERENCES insumos(id_insumo)
 );
 
 CREATE TABLE IF NOT EXISTS movimientos_inventario (
     id_movimiento INT PRIMARY KEY AUTO_INCREMENT,
     id_inventario INT NOT NULL,
+    id_usuario INT NOT NULL,
     tipo_movimiento ENUM('entrada', 'salida') NOT NULL,
-    cantidad INT NOT NULL,
+    cantidad DECIMAL(10,2) NOT NULL,
     fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_inventario) REFERENCES inventario(id_inventario)
+    observacion VARCHAR(255),
+    FOREIGN KEY (id_inventario) REFERENCES inventario(id_inventario),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
-CREATE TABLE IF NOT EXISTS fertilizantes (
-    id_fertilizante INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_fertilizante VARCHAR(100) NOT NULL,
-    tipo_fertilizante VARCHAR(50) NOT NULL,
-    fecha_caducidad DATE NOT NULL,
-    id_proveedor INT,
-    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
-);
-
-CREATE TABLE IF NOT EXISTS abonos (
-    id_abono INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_abono VARCHAR(100) NOT NULL,
-    tipo_abono VARCHAR(50) NOT NULL,
-    fecha_caducidad DATE NOT NULL,
-    id_proveedor INT,
-    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
+CREATE TABLE IF NOT EXISTS herramientas (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    tipo VARCHAR(100),
+    cantidad INT NOT NULL DEFAULT 1,
+    estado VARCHAR(30) NOT NULL DEFAULT 'Disponible',
+    fecha_adquisicion DATE
 );
 
 CREATE TABLE IF NOT EXISTS cosechas (
     id_cosecha INT PRIMARY KEY AUTO_INCREMENT,
     id_cultivo BIGINT NOT NULL,
+    id_usuario INT NOT NULL,
     fecha_cosecha DATE NOT NULL,
     cantidad_cosechada DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id)
-);
-
-CREATE TABLE IF NOT EXISTS distribucion (
-    id_distribucion INT PRIMARY KEY AUTO_INCREMENT,
-    fecha_salida DATE NOT NULL,
-    fecha_entrega DATE NULL,
-    destino VARCHAR(100) NOT NULL,
-    responsable VARCHAR(100) NOT NULL,
-    estado ENUM('pendiente', 'en_transito', 'entregado')
-        NOT NULL DEFAULT 'pendiente'
-);
-
-CREATE TABLE IF NOT EXISTS detalle_distribucion (
-    id_detalle INT PRIMARY KEY AUTO_INCREMENT,
-    id_distribucion INT NOT NULL,
-    id_cosecha INT NOT NULL,
-    cantidad INT NOT NULL,
-    FOREIGN KEY (id_distribucion) REFERENCES distribucion(id_distribucion),
-    FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
-);
-
-CREATE TABLE IF NOT EXISTS riesgos (
-    id_riesgo INT PRIMARY KEY AUTO_INCREMENT,
-    descripcion VARCHAR(255) NOT NULL,
-    nivel_riesgo ENUM('bajo', 'medio', 'alto') NOT NULL,
-    fecha_identificacion DATE NOT NULL
+    cantidad_disponible DECIMAL(10,2) NOT NULL,
+    estado_maduracion VARCHAR(30),
+    ubicacion_bodega VARCHAR(100),
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -162,7 +120,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre_usuario VARCHAR(100) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
-    rol ENUM('agricultor', 'trabajador', 'cliente') NOT NULL
+    rol ENUM('administrador_agricultor', 'trabajador', 'cliente') NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS observaciones_cultivos (
@@ -187,17 +145,63 @@ CREATE TABLE IF NOT EXISTS incidencias_cultivo (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+CREATE TABLE IF NOT EXISTS seguimientos_incidencia (
+    id_seguimiento INT PRIMARY KEY AUTO_INCREMENT,
+    id_incidencia INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha DATE NOT NULL,
+    accion_realizada TEXT NOT NULL,
+    observacion TEXT,
+    FOREIGN KEY (id_incidencia) REFERENCES incidencias_cultivo(id_incidencia),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
 CREATE TABLE IF NOT EXISTS riegos (
     id_riego INT PRIMARY KEY AUTO_INCREMENT,
     id_cultivo BIGINT NOT NULL,
-    id_terreno BIGINT NOT NULL,
-    fecha_riego DATE NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_riego DATETIME NOT NULL,
     cantidad_agua DECIMAL(10,2) NOT NULL,
     unidad_medida VARCHAR(20) NOT NULL,
-    metodo VARCHAR(50) NULL,
+    metodo VARCHAR(50),
     observaciones VARCHAR(255),
     FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
-    FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS pedidos (
+    id_pedido INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    fecha_pedido DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metodo_pago ENUM('transferencia', 'tarjeta') NOT NULL,
+    tipo_entrega ENUM('domicilio', 'recoleccion') NOT NULL,
+    estado ENUM('pendiente', 'preparando', 'listo', 'enviado', 'entregado', 'cancelado') NOT NULL DEFAULT 'pendiente',
+    total DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS detalle_pedido (
+    id_detalle INT PRIMARY KEY AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_cosecha INT NOT NULL,
+    cantidad DECIMAL(10,2) NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
+    FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
+);
+
+CREATE TABLE IF NOT EXISTS distribuciones (
+    id_distribucion INT PRIMARY KEY AUTO_INCREMENT,
+    id_pedido INT NOT NULL UNIQUE,
+    id_usuario INT,
+    fecha_salida DATETIME,
+    fecha_entrega DATETIME,
+    direccion_entrega VARCHAR(255),
+    fecha_recoleccion DATE,
+    numero_rastreo1 VARCHAR(100),
+    estado ENUM('pendiente', 'preparando', 'en_transito', 'listo_recoleccion', 'entregado', 'cancelado') NOT NULL DEFAULT 'pendiente',
+    FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
 -- ---------------------------------------------------------------------

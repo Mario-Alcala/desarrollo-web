@@ -43,7 +43,7 @@ public class MovimientoInventarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void crear(@RequestBody MovimientoInventario movimiento) {
-        servicio.crear(movimiento);
+    public MovimientoInventario crear(@RequestBody MovimientoInventario movimiento) {
+        return servicio.crear(movimiento);
     }
 }

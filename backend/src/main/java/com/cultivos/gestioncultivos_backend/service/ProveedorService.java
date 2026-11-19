@@ -33,9 +33,10 @@ public class ProveedorService {
         return proveedor;
     }
 
-    public void crear(Proveedor proveedor) {
+    public Proveedor crear(Proveedor proveedor) {
         validar(proveedor);
-        repositorio.insertar(proveedor);
+        proveedor.setIdProveedor(repositorio.insertar(proveedor));
+        return proveedor;
     }
 
     public void actualizar(int id, Proveedor proveedor) {
