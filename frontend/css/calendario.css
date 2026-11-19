@@ -1,0 +1,58 @@
+.campos-calendario {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+}
+
+.calendario label {
+    display: block;
+}
+
+.calendario select, .calendario textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #9caa96;
+    border-radius: 5px;
+    background: white;
+    color: #1f2d1f;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+.calendario textarea {
+    resize: vertical;
+}
+
+.calendario select:focus-visible, .calendario textarea:focus-visible {
+    outline: 3px solid #7b9e60;
+    outline-offset: 3px;
+}
+
+#guardar-etapa {
+    align-self: flex-start;
+}
+
+.calendario table {
+    min-width: 850px;
+}
+
+.calendario td {
+    vertical-align: top;
+}
+
+.calendario .notas-tarea {
+    min-width: 140px;
+    max-width: 260px;
+    white-space: pre-wrap;
+}
+
+.etapa-completada {
+    color: #2e6b2e;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .campos-calendario {
+        grid-template-columns: 1fr;
+    }
+}
