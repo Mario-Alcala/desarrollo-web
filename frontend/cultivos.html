@@ -44,7 +44,6 @@
 
     <dialog id="pago" aria-labelledby="titulo-pago">
         <h2 id="titulo-pago">Finalizar pedido</h2>
-        <p>Simulación escolar: usa datos ficticios. No se realizará ningún cobro.</p>
         <p>Total: <strong id="total-pago"></strong></p>
         <form id="formulario-pago">
             <label for="titular">Nombre en la tarjeta</label>
@@ -53,11 +52,11 @@
             <input id="tarjeta" type="text" inputmode="numeric" pattern="[0-9]{16}" minlength="16" maxlength="16" autocomplete="off" placeholder="Ejemplo: 1111111111111111" required>
             <label for="vencimiento">Vencimiento</label>
             <input id="vencimiento" type="month" required>
-            <label for="codigo">Código de seguridad ficticio</label>
+            <label for="codigo">Código de seguridad</label>
             <input id="codigo" type="password" inputmode="numeric" pattern="[0-9]{3,4}" minlength="3" maxlength="4" autocomplete="off" required>
             <p id="mensaje-pago" class="mensaje error" role="alert"></p>
             <div class="botones-pedido">
-                <button class="boton" type="submit">Confirmar pedido de prueba</button>
+                <button class="boton" type="submit">Confirmar pedido</button>
                 <button id="cancelar-pago" class="boton boton-secundario" type="button">Cancelar</button>
             </div>
         </form>
