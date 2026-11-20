@@ -49,3 +49,38 @@ const INSUMOS = [
     { id: 6, nombre: "Fertilizante triple 17", categoria: "fertilizante", varTipo: "granulado NPK 17-17-17", unidad: "kg", activo: true },
     { id: 7, nombre: "Fertilizante foliar", categoria: "fertilizante", varTipo: "líquido", unidad: "litros", activo: false }
 ];
+
+/* ---------- Bodegas (tabla bodegas) ---------- */
+const BODEGAS = [
+    { id: 1, nombre: "Bodega Central", ubicacion: "El Encino, Xalapa, Ver." },
+    { id: 2, nombre: "Bodega Norte", ubicacion: "La Esperanza, Coatepec, Ver." }
+];
+
+/* ---------- Inventario: lotes de insumos (tabla inventario) ---------- */
+const INVENTARIO = [
+    { id: 1, idInsumo: 1, idProveedor: 2, idBodega: 1, fechaIngreso: "2026-10-20", fechaCaducidad: "2027-05-01", cantidadDisponible: 12.5 },
+    { id: 2, idInsumo: 2, idProveedor: 2, idBodega: 1, fechaIngreso: "2026-10-20", fechaCaducidad: "2027-03-15", cantidadDisponible: 8 },
+    { id: 3, idInsumo: 3, idProveedor: 2, idBodega: 2, fechaIngreso: "2026-10-25", fechaCaducidad: "2026-12-05", cantidadDisponible: 20 },
+    { id: 4, idInsumo: 4, idProveedor: 4, idBodega: 2, fechaIngreso: "2026-11-02", fechaCaducidad: "", cantidadDisponible: 300 },
+    { id: 5, idInsumo: 5, idProveedor: 4, idBodega: 1, fechaIngreso: "2026-11-05", fechaCaducidad: "", cantidadDisponible: 450 },
+    { id: 6, idInsumo: 6, idProveedor: 3, idBodega: 1, fechaIngreso: "2026-09-15", fechaCaducidad: "2026-11-10", cantidadDisponible: 60 },
+    { id: 7, idInsumo: 7, idProveedor: 3, idBodega: 2, fechaIngreso: "2026-10-30", fechaCaducidad: "2027-08-01", cantidadDisponible: 25 }
+];
+
+/* ---------- Herramientas (tabla herramientas) ---------- */
+const HERRAMIENTAS = [
+    { id: 1, idBodega: 1, nombre: "Azadón", tipo: "Manual", cantidad: 6, estado: "Disponible" },
+    { id: 2, idBodega: 1, nombre: "Pala", tipo: "Manual", cantidad: 4, estado: "En uso" },
+    { id: 3, idBodega: 1, nombre: "Tijeras de podar", tipo: "Manual", cantidad: 8, estado: "Disponible" },
+    { id: 4, idBodega: 2, nombre: "Motobomba de riego", tipo: "Motor", cantidad: 2, estado: "Mantenimiento" },
+    { id: 5, idBodega: 2, nombre: "Carretilla", tipo: "Transporte", cantidad: 5, estado: "Disponible" },
+    { id: 6, idBodega: 2, nombre: "Rejas de cosecha", tipo: "Empaque", cantidad: 40, estado: "En uso" }
+];
+
+/* ---------- Movimientos de inventario (tabla movimientos_inventario) ---------- */
+const MOVIMIENTOS = [
+    { id: 1, idInventario: 1, usuario: "Administrador / Agricultor", tipo: "entrada", cantidad: 15, fecha: "2026-10-20T09:30" },
+    { id: 2, idInventario: 1, usuario: "Trabajador de bodega", tipo: "salida", cantidad: 2.5, fecha: "2026-11-03T08:10" },
+    { id: 3, idInventario: 5, usuario: "Trabajador de bodega", tipo: "salida", cantidad: 50, fecha: "2026-11-12T07:45" },
+    { id: 4, idInventario: 4, usuario: "Administrador / Agricultor", tipo: "entrada", cantidad: 300, fecha: "2026-11-02T10:00" }
+];

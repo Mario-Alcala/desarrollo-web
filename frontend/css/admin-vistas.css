@@ -52,6 +52,7 @@
 }
 .filtro:hover { color: var(--texto); }
 .filtro[aria-pressed="true"] { background: var(--tarjeta-2); border-color: var(--acento); color: var(--acento); }
+
 /* ---------- Tablas de administración (Proveedores, Bodega, Pedidos) ---------- */
 .tabla-admin-contenedor {
     overflow-x: auto;
@@ -73,6 +74,13 @@
 }
 .tabla-admin tbody tr + tr td { border-top: 1px solid var(--borde); }
 .tabla-admin tbody tr:hover td { background: var(--tarjeta-2); }
+
+
+/* ---------- Bodega ---------- */
+body.admin .barra-herramientas select { width: auto; min-width: 12rem; }
+.tabla-admin td.numero,
+.tabla-admin th.numero { text-align: right; }
+
 
 /* ---------- Etiquetas de estado ---------- */
 .etq {
