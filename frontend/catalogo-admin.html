@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: catalogo-admin.html
+  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
+    superior y las tarjetas las dibuja JavaScript: sin JS la página sale casi vacía.
+  NOMBRE: se llama catalogo-admin.html porque catalogo.html ya es el catálogo del cliente.
+  BACKEND: aún no existe la ruta de productos (catálogo). Los datos salen de js/admin-datos.js.
+  LE FALTA: guardar altas y cambios en la API; subir imagen como archivo (hoy se pega una dirección web).
+  AÑADIDO POR BACKEND INCOMPLETO: el script admin-datos.js (variedades y cosechas de ejemplo).
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-vistas.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="catalogo"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar variedad o familia" data-local="true"></header>
+
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Catálogo</h1>
+                        <p>Alta y edición de las variedades que se ofrecen. La maduración y los kilos disponibles vienen de las cosechas.</p>
+                    </div>
+                    <button id="agregar-producto" class="boton" type="button">Agregar variedad</button>
+                </div>
+
+                <div id="filtros-categoria" class="barra-herramientas" role="group" aria-label="Filtrar por categoría">
+                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todas</button>
+                    <button class="filtro" type="button" data-valor="verdura" aria-pressed="false">Verduras</button>
+                    <button class="filtro" type="button" data-valor="fruta" aria-pressed="false">Frutas</button>
+                </div>
+
+                <p id="mensaje-catalogo" class="mensaje" role="status"></p>
+                <section aria-label="Variedades del catálogo">
+                    <div id="lista-productos" class="rejilla-productos"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="dialogo-producto" class="ancho" aria-labelledby="titulo-dialogo">
+        <h2 id="titulo-dialogo">Agregar variedad</h2>
+        <form id="formulario-producto">
+            <div class="campos-dos">
+                <div>
+                    <label for="p-categoria">Categoría</label>
+                    <select id="p-categoria" required>
+                        <option value="verdura">Verdura</option>
+                        <option value="fruta">Fruta</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="p-precio">Precio por kilo (MXN)</label>
+                    <input id="p-precio" type="number" min="0.01" step="0.01" required>
+                </div>
+                <div>
+                    <label for="p-familia">Familia</label>
+                    <input id="p-familia" type="text" maxlength="60" placeholder="Ejemplo: tomate" required>
+                </div>
+                <div>
+                    <label for="p-variedad">Variedad</label>
+                    <input id="p-variedad" type="text" maxlength="60" placeholder="Ejemplo: cherry" required>
+                </div>
+            </div>
+
+            <label for="p-descripcion">Descripción</label>
+            <textarea id="p-descripcion" rows="3" maxlength="300"></textarea>
+
+            <label for="p-imagen">Imagen (dirección web, opcional)</label>
+            <input id="p-imagen" type="url" placeholder="https://...">
+
+            <label class="casilla" for="p-activo">
+                <input id="p-activo" type="checkbox" checked> Se ofrece a los clientes (activo)
+            </label>
+            <p class="ayuda">No se capturan kilos ni maduración: se consultan desde las cosechas.</p>
+
+            <p id="mensaje-formulario" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar variedad</button>
+                <button id="cancelar-producto" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/admin-datos.js"></script>
+    <script src="js/admin-comun.js"></script>
+    <script src="js/catalogo-admin.js"></script>
+</body>
+</html>
