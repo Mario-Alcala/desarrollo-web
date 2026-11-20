@@ -1,0 +1,171 @@
+/*
+ * CAPA: FRONTEND (estilos).
+ * LE FALTA: estados de carga y de error con estilo propio; la miniatura de la ficha 
+ */
+
+/* ---------- Lista de terrenos ---------- */
+.encabezado-terrenos {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.lista-terrenos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+.tarjeta-terreno {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tarjeta-terreno .vista {
+    height: 118px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.7rem 0.8rem;
+    background: linear-gradient(150deg, #d5e8cf 0%, #8fbf8a 45%, #c9b88f 70%, #7fa56e 100%);
+    color: #1c2e22;
+    font-size: 0.85rem;
+}
+
+.tarjeta-terreno .cuerpo { padding: 0.9rem; }
+.tarjeta-terreno h3 { margin: 0 0 0.3rem; font-size: 1.1rem; }
+.tarjeta-terreno .datos { margin: 0; color: var(--texto-suave); font-size: 0.9rem; }
+
+.chips { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.7rem 0; }
+
+.chip {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--tarjeta-2);
+    font-size: 0.8rem;
+}
+
+.pie-tarjeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--texto-suave);
+    font-size: 0.85rem;
+}
+
+.ver-terreno {
+    color: var(--acento);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+/* ---------- Detalle del terreno ---------- */
+.migas { color: var(--texto-suave); font-size: 0.85rem; margin-bottom: 0.8rem; }
+.migas a { text-decoration: none; }
+.migas a:hover { color: var(--acento); }
+
+.encabezado-detalle {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.fila-resumen,
+.vista-parcelas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.vista-parcelas { grid-template-columns: 300px 1fr; align-items: start; }
+
+.titulo-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+.titulo-panel h2 { margin: 0; font-size: 1.15rem; }
+.titulo-panel span { color: var(--texto-suave); font-size: 0.85rem; }
+
+.clima {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.9rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--tarjeta-2);
+}
+.clima p { margin: 0.2rem 0 0; color: var(--texto-suave); font-size: 0.85rem; }
+.clima .temperatura { color: var(--acento); font-size: 1.3rem; font-weight: 600; white-space: nowrap; }
+
+.parcela {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin-top: 0.6rem;
+    padding: 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    background: var(--tarjeta);
+    color: var(--texto);
+    cursor: pointer;
+    font: inherit;
+}
+.parcela.seleccionada { border-color: var(--acento); background: var(--tarjeta-2); }
+.parcela .fila { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.parcela small { display: block; margin-top: 0.35rem; color: var(--texto-suave); }
+
+.insignia {
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: var(--borde);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.insignia.activa { background: #2f5a40; color: var(--acento); }
+
+.pestanas {
+    display: flex;
+    gap: 1.2rem;
+    border-bottom: 1px solid var(--borde);
+    margin: 0.8rem 0 0.4rem;
+}
+.pestanas button {
+    border: none;
+    background: none;
+    padding: 0.5rem 0;
+    color: var(--texto-suave);
+    cursor: pointer;
+    font: inherit;
+    border-bottom: 2px solid transparent;
+}
+.pestanas button.activa { color: var(--acento); border-bottom-color: var(--acento); }
+
+.registro {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    gap: 0.8rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--borde);
+    font-size: 0.9rem;
+}
+.registro p { margin: 0.25rem 0 0; color: var(--texto-suave); font-size: 0.85rem; }
+.registro .tipo { color: var(--acento); font-size: 0.8rem; text-align: right; }
+.fecha-registro { color: var(--texto-suave); }
+
+@media (max-width: 800px) {
+    .fila-resumen,
+    .vista-parcelas { grid-template-columns: 1fr; }
+}
