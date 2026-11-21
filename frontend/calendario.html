@@ -17,6 +17,7 @@
             </nav>
         </header>
         <main class="pagina calendario">
+            <a class="boton boton-secundario" href="cultivos.html">Regresar</a>
             <h1>Calendario de cultivos</h1>
             <p>Consulta las etapas y las próximas tareas de tus cultivos.</p>
             <div class="filtros-calendario">
@@ -42,6 +43,10 @@
                     <h2 id="titulo-mes" aria-live="polite"></h2>
                     <button id="mes-siguiente" class="boton boton-secundario" aria-label="Mes siguiente" type="button">→</button>
                     <button id="mes-actual" class="boton boton-secundario" type="button">Hoy</button>
+                </div>
+                <div class="selector-anio">
+                    <label for="anio-calendario">Año</label>
+                    <input id="anio-calendario" type="number" min="1900" max="9999" step="1">
                 </div>
                 <div class="calendario-scroll">
                     <div class="semana" aria-hidden="true">

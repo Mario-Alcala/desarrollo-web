@@ -209,3 +209,14 @@ summary {
         grid-template-columns: 1fr;
     }
 }
+
+.selector-anio {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.selector-anio input {
+    width: 110px;
+}
