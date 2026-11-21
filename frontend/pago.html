@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Método de pago - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/cultivos.css">
+    <link rel="stylesheet" href="css/pago.css">
+</head>
+<body>
+    <header class="barra">
+        <span class="marca">Gestión de Cultivos</span>
+        <a href="catalogo.html">Regresar al catálogo</a>
+    </header>
+    <main class="pagina">
+        <h1>Método de pago</h1>
+        <div id="contenido-pago" class="vista-pago">
+            <section class="panel">
+                <h2>Tu pedido</h2>
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead><tr><th>Producto</th><th>Kilos</th><th>Subtotal</th></tr></thead>
+                        <tbody id="resumen-pago"></tbody>
+                    </table>
+                </div>
+                <p class="total">Total: <span id="total-pago">$0.00</span></p>
+                <h2>Recoger el pedido</h2>
+                <button id="recoleccion" class="boton boton-secundario" type="button">Recolección</button>
+                <p id="fecha-elegida">Selecciona el día de recolección.</p>
+            </section>
+            <section class="panel">
+                <h2>Forma de pago</h2>
+              
+                <form id="formulario-pago" novalidate>
+                    <label for="metodo-pago">Método de pago</label>
+                    <select id="metodo-pago">
+                        <option value="Tarjeta">Tarjeta de crédito o débito</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                    <div id="datos-transferencia" hidden>
+                        <p>Los datos de la cuenta para transferencia están pendientes.</p>
+                    </div>
+                    <div id="datos-tarjeta">
+                    <label for="titular">Nombre del titular</label>
+                    <input id="titular" type="text" maxlength="80" autocomplete="off" required>
+                    <label for="tarjeta">Número de tarjeta (16 dígitos)</label>
+                    <input id="tarjeta" type="text" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" autocomplete="off" required>
+                    <div class="campos-tarjeta">
+                        <div>
+                            <label for="codigo">Código de seguridad</label>
+                            <input id="codigo" type="password" inputmode="numeric" pattern="[0-9]{3,4}" maxlength="4" autocomplete="off" required>
+                        </div>
+                        <div>
+                            <label for="vencimiento">Vencimiento</label>
+                            <input id="vencimiento" type="month" required>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="acciones-pago">
+                        <a class="boton boton-secundario" href="catalogo.html">Cancelar</a>
+                        <button id="confirmar-pago" class="boton" type="submit">Confirmar pedido</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+        <p id="mensaje-pago" class="mensaje" role="status"></p>
+        <section id="confirmacion-pedido" class="panel" hidden>
+            <h2>¡Tu pedido está hecho!</h2>
+            <p id="numero-pedido"></p>
+            <p id="fecha-confirmada"></p>
+            <button id="entregar-pedido" class="boton" type="button">Entregar pedido</button>
+            <a class="boton" href="catalogo.html">Volver al catálogo</a>
+            <a class="boton boton-secundario" href="historial.html">Ver historial de pedidos</a>
+        </section>
+        <section id="seccion-rastreo" class="panel" hidden>
+            <h2>Rastrear pedido</h2>
+            <button class="boton boton-secundario" type="button">Rastrear pedido</button>
+            <a class="boton boton-secundario" href="catalogo.html">Regresar al catálogo</a>
+        </section>
+    </main>
+    <script src="js/datos.js"></script>
+    <script src="js/pedido.js"></script>
+    <script src="js/pago.js"></script>
+</body>
+</html>

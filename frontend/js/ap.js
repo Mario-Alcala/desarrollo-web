@@ -3,7 +3,7 @@ var formulario = document.getElementById('formulario-login');
 
 if (crearCuenta) {
     crearCuenta.addEventListener('click', function () {
-        document.getElementById('mensaje-registro').textContent = ""
+        window.location.href = 'crear-cuenta.html';
     });
 }
 

@@ -1,0 +1,14 @@
+.titulo-cuenta {
+    font-size: 20px;
+    text-align: center;
+    color: #2e6b2e;
+}
+
+.campos-cuenta {
+    display: flex;
+    flex-direction: column;
+}
+
+.campos-cuenta .boton {
+    margin-top: 24px;
+}
