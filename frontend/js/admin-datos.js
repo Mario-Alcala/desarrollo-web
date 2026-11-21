@@ -84,3 +84,52 @@ const MOVIMIENTOS = [
     { id: 3, idInventario: 5, usuario: "Trabajador de bodega", tipo: "salida", cantidad: 50, fecha: "2026-11-12T07:45" },
     { id: 4, idInventario: 4, usuario: "Administrador / Agricultor", tipo: "entrada", cantidad: 300, fecha: "2026-11-02T10:00" }
 ];
+
+/* ---------- Pedidos (tablas pedidos, detalle_pedido y entregas) ----------
+ * El total NO se guarda: se calcula sumando kg × precio de cada renglón del detalle.
+ * La entrega vive dentro del pedido:
+ *   tipo "domicilio"   -> direccion y numeroRastreo (si ya salió)
+ *   tipo "recoleccion" -> idBodega y diaRecoleccion (horario fijo 7:00 a. m. a 6:00 p. m.)
+ */
+const PEDIDOS = [
+    {
+        id: 1001, cliente: "Restaurante La Hacienda", fecha: "2026-11-18", estado: "entregado",
+        detalle: [
+            { idProducto: 2, kg: 40, precioPorKg: 32 },
+            { idProducto: 3, kg: 15, precioPorKg: 28 }
+        ],
+        entrega: { tipo: "domicilio", direccion: "Av. Xalapa 120, Xalapa, Ver.", numeroRastreo: "GC-48213", estado: "entregada" }
+    },
+    {
+        id: 1002, cliente: "Mercado Los Sauces", fecha: "2026-11-19", estado: "enviado",
+        detalle: [
+            { idProducto: 1, kg: 25, precioPorKg: 48 },
+            { idProducto: 5, kg: 30, precioPorKg: 26 },
+            { idProducto: 6, kg: 10, precioPorKg: 85 }
+        ],
+        entrega: { tipo: "domicilio", direccion: "Calle Hidalgo 33, Coatepec, Ver.", numeroRastreo: "GC-48377", estado: "en camino" }
+    },
+    {
+        id: 1003, cliente: "María Fernanda Ortiz", fecha: "2026-11-19", estado: "pendiente",
+        detalle: [
+            { idProducto: 1, kg: 3, precioPorKg: 48 },
+            { idProducto: 4, kg: 6, precioPorKg: 18 }
+        ],
+        entrega: { tipo: "recoleccion", idBodega: 1, diaRecoleccion: "2026-11-22", estado: "por programar" }
+    },
+    {
+        id: 1004, cliente: "Cocina Económica Doña Lupe", fecha: "2026-11-20", estado: "en preparación",
+        detalle: [
+            { idProducto: 2, kg: 20, precioPorKg: 32 },
+            { idProducto: 3, kg: 12, precioPorKg: 28 }
+        ],
+        entrega: { tipo: "recoleccion", idBodega: 2, diaRecoleccion: "2026-11-23", estado: "por programar" }
+    },
+    {
+        id: 1005, cliente: "Tienda Naturista Verde Vida", fecha: "2026-11-14", estado: "cancelado",
+        detalle: [
+            { idProducto: 6, kg: 8, precioPorKg: 85 }
+        ],
+        entrega: { tipo: "domicilio", direccion: "Blvd. Díaz Mirón 410, Veracruz, Ver.", numeroRastreo: "", estado: "cancelada" }
+    }
+];
