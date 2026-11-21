@@ -20,13 +20,13 @@ public class TerrenoRepository {
     }
 
     public List<Terreno> buscarTodos() {
-        return jdbc.sql("SELECT * FROM terrenos ORDER BY id")
+        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2 / 10000 AS superficie_ha, estado FROM terrenos ORDER BY id")
                 .query(Terreno.class)
                 .list();
     }
 
     public Optional<Terreno> buscarPorId(Long id) {
-        return jdbc.sql("SELECT * FROM terrenos WHERE id = :id")
+        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2 / 10000 AS superficie_ha, estado FROM terrenos WHERE id = :id")
                 .param("id", id)
                 .query(Terreno.class)
                 .optional();
@@ -36,20 +36,13 @@ public class TerrenoRepository {
         KeyHolder llaves = new GeneratedKeyHolder();
 
         jdbc.sql("""
-                INSERT INTO terrenos
-                (nombre, ubicacion, superficie_ha, tipo_suelo, estado,
-                 latitud, longitud)
-                VALUES
-                (:nombre, :ubicacion, :superficie, :suelo, :estado,
-                 :latitud, :longitud)
+                INSERT INTO terrenos (nombre, ubicacion, superficie_m2, estado)
+                VALUES (:nombre, :ubicacion, :superficie, :estado)
                 """)
                 .param("nombre", terreno.getNombre())
                 .param("ubicacion", terreno.getUbicacion())
-                .param("superficie", terreno.getSuperficieHa())
-                .param("suelo", terreno.getTipoSuelo())
+                .param("superficie", terreno.getSuperficieHa() == null ? 0 : terreno.getSuperficieHa() * 10000)
                 .param("estado", terreno.getEstado())
-                .param("latitud", terreno.getLatitud())
-                .param("longitud", terreno.getLongitud())
                 .update(llaves);
 
         return llaves.getKey().longValue();
@@ -58,22 +51,14 @@ public class TerrenoRepository {
     public boolean actualizar(Terreno terreno) {
         int filas = jdbc.sql("""
                 UPDATE terrenos
-                SET nombre = :nombre,
-                    ubicacion = :ubicacion,
-                    superficie_ha = :superficie,
-                    tipo_suelo = :suelo,
-                    estado = :estado,
-                    latitud = :latitud,
-                    longitud = :longitud
+                SET nombre = :nombre, ubicacion = :ubicacion,
+                    superficie_m2 = :superficie, estado = :estado
                 WHERE id = :id
                 """)
                 .param("nombre", terreno.getNombre())
                 .param("ubicacion", terreno.getUbicacion())
-                .param("superficie", terreno.getSuperficieHa())
-                .param("suelo", terreno.getTipoSuelo())
+                .param("superficie", terreno.getSuperficieHa() == null ? 0 : terreno.getSuperficieHa() * 10000)
                 .param("estado", terreno.getEstado())
-                .param("latitud", terreno.getLatitud())
-                .param("longitud", terreno.getLongitud())
                 .param("id", terreno.getId())
                 .update();
 

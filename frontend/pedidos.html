@@ -3,9 +3,7 @@
   ARCHIVO: pedidos.html
   CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
     superior y las filas de la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
-  BACKEND: aún no existe la ruta de pedidos. Los datos salen de js/admin-datos.js (arreglo PEDIDOS).
-  LE FALTA: leer los pedidos de la API; crear un pedido; paginación.
-  AÑADIDO POR BACKEND INCOMPLETO: los pedidos de ejemplo en admin-datos.js.
+  BACKEND: pedidos, lotes asignados y estado de entrega en /api/pedidos.
 -->
 <html lang="es">
 <head>
@@ -27,15 +25,15 @@
                 <div class="encabezado-pagina">
                     <div>
                         <h1>Pedidos y entregas</h1>
-                        <p>Consulta los pedidos y abre uno para ver su detalle y su entrega. El total se calcula con los productos de cada pedido.</p>
+                        <p>Asigna a cada pedido kilos de cosechas disponibles y registra si salen a envío o quedan listos para recoger.</p>
                     </div>
                 </div>
 
                 <div id="filtros-estado" class="barra-herramientas" role="group" aria-label="Filtrar por estado">
                     <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
                     <button class="filtro" type="button" data-valor="pendiente" aria-pressed="false">Pendientes</button>
-                    <button class="filtro" type="button" data-valor="en preparación" aria-pressed="false">En preparación</button>
-                    <button class="filtro" type="button" data-valor="enviado" aria-pressed="false">Enviados</button>
+                    <button class="filtro" type="button" data-valor="en_transito" aria-pressed="false">Enviados</button>
+                    <button class="filtro" type="button" data-valor="listo_recoleccion" aria-pressed="false">Listos para recoger</button>
                     <button class="filtro" type="button" data-valor="entregado" aria-pressed="false">Entregados</button>
                     <button class="filtro" type="button" data-valor="cancelado" aria-pressed="false">Cancelados</button>
                 </div>
@@ -49,10 +47,9 @@
                                     <th>Pedido</th>
                                     <th>Cliente</th>
                                     <th>Fecha</th>
-                                    <th>Productos</th>
+                                    <th>Lotes asignados</th>
                                     <th>Entrega</th>
                                     <th>Estado</th>
-                                    <th class="celda-total">Total</th>
                                     <th><span class="solo-lectores">Detalle</span></th>
                                 </tr>
                             </thead>
@@ -65,9 +62,7 @@
     </div>
 
     <script src="js/sidebar.js"></script>
-    <script src="js/admin-datos.js"></script>
     <script src="js/admin-comun.js"></script>
-    <script src="js/pedidos-comun.js"></script>
     <script src="js/pedidos.js"></script>
 </body>
 </html>

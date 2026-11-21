@@ -15,7 +15,7 @@ import com.cultivos.gestioncultivos_backend.repository.TerrenoRepository;
 public class TerrenoService {
 
     private static final List<String> ESTADOS =
-            List.of("Disponible", "En uso", "En descanso");
+            List.of("disponible", "ocupado");
 
     private final TerrenoRepository repositorio;
 
@@ -81,8 +81,9 @@ public class TerrenoService {
 
         if (terreno.getEstado() == null
                 || terreno.getEstado().isBlank()) {
-            terreno.setEstado("Disponible");
+            terreno.setEstado("disponible");
         }
+        terreno.setEstado(terreno.getEstado().trim().toLowerCase());
 
         if (!ESTADOS.contains(terreno.getEstado())) {
             throw new IllegalArgumentException(
@@ -90,26 +91,5 @@ public class TerrenoService {
                             + String.join(", ", ESTADOS));
         }
 
-        boolean faltaLatitud = terreno.getLatitud() == null;
-        boolean faltaLongitud = terreno.getLongitud() == null;
-
-        if (faltaLatitud != faltaLongitud) {
-            throw new IllegalArgumentException(
-                    "Debes proporcionar latitud y longitud juntas");
-        }
-
-        if (!faltaLatitud
-                && (terreno.getLatitud() < -90
-                || terreno.getLatitud() > 90)) {
-            throw new IllegalArgumentException(
-                    "La latitud debe estar entre -90 y 90");
-        }
-
-        if (!faltaLongitud
-                && (terreno.getLongitud() < -180
-                || terreno.getLongitud() > 180)) {
-            throw new IllegalArgumentException(
-                    "La longitud debe estar entre -180 y 180");
-        }
     }
 }

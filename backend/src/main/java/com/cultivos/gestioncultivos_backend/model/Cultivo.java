@@ -5,10 +5,14 @@ import java.time.LocalDate;
 public class Cultivo {
 
     private Long id;
+    private Long idParcela;
     private String nombre;
     private String tipo;
+    private String familia;
     private String etapaFenologica;
     private LocalDate fechaRegistro;
+    private LocalDate fechaSiembra;
+    private String estado;
 
     public Cultivo() {
     }
@@ -20,6 +24,9 @@ public class Cultivo {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public Long getIdParcela() { return idParcela; }
+    public void setIdParcela(Long idParcela) { this.idParcela = idParcela; }
 
     public String getNombre() {
         return nombre;
@@ -37,6 +44,9 @@ public class Cultivo {
         this.tipo = tipo;
     }
 
+    public String getFamilia() { return familia; }
+    public void setFamilia(String familia) { this.familia = familia; }
+
     public String getEtapaFenologica() {
         return etapaFenologica;
     }
@@ -52,4 +62,9 @@ public class Cultivo {
     public void setFechaRegistro(LocalDate fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
     }
+
+    public LocalDate getFechaSiembra() { return fechaSiembra; }
+    public void setFechaSiembra(LocalDate fechaSiembra) { this.fechaSiembra = fechaSiembra; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

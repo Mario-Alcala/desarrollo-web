@@ -1,14 +1,7 @@
 /*
  * USA DEL BACKEND: GET y POST http://localhost:8081/api/terrenos
  *   (TerrenoController y TerrenoRepository). corre en 8081.
- * LE FALTA: editar y eliminar terrenos (PUT y DELETE existen en la API, pero no hay botones);
- *   validaciones más completas; que las fichas muestren parcelas y cultivos reales.
- * AÑADIDO POR BACKEND INCOMPLETO:
- *   - Si la API falla o devuelve una lista vacía, se muestran los datos de terrenos-datos.js.
- *   - Conversión de hectáreas a m², porque la API usa superficieHa y el diseño muestra m².
- * PROBLEMA CONOCIDO DEL BACKEND: el POST falla porque TerrenoRepository inserta superficie_ha,
- *   tipo_suelo, latitud y longitud, pero la tabla terrenos tiene superficie_m2 y un estado
- *   limitado a disponible/ocupado. Hay que alinear el Java con init.sql (o al revés).
+ * Las fichas cargan los terrenos y el conteo de parcelas desde el API REST.
  */
 
 const API_TERRENOS = "http://localhost:8081/api/terrenos";
@@ -21,7 +14,6 @@ const formulario = document.getElementById("formulario-terreno");
 const mensajeFormulario = document.getElementById("mensaje-formulario");
 
 let terrenos = [];
-let usandoEjemplo = false;
 
 function crear(etiqueta, texto, clase) {
     const el = document.createElement(etiqueta);
@@ -40,28 +32,23 @@ function dibujar() {
         !q ||
         String(t.nombre).toLowerCase().includes(q) ||
         String(t.ubicacion).toLowerCase().includes(q) ||
-        (t.parcelas || []).some(p => p.cultivo && p.cultivo.nombre.toLowerCase().includes(q))
+        (t.parcelas || []).some(p => String(p.cultivoNombre || "").toLowerCase().includes(q))
     );
 
     lista.replaceChildren();
     visibles.forEach(t => {
         const tarjeta = crear("article", undefined, "tarjeta-terreno");
 
-        const vista = crear("div", "Vista general del terreno · Ejemplo", "vista");
+        const vista = crear("div", "Terreno registrado", "vista");
 
         const chips = crear("div", undefined, "chips");
         const pie = crear("div", undefined, "pie-tarjeta");
-        if (t.parcelas) {
-            const activos = t.parcelas.filter(p => p.cultivo);
-            chips.append(
-                crear("span", `${t.parcelas.length} parcelas`, "chip"),
-                crear("span", `${activos.length} ${activos.length === 1 ? "cultivo activo" : "cultivos activos"}`, "chip")
-            );
-            pie.append(crear("span", activos.map(p => p.cultivo.nombre).join(" · ") || "Sin cultivos activos"));
-        } else {
-            chips.append(crear("span", t.estado, "chip"), crear("span", t.tipoSuelo || "—", "chip"));
-            pie.append(crear("span", ""));
-        }
+        const activos = t.parcelas.filter(p => p.idCultivo != null).length;
+        chips.append(
+            crear("span", `${t.parcelas.length} ${t.parcelas.length === 1 ? "parcela" : "parcelas"}`, "chip"),
+            crear("span", `${activos} ${activos === 1 ? "cultivo" : "cultivos"}`, "chip")
+        );
+        pie.append(crear("span", t.estado ? t.estado.charAt(0).toUpperCase() + t.estado.slice(1) : ""));
 
         const enlace = crear("a", "Ver terreno →", "ver-terreno");
         enlace.href = "terreno-detalle.html?id=" + encodeURIComponent(t.id);
@@ -80,27 +67,26 @@ function dibujar() {
     });
 
     if (!visibles.length) {
-        mensaje.textContent = "No hay terrenos para mostrar.";
-    } else if (usandoEjemplo) {
-        mensaje.textContent = "Mostrando datos de ejemplo: no hay conexión con la API.";
+        if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay terrenos para mostrar.";
     } else {
         mensaje.textContent = "";
     }
 }
 
 async function cargarTerrenos() {
+    mensaje.textContent = "Cargando terrenos y parcelas…";
     try {
         const respuesta = await fetch(API_TERRENOS);
         if (!respuesta.ok) throw new Error("Error " + respuesta.status);
         terrenos = await respuesta.json();
-        usandoEjemplo = false;
-        if (!terrenos.length) {
-            terrenos = TERRENOS_EJEMPLO;
-            usandoEjemplo = true;
-        }
+        terrenos = await Promise.all(terrenos.map(async terreno => {
+            const r = await fetch(`http://localhost:8081/api/parcelas/terreno/${encodeURIComponent(terreno.id)}`);
+            if (!r.ok) throw new Error("No se pudieron cargar las parcelas");
+            return { ...terreno, parcelas: await r.json() };
+        }));
     } catch (error) {
-        terrenos = TERRENOS_EJEMPLO;
-        usandoEjemplo = true;
+        terrenos = [];
+        mensaje.textContent = "No se pudieron cargar los terrenos y sus parcelas desde el API.";
     }
     dibujar();
 }
@@ -112,8 +98,7 @@ async function guardarTerreno(evento) {
     const datos = {
         nombre: document.getElementById("t-nombre").value.trim(),
         ubicacion: document.getElementById("t-ubicacion").value.trim(),
-        superficieHa: Number(document.getElementById("t-superficie").value),
-        tipoSuelo: document.getElementById("t-suelo").value.trim(),
+        superficieHa: Number(document.getElementById("t-superficie").value) / 10000,
         estado: document.getElementById("t-estado").value
     };
 

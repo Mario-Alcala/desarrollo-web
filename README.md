@@ -16,7 +16,7 @@ Todo el proyecto se desarrolla y ejecuta desde **WSL (Ubuntu)**.
 ```
 desarrollo-web/
 ├── README.md
-├── backend/                     # Spring Boot (puerto 8080)
+├── backend/                     # Spring Boot (puerto 8081)
 │   ├── pom.xml
 │   ├── mvnw                     # Maven Wrapper 
 │   ├── database/
@@ -75,7 +75,7 @@ sudo service mysql start
 sudo mysql < database/init.sql
 ```
 
-Esto crea la base `gestion_cultivos`, el usuario `cultivos_user`, las tablas `cultivos`, `semillas`, `terrenos` y `herramientas`, y algunos datos de ejemplo.
+Esto crea la base `gestion_cultivos`, el usuario `cultivos_user` y las tablas de terrenos, parcelas, cultivos, cosechas, proveedores, insumos, inventario, pedidos y herramientas, además de datos iniciales de demostración.
 Las credenciales de desarrollo están en `backend/database/init.sql` y deben coincidir con las de `application.yaml`. Es seguro volver a ejecutarlo: no duplica datos.
 
 Si prefieres otro usuario o clave, el backend lee las variables de entorno `DB_USER` y `DB_PASSWORD`.
@@ -94,11 +94,11 @@ La primera vez tarda unos minutos (descarga Maven y las dependencias). Está lis
 Comprobar que funciona y que está conectado a MySQL:
 
 ```bash
-curl http://localhost:8080/api/cultivos          # responde la lista de cultivos de ejemplo
+curl http://localhost:8081/api/cultivos          # responde la lista de cultivos registrados
 mysql -u cultivos_user -p gestion_cultivos -e "SHOW TABLES;"   # clave: cultivos-web
 ```
 
-También puedes abrir <http://localhost:8080> en el navegador (página de inicio con plantilla Thymeleaf).
+También puedes abrir <http://localhost:8081> en el navegador (página de inicio con plantilla Thymeleaf).
 Para detenerlo: `Ctrl + C`.
 
 ## 6. Ejecutar el frontend (terminal 2)
@@ -116,7 +116,7 @@ Arriba a la derecha debe aparecer **"API conectada"**.
 
 ## 7. API REST
 
-Base: `http://localhost:8080/api`
+Base: `http://localhost:8081/api`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -126,35 +126,41 @@ Base: `http://localhost:8080/api`
 | PUT | `/cultivos/{id}` | Actualiza un cultivo |
 | DELETE | `/cultivos/{id}` | Elimina un cultivo (204) |
 | GET · POST · PUT · DELETE | `/semillas`, `/semillas/{id}` | Igual que cultivos, para el banco de semillas |
-| GET · POST · PUT · DELETE | `/terrenos`, `/terrenos/{id}` | Igual que cultivos, para terrenos. Estados válidos: Disponible, En uso, En descanso |
+| GET · POST · PUT · DELETE | `/terrenos`, `/terrenos/{id}` | Igual que cultivos, para terrenos. Estados válidos: `disponible`, `ocupado` |
 | GET · POST · PUT · DELETE | `/herramientas`, `/herramientas/{id}` | Igual que cultivos, para herramientas. Estados válidos: Disponible, En uso, Mantenimiento |
+| GET | `/parcelas/terreno/{idTerreno}` | Lista las parcelas del terreno y el cultivo activo asociado |
+| GET · POST · PUT · DELETE | `/cosechas`, `/cosechas/{id}` | Registra lotes empacados, kilos disponibles y maduración |
+| GET · POST · PUT · DELETE | `/proveedores`, `/proveedores/{id}` | Administra proveedores, independientemente de inventario |
+| GET · POST · PUT · DELETE | `/insumos`, `/insumos/{id}` · `/inventario`, `/inventario/{id}` | Catálogo de insumos y existencias por lote |
+| GET | `/pedidos`, `/pedidos/{id}/lotes` | Consulta pedidos y kilos asignados desde cosechas |
+| POST · PUT | `/pedidos/{id}/lotes`, `/pedidos/{id}/entrega` | Asigna kilos disponibles o registra envío/recolección |
 
 Los errores se devuelven como JSON: `{"fecha": "...", "estado": 404, "mensaje": "..."}` (400 datos inválidos, 404 no encontrado, 500 error de base de datos).
 
 Ejemplos con `curl`:
 
 ```bash
-curl -X POST http://localhost:8080/api/cultivos \
+curl -X POST http://localhost:8081/api/cultivos \
   -H "Content-Type: application/json" \
-  -d '{"nombre":"Maíz","tipo":"Cereal","etapaFenologica":"Siembra"}'
+  -d '{"idParcela":1,"nombre":"Maíz","familia":"Cereal","etapaFenologica":"Siembra","fechaSiembra":"2026-11-01"}'
 
-curl "http://localhost:8080/api/cultivos?etapa=Siembra"
+curl "http://localhost:8081/api/cultivos?etapa=Siembra"
 
-curl -X PUT http://localhost:8080/api/cultivos/1 \
+curl -X PUT http://localhost:8081/api/cultivos/1 \
   -H "Content-Type: application/json" \
-  -d '{"nombre":"Maíz criollo","tipo":"Cereal","etapaFenologica":"Vegetación"}'
+  -d '{"idParcela":1,"nombre":"Maíz criollo","familia":"Cereal","etapaFenologica":"Vegetación","fechaSiembra":"2026-11-01"}'
 
-curl -X DELETE http://localhost:8080/api/cultivos/1
+curl -X DELETE http://localhost:8081/api/cultivos/1
 
-curl -X POST http://localhost:8080/api/semillas \
+curl -X POST http://localhost:8081/api/semillas \
   -H "Content-Type: application/json" \
   -d '{"variedad":"Tomate cherry","stockDisponible":25,"proveedorOrigen":"AgroSur","fechaCaducidad":"2027-05-01"}'
 
-curl -X POST http://localhost:8080/api/terrenos \
+curl -X POST http://localhost:8081/api/terrenos \
   -H "Content-Type: application/json" \
   -d '{"nombre":"Parcela Este","ubicacion":"Veracruz, Ver.","superficieHa":1.5,"tipoSuelo":"Franco","estado":"Disponible"}'
 
-curl -X POST http://localhost:8080/api/herramientas \
+curl -X POST http://localhost:8081/api/herramientas \
   -H "Content-Type: application/json" \
   -d '{"nombre":"Azadón","tipo":"Manual","cantidad":6,"estado":"Disponible","fechaAdquisicion":"2026-02-01"}'
 ```
@@ -172,7 +178,7 @@ En un Ubuntu/WSL limpio basta con repetir, en orden, las secciones **2 → 3 →
 | `Permission denied` al ejecutar `./mvnw` | `chmod +x mvnw` |
 | `Communications link failure` / `Connection refused` | MySQL está apagado: `sudo service mysql start` |
 | `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta `backend/`) |
-| `Port 8080 was already in use` | Cierra el otro proceso (ver cuál es con `sudo ss -ltnp \| grep :8080`) |
+| `Port 8081 was already in use` | Cierra el otro proceso (ver cuál es con `sudo ss -ltnp \| grep :8081`) |
 | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
 | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
 | `./mvnw test` falla | Las pruebas arrancan Spring y se conectan a MySQL: debe estar encendido y con `init.sql` ejecutado |

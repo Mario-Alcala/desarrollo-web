@@ -70,5 +70,20 @@ public class CosechaService {
             throw new IllegalArgumentException(
                     "La cantidad cosechada debe ser mayor que cero");
         }
+
+        if (cosecha.getCantidadDisponible() == null) {
+            cosecha.setCantidadDisponible(cosecha.getCantidadCosechada());
+        }
+        if (cosecha.getCantidadDisponible().compareTo(BigDecimal.ZERO) < 0
+                || cosecha.getCantidadDisponible().compareTo(cosecha.getCantidadCosechada()) > 0) {
+            throw new IllegalArgumentException("Los kilos disponibles deben estar entre cero y los kilos cosechados");
+        }
+        if (cosecha.getEstadoMaduracion() != null
+                && !List.of("verde", "maduro").contains(cosecha.getEstadoMaduracion().trim().toLowerCase())) {
+            throw new IllegalArgumentException("La maduración debe ser verde o maduro");
+        }
+        if (cosecha.getEstadoMaduracion() != null) {
+            cosecha.setEstadoMaduracion(cosecha.getEstadoMaduracion().trim().toLowerCase());
+        }
     }
 }

@@ -37,6 +37,8 @@ public class CultivoService {
         if (cultivo.getFechaRegistro() == null) {
             cultivo.setFechaRegistro(LocalDate.now());
         }
+        if (cultivo.getFechaSiembra() == null) cultivo.setFechaSiembra(cultivo.getFechaRegistro());
+        if (cultivo.getEstado() == null) cultivo.setEstado("activo");
         cultivo.setId(repositorio.insertar(cultivo));
         return cultivo;
     }
@@ -48,6 +50,8 @@ public class CultivoService {
         if (cultivo.getFechaRegistro() == null) {
             cultivo.setFechaRegistro(actual.getFechaRegistro());
         }
+        if (cultivo.getFechaSiembra() == null) cultivo.setFechaSiembra(cultivo.getFechaRegistro());
+        if (cultivo.getEstado() == null) cultivo.setEstado(actual.getEstado());
         repositorio.actualizar(cultivo);
         return cultivo;
     }
@@ -65,6 +69,9 @@ public class CultivoService {
         cultivo.setNombre(cultivo.getNombre().trim());
         if (cultivo.getNombre().length() > 100) {
             throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
+        }
+        if (cultivo.getIdParcela() == null) {
+            throw new IllegalArgumentException("La parcela del cultivo es obligatoria");
         }
     }
 

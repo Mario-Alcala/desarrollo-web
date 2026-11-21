@@ -5,7 +5,7 @@
   CAPA: FRONTEND
   BACKEND: la lista sale de la API /api/terrenos (lo conecta js/terrenos.js).
   LE FALTA: versión con fichas escritas directamente en HTML si el cascarón debe ser sin JS.
-  AÑADIDO POR BACKEND INCOMPLETO: el script terrenos-datos.js (datos de ejemplo)
+  Las parcelas se consultan en /api/parcelas/terreno/{id}.
 -->
 
 <html lang="es">
@@ -49,17 +49,13 @@
             <label for="t-ubicacion">Ubicación</label>
             <input id="t-ubicacion" type="text" maxlength="120" required>
 
-            <label for="t-superficie">Superficie (hectáreas)</label>
+            <label for="t-superficie">Superficie (m²)</label>
             <input id="t-superficie" type="number" min="0.01" step="0.01" required>
-
-            <label for="t-suelo">Tipo de suelo</label>
-            <input id="t-suelo" type="text" maxlength="60" required>
 
             <label for="t-estado">Estado</label>
             <select id="t-estado" required>
-                <option>Disponible</option>
-                <option>En uso</option>
-                <option>En descanso</option>
+                <option value="disponible">Disponible</option>
+                <option value="ocupado">Ocupado</option>
             </select>
 
             <p id="mensaje-formulario" class="mensaje error" role="alert"></p>
@@ -71,7 +67,6 @@
     </dialog>
 
     <script src="js/sidebar.js"></script>
-    <script src="js/terrenos-datos.js"></script>
     <script src="js/terrenos.js"></script>
 </body>
 </html>

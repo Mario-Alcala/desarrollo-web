@@ -3,15 +3,13 @@
   ARCHIVO: proveedores.html
   CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
     superior y la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
-  BACKEND: no se verificó una ruta de proveedores e insumos; los datos salen de js/admin-datos.js.
-  LE FALTA: guardar altas y cambios en la API; eliminar o desactivar proveedores.
-  AÑADIDO POR BACKEND INCOMPLETO: el script admin-datos.js (proveedores e insumos de ejemplo).
+  BACKEND: proveedores de /api/proveedores.
 -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proveedores e insumos - Gestión de Cultivos</title>
+    <title>Proveedores - Gestión de Cultivos</title>
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/admin-vistas.css">
 </head>
@@ -20,27 +18,15 @@
         <aside id="sidebar" class="sidebar-admin" data-activo="proveedores"></aside>
 
         <div class="contenido-admin">
-            <header id="topbar" class="topbar-admin" data-placeholder="Buscar proveedor o insumo" data-local="true"></header>
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar proveedor" data-local="true"></header>
 
             <main class="pagina">
                 <div class="encabezado-pagina">
                     <div>
-                        <h1>Proveedores e insumos</h1>
-                        <p>Administra los proveedores y los insumos. Semillas, abonos y fertilizantes son categorías de insumo.</p>
+                        <h1>Proveedores</h1>
+                        <p>Consulta y administra los datos de contacto de tus proveedores.</p>
                     </div>
-                    <button id="agregar" class="boton" type="button">Agregar proveedor</button>
-                </div>
-
-                <div id="pestanas" class="barra-herramientas" role="group" aria-label="Elegir lista">
-                    <button class="filtro" type="button" data-valor="proveedores" aria-pressed="true">Proveedores</button>
-                    <button class="filtro" type="button" data-valor="insumos" aria-pressed="false">Insumos</button>
-                </div>
-
-                <div id="filtros-categoria" class="barra-herramientas" role="group" aria-label="Filtrar insumos por categoría" hidden>
-                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
-                    <button class="filtro" type="button" data-valor="semilla" aria-pressed="false">Semillas</button>
-                    <button class="filtro" type="button" data-valor="abono" aria-pressed="false">Abonos</button>
-                    <button class="filtro" type="button" data-valor="fertilizante" aria-pressed="false">Fertilizantes</button>
+                    <button id="agregar-proveedor" class="boton" type="button">Agregar proveedor</button>
                 </div>
 
                 <p id="mensaje-prov" class="mensaje" role="status"></p>
@@ -81,40 +67,7 @@
         </form>
     </dialog>
 
-    <dialog id="dialogo-insumo" class="ancho" aria-labelledby="titulo-insumo">
-        <h2 id="titulo-insumo">Agregar insumo</h2>
-        <form id="formulario-insumo">
-            <label for="in-nombre">Nombre</label>
-            <input id="in-nombre" type="text" maxlength="100" required>
-            <div class="campos-dos">
-                <div>
-                    <label for="in-categoria">Categoría</label>
-                    <select id="in-categoria" required>
-                        <option value="semilla">Semilla</option>
-                        <option value="abono">Abono</option>
-                        <option value="fertilizante">Fertilizante</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="in-unidad">Unidad de medida</label>
-                    <input id="in-unidad" type="text" maxlength="20" placeholder="kg, litros, piezas" required>
-                </div>
-            </div>
-            <label for="in-tipo">Variedad o tipo</label>
-            <input id="in-tipo" type="text" maxlength="100">
-            <label class="casilla" for="in-activo">
-                <input id="in-activo" type="checkbox" checked> Activo
-            </label>
-            <p id="mensaje-insumo" class="mensaje error" role="alert"></p>
-            <div class="botones-pedido">
-                <button class="boton" type="submit">Guardar insumo</button>
-                <button id="cancelar-insumo" class="boton boton-secundario" type="button">Cancelar</button>
-            </div>
-        </form>
-    </dialog>
-
     <script src="js/sidebar.js"></script>
-    <script src="js/admin-datos.js"></script>
     <script src="js/admin-comun.js"></script>
     <script src="js/proveedores.js"></script>
 </body>

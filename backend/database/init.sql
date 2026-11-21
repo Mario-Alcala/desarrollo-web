@@ -30,8 +30,20 @@ CREATE TABLE IF NOT EXISTS terrenos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     ubicacion VARCHAR(255),
-    superficie_m2 DECIMAL(10,2) NOT NULL,
-    estado ENUM('disponible', 'ocupado') NOT NULL DEFAULT 'disponible'
+    superficie_m2 DECIMAL(10,2) NOT NULL DEFAULT 0,
+    superficie_ha DECIMAL(10,4),
+    tipo_suelo VARCHAR(100),
+    latitud DOUBLE,
+    longitud DOUBLE,
+    estado VARCHAR(30) NOT NULL DEFAULT 'Disponible'
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_usuario VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    rol ENUM('administrador_agricultor', 'trabajador', 'cliente') NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS parcelas (
@@ -113,14 +125,6 @@ CREATE TABLE IF NOT EXISTS cosechas (
     ubicacion_bodega VARCHAR(100),
     FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
-
-CREATE TABLE IF NOT EXISTS usuarios (
-    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_usuario VARCHAR(100) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
-    contrasena VARCHAR(255) NOT NULL,
-    rol ENUM('administrador_agricultor', 'trabajador', 'cliente') NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS observaciones_cultivos (
@@ -207,43 +211,105 @@ CREATE TABLE IF NOT EXISTS distribuciones (
 -- ---------------------------------------------------------------------
 -- Datos de ejemplo (solo se insertan si la tabla está vacía)
 -- ---------------------------------------------------------------------
-INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
-SELECT * FROM (
-    SELECT 'Maíz criollo' AS nombre, 'Cereal' AS tipo,
-           'Siembra' AS etapa_fenologica, '2026-11-01' AS fecha_registro
-    UNION ALL
-    SELECT 'Frijol negro', 'Leguminosa', 'Germinación', '2026-11-03'
-    UNION ALL
-    SELECT 'Tomate saladette', 'Hortaliza', 'Floración', '2026-11-05'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM cultivos);
+INSERT INTO usuarios (nombre_usuario, correo_electronico, contrasena, rol)
+SELECT 'Administrador', 'admin@gestioncultivos.local', 'sin-acceso-web', 'administrador_agricultor'
+WHERE NOT EXISTS (SELECT 1 FROM usuarios);
 
-INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
-SELECT * FROM (
-    SELECT 'Maíz blanco H-520' AS variedad, 120 AS stock_disponible,
-           'Agroinsumos del Golfo' AS proveedor_origen,
-           '2027-06-30' AS fecha_caducidad
-    UNION ALL
-    SELECT 'Frijol Jamapa', 80, 'Semillas Veracruz', '2027-03-15'
-    UNION ALL
-    SELECT 'Tomate Río Grande', 45, 'Agroinsumos del Golfo', '2026-12-31'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM semillas);
+INSERT INTO terrenos (nombre, ubicacion, superficie_m2, estado)
+SELECT 'El Encino', 'Xalapa, Veracruz', 1200, 'ocupado'
+WHERE NOT EXISTS (SELECT 1 FROM terrenos WHERE nombre = 'El Encino');
 
-INSERT INTO terrenos
-(nombre, ubicacion, superficie_ha, tipo_suelo, estado)
-SELECT * FROM (
-    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion,
-           2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo,
-           'Disponible' AS estado
-    UNION ALL
-    SELECT 'Parcela Sur', 'Veracruz, Ver.', 1.80,
-           'Arenoso', 'En uso'
-    UNION ALL
-    SELECT 'Invernadero 1', 'Boca del Río, Ver.', 0.30,
-           'Sustrato', 'En descanso'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM terrenos);
+INSERT INTO parcelas (id_terreno, nombre, superficie_m2, estado)
+SELECT t.id, 'Parcela A', 400, 'ocupada' FROM terrenos t
+WHERE t.nombre = 'El Encino' AND NOT EXISTS (
+    SELECT 1 FROM parcelas p WHERE p.id_terreno = t.id AND p.nombre = 'Parcela A'
+);
+
+INSERT INTO cultivos (id_parcela, nombre, familia, etapa_fenologica, fecha_siembra, estado)
+SELECT p.id_parcela, 'Tomate cherry', 'Hortaliza', 'Floración', CURRENT_DATE, 'activo'
+FROM parcelas p JOIN terrenos t ON t.id = p.id_terreno
+WHERE t.nombre = 'El Encino' AND p.nombre = 'Parcela A'
+AND NOT EXISTS (SELECT 1 FROM cultivos c WHERE c.id_parcela = p.id_parcela AND c.estado = 'activo');
+
+INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
+                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
+SELECT c.id, u.id_usuario, CURRENT_DATE, 85.5, 85.5, 'maduro', 'Bodega Central'
+FROM cultivos c CROSS JOIN usuarios u
+WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
+AND NOT EXISTS (
+    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'maduro'
+);
+
+INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
+                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
+SELECT c.id, u.id_usuario, CURRENT_DATE, 60, 60, 'verde', 'Bodega Central'
+FROM cultivos c CROSS JOIN usuarios u
+WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
+AND NOT EXISTS (
+    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'verde'
+);
+
+INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)
+SELECT 'AgroSur', 'Laura Méndez', '2281234567', 'ventas@agrosur.local', 'Xalapa, Veracruz'
+WHERE NOT EXISTS (SELECT 1 FROM proveedores WHERE nombre_empresa = 'AgroSur');
+
+INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)
+SELECT 'Semillas del Golfo', 'Carlos Ibarra', '2299876543', 'contacto@semillasgolfo.local', 'Veracruz, Veracruz'
+WHERE NOT EXISTS (SELECT 1 FROM proveedores WHERE nombre_empresa = 'Semillas del Golfo');
+
+INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)
+SELECT 'Fertiverde', 'Ana Torres', '2288765432', 'ventas@fertiverde.local', 'Coatepec, Veracruz'
+WHERE NOT EXISTS (SELECT 1 FROM proveedores WHERE nombre_empresa = 'Fertiverde');
+
+INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+SELECT 'Composta orgánica', 'abono', 'kg', p.id_proveedor FROM proveedores p
+WHERE p.nombre_empresa = 'AgroSur'
+AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Composta orgánica' AND i.categoria = 'abono');
+
+INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+SELECT 'Estiércol composteado', 'abono', 'kg', p.id_proveedor FROM proveedores p
+WHERE p.nombre_empresa = 'AgroSur'
+AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Estiércol composteado' AND i.categoria = 'abono');
+
+INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+SELECT 'Semilla de maíz blanco H-520', 'semilla', 'kg', p.id_proveedor FROM proveedores p
+WHERE p.nombre_empresa = 'Semillas del Golfo'
+AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Semilla de maíz blanco H-520' AND i.categoria = 'semilla');
+
+INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+SELECT 'Semilla de tomate Río Grande', 'semilla', 'kg', p.id_proveedor FROM proveedores p
+WHERE p.nombre_empresa = 'Semillas del Golfo'
+AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Semilla de tomate Río Grande' AND i.categoria = 'semilla');
+
+INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
+SELECT 'Fertilizante NPK 17-17-17', 'fertilizante', 'kg', p.id_proveedor FROM proveedores p
+WHERE p.nombre_empresa = 'Fertiverde'
+AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Fertilizante NPK 17-17-17' AND i.categoria = 'fertilizante');
+
+INSERT INTO inventario (id_insumo, cantidad, fecha_ingreso, fecha_caducidad)
+SELECT i.id_insumo, 120, CURRENT_DATE, NULL FROM insumos i
+WHERE i.nombre = 'Composta orgánica'
+AND NOT EXISTS (SELECT 1 FROM inventario x WHERE x.id_insumo = i.id_insumo);
+
+INSERT INTO inventario (id_insumo, cantidad, fecha_ingreso, fecha_caducidad)
+SELECT i.id_insumo, 65, CURRENT_DATE, NULL FROM insumos i
+WHERE i.nombre = 'Estiércol composteado'
+AND NOT EXISTS (SELECT 1 FROM inventario x WHERE x.id_insumo = i.id_insumo);
+
+INSERT INTO inventario (id_insumo, cantidad, fecha_ingreso, fecha_caducidad)
+SELECT i.id_insumo, 45, CURRENT_DATE, '2027-06-30' FROM insumos i
+WHERE i.nombre = 'Semilla de maíz blanco H-520'
+AND NOT EXISTS (SELECT 1 FROM inventario x WHERE x.id_insumo = i.id_insumo);
+
+INSERT INTO inventario (id_insumo, cantidad, fecha_ingreso, fecha_caducidad)
+SELECT i.id_insumo, 18, CURRENT_DATE, '2027-04-30' FROM insumos i
+WHERE i.nombre = 'Semilla de tomate Río Grande'
+AND NOT EXISTS (SELECT 1 FROM inventario x WHERE x.id_insumo = i.id_insumo);
+
+INSERT INTO inventario (id_insumo, cantidad, fecha_ingreso, fecha_caducidad)
+SELECT i.id_insumo, 50, CURRENT_DATE, '2028-11-21' FROM insumos i
+WHERE i.nombre = 'Fertilizante NPK 17-17-17'
+AND NOT EXISTS (SELECT 1 FROM inventario x WHERE x.id_insumo = i.id_insumo);
 
 INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
 SELECT * FROM (

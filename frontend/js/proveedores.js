@@ -1,179 +1,90 @@
-/*
- * ARCHIVO: js/proveedores.js
- * CAPA: FRONTEND (lógica). ¿ES CASCARÓN? NO: alterna pestañas, filtra, valida y maneja formularios.
- * QUÉ USA DEL BACKEND: nada todavía; lee PROVEEDORES e INSUMOS de js/admin-datos.js.
- * REGLA DEL DOCUMENTO: semilla, abono y fertilizante son categorías de una sola tabla (insumos).
- * LE FALTA: GET, POST y PUT contra la API; desactivar proveedores; mostrar existencias por insumo.
- * AÑADIDO POR BACKEND INCOMPLETO: los cambios viven solo en memoria (se pierden al recargar).
- */
-
+const API_PROVEEDORES = "http://localhost:8081/api/proveedores";
 const buscador = document.querySelector("#topbar input");
 const mensaje = document.getElementById("mensaje-prov");
 const cabecera = document.getElementById("tabla-cabecera");
 const cuerpo = document.getElementById("tabla-cuerpo");
-const filtrosCategoria = document.getElementById("filtros-categoria");
-const botonAgregar = document.getElementById("agregar");
+const dialogo = document.getElementById("dialogo-proveedor");
+const formulario = document.getElementById("formulario-proveedor");
+const msgFormulario = document.getElementById("mensaje-proveedor");
+let proveedores = [];
+let editando = null;
 
-const dlgProveedor = document.getElementById("dialogo-proveedor");
-const formProveedor = document.getElementById("formulario-proveedor");
-const msgProveedor = document.getElementById("mensaje-proveedor");
-const dlgInsumo = document.getElementById("dialogo-insumo");
-const formInsumo = document.getElementById("formulario-insumo");
-const msgInsumo = document.getElementById("mensaje-insumo");
-
-let vista = "proveedores";
-let categoriaActiva = "todos";
-let editandoProveedor = null;
-let editandoInsumo = null;
-
-function texto(id) {
-    return document.getElementById(id).value.trim();
-}
-
-function coincide(q, campos) {
-    return !q || campos.some(c => String(c || "").toLowerCase().includes(q));
-}
-
-function dibujarTabla(columnas, filas) {
-    cabecera.replaceChildren(...columnas.map(c => crear("th", c)));
-    cuerpo.replaceChildren(...filas.map(celdas => {
-        const tr = crear("tr");
-        celdas.forEach(c => {
-            const td = crear("td");
-            td.append(c);
-            tr.append(td);
-        });
-        return tr;
-    }));
+async function cargarProveedores() {
+    mensaje.textContent = "Cargando proveedores…";
+    try {
+        const respuesta = await fetch(API_PROVEEDORES);
+        if (!respuesta.ok) throw new Error("No se pudo consultar el API de proveedores.");
+        proveedores = await respuesta.json();
+        dibujar();
+    } catch (error) {
+        proveedores = [];
+        dibujar();
+        mensaje.textContent = "No se pudieron cargar los proveedores desde el API. Comprueba que el backend esté conectado.";
+    }
 }
 
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
-    let total;
-
-    if (vista === "proveedores") {
-        const filas = PROVEEDORES
-            .filter(p => coincide(q, [p.nombreEmpresa, p.contacto, p.email, p.direccion]))
-            .map(p => [
-                p.nombreEmpresa, p.contacto || "—", p.telefono || "—", p.email || "—", p.direccion || "—",
-                crearBoton("Editar", "boton boton-secundario boton-chico", () => abrirProveedor(p))
-            ]);
-        dibujarTabla(["Empresa", "Contacto", "Teléfono", "Correo", "Dirección", "Acciones"], filas);
-        total = filas.length;
-    } else {
-        const filas = INSUMOS
-            .filter(i => (categoriaActiva === "todos" || i.categoria === categoriaActiva) &&
-                         coincide(q, [i.nombre, i.varTipo, i.categoria]))
-            .map(i => [
-                i.nombre,
-                etiqueta(capitalizar(i.categoria), i.categoria === "semilla" ? "ok" : i.categoria === "abono" ? "aviso" : ""),
-                i.varTipo || "—",
-                i.unidad,
-                i.activo ? etiqueta("Activo", "ok") : etiqueta("Inactivo"),
-                crearBoton("Editar", "boton boton-secundario boton-chico", () => abrirInsumo(i))
-            ]);
-        dibujarTabla(["Nombre", "Categoría", "Variedad o tipo", "Unidad", "Estado", "Acciones"], filas);
-        total = filas.length;
-    }
-
-    if (!total) mensaje.textContent = "No hay registros para mostrar.";
-    else if (mensaje.textContent === "No hay registros para mostrar.") mensaje.textContent = "";
+    const visibles = proveedores.filter(p =>
+        [p.nombreEmpresa, p.contacto, p.telefono, p.email, p.direccion]
+            .some(valor => String(valor || "").toLowerCase().includes(q))
+    );
+    cabecera.replaceChildren(...["Empresa", "Contacto", "Teléfono", "Correo", "Dirección", "Acciones"].map(t => crear("th", t)));
+    cuerpo.replaceChildren(...visibles.map(p => {
+        const fila = crear("tr");
+        [p.nombreEmpresa, p.contacto || "—", p.telefono || "—", p.email || "—", p.direccion || "—"].forEach(t => fila.append(crear("td", t)));
+        const acciones = crear("td");
+        acciones.append(crearBoton("Editar", "boton boton-secundario boton-chico", () => abrir(p)));
+        fila.append(acciones);
+        return fila;
+    }));
+    if (visibles.length) mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "proveedor" : "proveedores"}`;
+    else if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay proveedores para mostrar.";
 }
 
-/* ---------- Proveedores ---------- */
-function abrirProveedor(p) {
-    editandoProveedor = p ? p.id : null;
+function abrir(p = null) {
+    editando = p ? p.idProveedor : null;
     document.getElementById("titulo-proveedor").textContent = p ? "Editar proveedor" : "Agregar proveedor";
-    msgProveedor.textContent = "";
-    formProveedor.reset();
+    msgFormulario.textContent = "";
+    formulario.reset();
     if (p) {
-        document.getElementById("pv-empresa").value = p.nombreEmpresa;
-        document.getElementById("pv-contacto").value = p.contacto;
-        document.getElementById("pv-telefono").value = p.telefono;
-        document.getElementById("pv-email").value = p.email;
-        document.getElementById("pv-direccion").value = p.direccion;
+        document.getElementById("pv-empresa").value = p.nombreEmpresa || "";
+        document.getElementById("pv-contacto").value = p.contacto || "";
+        document.getElementById("pv-telefono").value = p.telefono || "";
+        document.getElementById("pv-email").value = p.email || "";
+        document.getElementById("pv-direccion").value = p.direccion || "";
     }
-    dlgProveedor.showModal();
+    dialogo.showModal();
 }
 
-formProveedor.addEventListener("submit", e => {
-    e.preventDefault();
-    msgProveedor.textContent = "";
+formulario.addEventListener("submit", async evento => {
+    evento.preventDefault();
+    msgFormulario.textContent = "";
     const datos = {
-        nombreEmpresa: texto("pv-empresa"),
-        contacto: texto("pv-contacto"),
-        telefono: texto("pv-telefono"),
-        email: texto("pv-email"),
-        direccion: texto("pv-direccion")
+        nombreEmpresa: document.getElementById("pv-empresa").value.trim(),
+        contacto: document.getElementById("pv-contacto").value.trim(),
+        telefono: document.getElementById("pv-telefono").value.trim(),
+        email: document.getElementById("pv-email").value.trim(),
+        direccion: document.getElementById("pv-direccion").value.trim()
     };
-    if (datos.telefono && !/^[0-9+\s-]{7,15}$/.test(datos.telefono)) {
-        msgProveedor.textContent = "El teléfono solo puede llevar números, espacios, + o guiones (7 a 15 caracteres).";
-        return;
+    try {
+        const respuesta = await fetch(editando === null ? API_PROVEEDORES : `${API_PROVEEDORES}/${editando}`, {
+            method: editando === null ? "POST" : "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            const error = await respuesta.json().catch(() => ({}));
+            throw new Error(error.mensaje || "No se pudo guardar el proveedor.");
+        }
+        dialogo.close();
+        await cargarProveedores();
+    } catch (error) {
+        msgFormulario.textContent = error.message;
     }
-    if (editandoProveedor === null) {
-        datos.id = Math.max(0, ...PROVEEDORES.map(p => p.id)) + 1;
-        PROVEEDORES.push(datos);
-    } else {
-        Object.assign(PROVEEDORES.find(p => p.id === editandoProveedor), datos);
-    }
-    dlgProveedor.close();
-    mensaje.textContent = MENSAJE_SESION;
-    dibujar();
 });
 
-/* ---------- Insumos ---------- */
-function abrirInsumo(i) {
-    editandoInsumo = i ? i.id : null;
-    document.getElementById("titulo-insumo").textContent = i ? "Editar insumo" : "Agregar insumo";
-    msgInsumo.textContent = "";
-    formInsumo.reset();
-    if (i) {
-        document.getElementById("in-nombre").value = i.nombre;
-        document.getElementById("in-categoria").value = i.categoria;
-        document.getElementById("in-unidad").value = i.unidad;
-        document.getElementById("in-tipo").value = i.varTipo;
-        document.getElementById("in-activo").checked = i.activo;
-    }
-    dlgInsumo.showModal();
-}
-
-formInsumo.addEventListener("submit", e => {
-    e.preventDefault();
-    msgInsumo.textContent = "";
-    const datos = {
-        nombre: texto("in-nombre"),
-        categoria: texto("in-categoria"),
-        unidad: texto("in-unidad"),
-        varTipo: texto("in-tipo"),
-        activo: document.getElementById("in-activo").checked
-    };
-    if (editandoInsumo === null) {
-        datos.id = Math.max(0, ...INSUMOS.map(i => i.id)) + 1;
-        INSUMOS.push(datos);
-    } else {
-        Object.assign(INSUMOS.find(i => i.id === editandoInsumo), datos);
-    }
-    dlgInsumo.close();
-    mensaje.textContent = MENSAJE_SESION;
-    dibujar();
-});
-
-/* ---------- Eventos generales ---------- */
-botonAgregar.addEventListener("click", () => (vista === "proveedores" ? abrirProveedor(null) : abrirInsumo(null)));
-document.getElementById("cancelar-proveedor").addEventListener("click", () => dlgProveedor.close());
-document.getElementById("cancelar-insumo").addEventListener("click", () => dlgInsumo.close());
-
-iniciarFiltros(document.getElementById("pestanas"), valor => {
-    vista = valor;
-    filtrosCategoria.hidden = valor !== "insumos";
-    botonAgregar.textContent = valor === "insumos" ? "Agregar insumo" : "Agregar proveedor";
-    mensaje.textContent = "";
-    dibujar();
-});
-iniciarFiltros(filtrosCategoria, valor => {
-    categoriaActiva = valor;
-    dibujar();
-});
+document.getElementById("agregar-proveedor").addEventListener("click", () => abrir());
+document.getElementById("cancelar-proveedor").addEventListener("click", () => dialogo.close());
 buscador.addEventListener("input", dibujar);
-
-dibujar();
+cargarProveedores();

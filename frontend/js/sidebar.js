@@ -18,11 +18,11 @@
 // Menú del administrador. Para agregar una opción, añade una línea aquí.
 const MENU_ADMIN = [
     { id: "resumen",     texto: "Resumen",     href: "#" },
-    { id: "terrenos",    texto: "Terrenos",    href: "terrenos.html" },
-    { id: "cultivos",    texto: "Cultivos",    href: "#" },
+    { id: "terrenos",    texto: "Terrenos y cultivos", href: "terrenos.html" },
     { id: "catalogo",    texto: "Catálogo",    href: "catalogo-admin.html" },
     { id: "proveedores", texto: "Proveedores", href: "proveedores.html" },
     { id: "bodega",      texto: "Bodega",      href: "bodega.html" },
+    { id: "inventario",  texto: "Inventario",  href: "inventario.html" },
     { id: "pedidos",     texto: "Pedidos",     href: "pedidos.html" }
 ];
 

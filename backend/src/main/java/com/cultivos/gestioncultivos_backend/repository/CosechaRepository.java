@@ -17,14 +17,21 @@ public class CosechaRepository {
     }
 
     public List<Cosecha> buscarTodas() {
-        return jdbc.sql("SELECT * FROM cosechas ORDER BY id_cosecha")
+        return jdbc.sql("""
+                SELECT c.*, cu.nombre AS nombre_cultivo
+                FROM cosechas c JOIN cultivos cu ON cu.id = c.id_cultivo
+                ORDER BY c.id_cosecha
+                """)
                 .query(Cosecha.class)
                 .list();
     }
 
     public Cosecha buscarPorId(int id) {
-        List<Cosecha> resultado = jdbc.sql(
-                "SELECT * FROM cosechas WHERE id_cosecha = :id")
+        List<Cosecha> resultado = jdbc.sql("""
+                SELECT c.*, cu.nombre AS nombre_cultivo
+                FROM cosechas c JOIN cultivos cu ON cu.id = c.id_cultivo
+                WHERE c.id_cosecha = :id
+                """)
                 .param("id", id)
                 .query(Cosecha.class)
                 .list();
@@ -39,13 +46,19 @@ public class CosechaRepository {
     public void insertar(Cosecha cosecha) {
         jdbc.sql("""
                 INSERT INTO cosechas
-                (id_cultivo, fecha_cosecha, cantidad_cosechada)
+                (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
+                 cantidad_disponible, estado_maduracion, ubicacion_bodega)
                 VALUES
-                (:idCultivo, :fecha, :cantidad)
+                (:idCultivo, :idUsuario, :fecha, :cantidad,
+                 :disponible, :maduracion, :bodega)
                 """)
                 .param("idCultivo", cosecha.getIdCultivo())
+                .param("idUsuario", cosecha.getIdUsuario())
                 .param("fecha", cosecha.getFechaCosecha())
                 .param("cantidad", cosecha.getCantidadCosechada())
+                .param("disponible", cosecha.getCantidadDisponible())
+                .param("maduracion", cosecha.getEstadoMaduracion())
+                .param("bodega", cosecha.getUbicacionBodega())
                 .update();
     }
 
@@ -53,13 +66,21 @@ public class CosechaRepository {
         jdbc.sql("""
                 UPDATE cosechas
                 SET id_cultivo = :idCultivo,
+                    id_usuario = :idUsuario,
                     fecha_cosecha = :fecha,
-                    cantidad_cosechada = :cantidad
+                    cantidad_cosechada = :cantidad,
+                    cantidad_disponible = :disponible,
+                    estado_maduracion = :maduracion,
+                    ubicacion_bodega = :bodega
                 WHERE id_cosecha = :id
                 """)
                 .param("idCultivo", cosecha.getIdCultivo())
+                .param("idUsuario", cosecha.getIdUsuario())
                 .param("fecha", cosecha.getFechaCosecha())
                 .param("cantidad", cosecha.getCantidadCosechada())
+                .param("disponible", cosecha.getCantidadDisponible())
+                .param("maduracion", cosecha.getEstadoMaduracion())
+                .param("bodega", cosecha.getUbicacionBodega())
                 .param("id", cosecha.getIdCosecha())
                 .update();
     }
