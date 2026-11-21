@@ -15,7 +15,7 @@ public class InventarioRepository {
     private static final String CONSULTA_CON_INSUMO = """
             SELECT i.id_inventario, i.id_insumo, i.cantidad, i.fecha_ingreso,
                    i.fecha_caducidad, n.nombre AS nombre_insumo,
-                   n.categoria, n.unidad_medida
+                   n.categoria, n.tipo_abono AS tipo_abono, n.unidad_medida
             FROM inventario i
             JOIN insumos n ON n.id_insumo = i.id_insumo
             """;

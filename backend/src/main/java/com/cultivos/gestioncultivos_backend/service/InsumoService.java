@@ -70,6 +70,17 @@ public class InsumoService {
         }
         insumo.setCategoria(insumo.getCategoria().trim().toLowerCase());
         validarCategoria(insumo.getCategoria());
+        if ("abono".equals(insumo.getCategoria())) {
+            if (insumo.getTipoAbono() == null || insumo.getTipoAbono().isBlank()) {
+                throw new IllegalArgumentException("El tipo de abono es obligatorio");
+            }
+            insumo.setTipoAbono(insumo.getTipoAbono().trim().toLowerCase());
+            if (!List.of("organico", "inorganico").contains(insumo.getTipoAbono())) {
+                throw new IllegalArgumentException("El tipo de abono debe ser organico o inorganico");
+            }
+        } else {
+            insumo.setTipoAbono(null);
+        }
         if (insumo.getUnidadMedida() == null || insumo.getUnidadMedida().isBlank()) {
             throw new IllegalArgumentException("La unidad de medida es obligatoria");
         }

@@ -63,6 +63,8 @@
 .tabla-admin { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .tabla-admin th,
 .tabla-admin td { padding: 0.7rem 0.9rem; text-align: left; vertical-align: middle; }
+.imagen-miniatura { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; }
+.acciones-encabezado { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .tabla-admin th {
     color: var(--texto-suave);
     font-size: 0.78rem;
@@ -121,11 +123,14 @@ body.admin .boton-chico { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
     display: flex;
     align-items: flex-end;
     padding: 0.6rem 0.8rem;
+    background-image: linear-gradient(145deg, #d5e8cf, #8fbf8a 55%, #6f9f66);
     background-size: cover;
     background-position: center;
     color: #1c2e22;
     font-size: 0.85rem;
 }
+.imagen-producto-foto { width: 100%; height: 190px; box-sizing: border-box; display: block; padding: 0; object-fit: cover; }
+.sin-imagen { align-items: center; justify-content: center; }
 .imagen-producto.verdura { background-image: linear-gradient(150deg, #d5e8cf, #8fbf8a 55%, #6f9f66); }
 .imagen-producto.fruta { background-image: linear-gradient(150deg, #f3e3b8, #e0b06a 55%, #b9794a); }
 

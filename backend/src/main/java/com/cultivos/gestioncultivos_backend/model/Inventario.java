@@ -12,6 +12,7 @@ public class Inventario {
     private LocalDate fechaCaducidad;
     private String nombreInsumo;
     private String categoria;
+    private String tipoAbono;
     private String unidadMedida;
 
     public Inventario() {
@@ -31,6 +32,8 @@ public class Inventario {
     public void setNombreInsumo(String nombreInsumo) { this.nombreInsumo = nombreInsumo; }
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
+    public String getTipoAbono() { return tipoAbono; }
+    public void setTipoAbono(String tipoAbono) { this.tipoAbono = tipoAbono; }
     public String getUnidadMedida() { return unidadMedida; }
     public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
 }

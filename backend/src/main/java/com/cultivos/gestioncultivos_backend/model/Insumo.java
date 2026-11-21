@@ -5,6 +5,7 @@ public class Insumo {
     private Integer idInsumo;
     private String nombre;
     private String categoria;
+    private String tipoAbono;
     private String unidadMedida;
     private Integer idProveedor;
 
@@ -17,6 +18,8 @@ public class Insumo {
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
+    public String getTipoAbono() { return tipoAbono; }
+    public void setTipoAbono(String tipoAbono) { this.tipoAbono = tipoAbono; }
     public String getUnidadMedida() { return unidadMedida; }
     public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
     public Integer getIdProveedor() { return idProveedor; }

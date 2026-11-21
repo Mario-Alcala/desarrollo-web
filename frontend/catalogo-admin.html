@@ -17,23 +17,52 @@
         <aside id="sidebar" class="sidebar-admin" data-activo="catalogo"></aside>
 
         <div class="contenido-admin">
-            <header id="topbar" class="topbar-admin" data-placeholder="Buscar variedad o familia" data-local="true"></header>
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar nombre o variedad" data-local="true"></header>
 
             <main class="pagina">
                 <div class="encabezado-pagina">
                     <div>
-                            <h1>Catálogo</h1>
-                            <p>Productos registrados y kilos disponibles por lote de cosecha.</p>
+                        <h1>Catálogo</h1>
+                        <p>Productos disponibles con su variedad, descripción, imagen y precio.</p>
+                    </div>
+                    <div class="acciones-encabezado">
+                        <button id="agregar-producto" class="boton" type="button">Agregar producto</button>
                     </div>
                 </div>
 
+                <div class="barra-herramientas">
+                    <label for="filtrar-familia">Nombre</label>
+                    <select id="filtrar-familia">
+                        <option value="">Todos los nombres</option>
+                    </select>
+                </div>
                 <p id="mensaje-catalogo" class="mensaje" role="status"></p>
-                <section aria-label="Variedades del catálogo">
-                    <div id="lista-productos" class="rejilla-productos"></div>
+                <section id="lista-productos" class="rejilla-productos" aria-label="Productos del catálogo">
                 </section>
             </main>
         </div>
     </div>
+
+    <dialog id="dialogo-producto" class="ancho" aria-labelledby="titulo-producto">
+        <h2 id="titulo-producto">Agregar producto</h2>
+        <form id="formulario-producto">
+            <label for="producto-nombre">Nombre</label>
+            <input id="producto-nombre" type="text" maxlength="100" placeholder="Tomate" required>
+            <label for="producto-variedad">Variedad</label>
+            <input id="producto-variedad" type="text" maxlength="100" placeholder="Cherry o verde" required>
+            <label for="producto-descripcion">Descripción</label>
+            <textarea id="producto-descripcion" maxlength="500" rows="3"></textarea>
+            <label for="producto-imagen">Enlace de imagen</label>
+            <input id="producto-imagen" type="url" maxlength="500" placeholder="https://...">
+            <label for="producto-precio">Precio por kilogramo</label>
+            <input id="producto-precio" type="number" min="0.01" step="0.01" required>
+            <p id="mensaje-producto" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar producto</button>
+                <button id="cancelar-producto" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
 
     <script src="js/sidebar.js"></script>
     <script src="js/admin-comun.js"></script>

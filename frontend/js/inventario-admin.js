@@ -64,7 +64,7 @@ function dibujar() {
         const tipo = l.categoria || insumos.find(i => i.idInsumo === l.idInsumo)?.categoria;
         fila.append(
             crear("td", nombre),
-            crear("td", etiquetaCategoria(tipo)),
+            crear("td", etiquetaCategoria(tipo, l.tipoAbono)),
             crear("td", `${fmtNum(l.cantidad)} ${unidad}`),
             crear("td", formatoFecha(l.fechaIngreso)),
             crear("td", formatoFecha(l.fechaCaducidad))
@@ -78,8 +78,13 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudo conectar")) mensaje.textContent = "No hay existencias para mostrar.";
 }
 
-function etiquetaCategoria(tipo) {
-    return { semilla: "Semilla", abono: "Abono orgánico", fertilizante: "Fertilizante" }[tipo] || "Insumo";
+function etiquetaCategoria(tipo, tipoAbono) {
+    if (tipo === "abono") {
+        if (tipoAbono === "organico") return "Abono orgánico";
+        if (tipoAbono === "inorganico") return "Abono inorgánico";
+        return "Abono";
+    }
+    return { semilla: "Semilla", fertilizante: "Fertilizante" }[tipo] || "Inventario";
 }
 
 document.getElementById("filtros-categoria").addEventListener("click", evento => {

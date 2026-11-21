@@ -35,8 +35,15 @@
                             <input id="nombre" name="nombre" type="text" required maxlength="100">
                         </div>
                         <div>
+                            <label for="tipoAbono">Tipo de abono</label>
+                            <select id="tipoAbono" name="tipoAbono" required>
+                                <option value="organico">Orgánico</option>
+                                <option value="inorganico">Inorgánico</option>
+                            </select>
+                        </div>
+                        <div>
                             <label for="unidadMedida">Unidad de medida</label>
-                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="50">
+                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="30">
                         </div>
                         <div>
                             <label for="proveedorNombre">Proveedor</label>
@@ -57,6 +64,7 @@
                         <thead>
                             <tr>
                                 <th data-campo="nombre">Nombre</th>
+                                <th data-campo="tipoAbono">Tipo</th>
                                 <th data-campo="unidadMedida">Unidad de medida</th>
                                 <th data-campo="idProveedor">Proveedor</th>
                                 <th>Acciones</th>
