@@ -1,0 +1,80 @@
+.menu-trabajador {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.menu-trabajador a {
+    color: #2e6b2e;
+    background: white;
+    border: 1px solid #d4dfcf;
+    padding: 10px 14px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.menu-trabajador a[aria-current="page"] {
+    background: #e4eedd;
+    font-weight: bold;
+}
+
+.campos-operacion {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+}
+
+.campos-operacion label {
+    display: block;
+}
+
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #9caa96;
+    border-radius: 5px;
+    font: inherit;
+    background: white;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.acciones-operacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.menu-inicio {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 28px;
+}
+
+.menu-inicio a {
+    color: #2e6b2e;
+    font-size: 18px;
+    text-decoration: none;
+    border-bottom: 1px solid #d4dfcf;
+    padding-bottom: 10px;
+}
+
+.menu-inicio a:hover {
+    text-decoration: underline;
+}
+
+.panel table {
+    min-width: 700px;
+}
+
+@media (max-width: 600px) {
+    .campos-operacion {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,68 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cultivos / Carrito - Gestión de Cultivos</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/cultivos.css">
-</head>
-<body>
-    <header class="barra">
-        <span class="marca">Gestión de Cultivos</span>
-        <nav aria-label="Navegación principal">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cultivos activos - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/cultivos.css">
+        <link rel="stylesheet" href="css/operaciones.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
             <a href="index.html">Inicio</a>
-            <a href="catalogo.html">Catálogo</a>
-            <a href="cultivos.html" aria-current="page">Cultivos / Carrito</a>
-        </nav>
-    </header>
-    <main class="pagina">
-        <h1>Cultivos / Carrito</h1>
-        <p>Elige tus productos y ajusta los kilos con los botones − y +.</p>
-        <p class="nota">Catálogo de práctica con precios y existencias de ejemplo. Precios en MXN.</p>
-        <p id="mensaje-catalogo" class="mensaje" role="status"></p>
-        <div class="vista-cliente">
-            <section aria-label="Productos disponibles">
-                <div id="productos" class="productos"></div>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html" aria-current="page">Cultivos activos</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Cultivos activos</h1>
+            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Registrar o actualizar</h2>
+                <form id="formulario-operacion" data-ruta="/cultivos" data-id="id" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="nombre">Nombre</label>
+                            <input id="nombre" name="nombre" type="text" required maxlength="100">
+                        </div>
+                        <div>
+                            <label for="tipo">Tipo</label>
+                            <input id="tipo" name="tipo" type="text" maxlength="100">
+                        </div>
+                        <div>
+                            <label for="etapaFenologica">Etapa actual</label>
+                            <select id="etapaFenologica" name="etapaFenologica" required>
+                                <option>Germinación</option>
+                                <option>Siembra</option>
+                                <option>Vegetación/Riego</option>
+                                <option>Floración</option>
+                                <option>Cosecha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="fechaRegistro">Fecha de registro</label>
+                            <input id="fechaRegistro" name="fechaRegistro" type="date" required>
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
+                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                    </div>
+                </form>
             </section>
-            <aside class="panel resumen">
-                <h2>Resumen del pedido</h2>
-                <div class="tabla-contenedor">
+            <section class="panel espacio">
+                <h2>Registros</h2>
+                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <div class="tabla-contenedor espacio">
                     <table>
-                        <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
-                        <tbody id="detalle-pedido"></tbody>
+                        <thead>
+                            <tr>
+                                <th data-campo="nombre">Nombre</th>
+                                <th data-campo="tipo">Tipo</th>
+                                <th data-campo="etapaFenologica">Etapa actual</th>
+                                <th data-campo="fechaRegistro">Fecha de registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-operacion"></tbody>
                     </table>
                 </div>
-                <p class="total" aria-live="polite">Total: <span id="total">$0.00</span></p>
-                <div class="botones-pedido">
-                    <button id="rastrear" class="boton boton-secundario" type="button">Rastrear pedidos</button>
-                    <button id="finalizar" class="boton" type="button" disabled>Finalizar pedido</button>
-                </div>
-            </aside>
-        </div>
-    </main>
-
-    <dialog id="pago" aria-labelledby="titulo-pago">
-        <h2 id="titulo-pago">Finalizar pedido</h2>
-        <p>Total: <strong id="total-pago"></strong></p>
-        <form id="formulario-pago">
-            <label for="titular">Nombre en la tarjeta</label>
-            <input id="titular" type="text" maxlength="80" autocomplete="off" required>
-            <label for="tarjeta">Número de tarjeta ficticio (16 dígitos)</label>
-            <input id="tarjeta" type="text" inputmode="numeric" pattern="[0-9]{16}" minlength="16" maxlength="16" autocomplete="off" placeholder="Ejemplo: 1111111111111111" required>
-            <label for="vencimiento">Vencimiento</label>
-            <input id="vencimiento" type="month" required>
-            <label for="codigo">Código de seguridad</label>
-            <input id="codigo" type="password" inputmode="numeric" pattern="[0-9]{3,4}" minlength="3" maxlength="4" autocomplete="off" required>
-            <p id="mensaje-pago" class="mensaje error" role="alert"></p>
-            <div class="botones-pedido">
-                <button class="boton" type="submit">Confirmar pedido</button>
-                <button id="cancelar-pago" class="boton boton-secundario" type="button">Cancelar</button>
-            </div>
-        </form>
-    </dialog>
-
-    <script src="js/datos.js"></script>
-    <script src="js/carrito.js"></script>
-</body>
+            </section>
+        </main>
+        <script src="js/api.js"></script>
+        <script src="js/operaciones.js"></script>
+    </body>
 </html>

@@ -18,11 +18,11 @@
 // Menú del administrador. Para agregar una opción, añade una línea aquí.
 const MENU_ADMIN = [
     { id: "resumen",     texto: "Resumen",     href: "#" },
-    { id: "terrenos",    texto: "Terrenos y cultivos", href: "terrenos.html" },
+    { id: "terrenos",    texto: "Terrenos y cultivos", href: "terrenos-admin.html" },
     { id: "catalogo",    texto: "Catálogo",    href: "catalogo-admin.html" },
     { id: "proveedores", texto: "Proveedores", href: "proveedores.html" },
     { id: "bodega",      texto: "Bodega",      href: "bodega.html" },
-    { id: "inventario",  texto: "Inventario",  href: "inventario.html" },
+    { id: "inventario",  texto: "Inventario",  href: "inventario-admin.html" },
     { id: "pedidos",     texto: "Pedidos",     href: "pedidos.html" }
 ];
 
@@ -76,8 +76,8 @@ const MENU_ADMIN = [
     // En las pantallas sin buscador propio, Enter lleva a Terrenos con la búsqueda aplicada.
     if (barra.dataset.local !== "true") {
         buscador.addEventListener("keydown", e => {
-            if (e.key === "Enter" && !location.pathname.endsWith("terrenos.html")) {
-                location.href = "terrenos.html?q=" + encodeURIComponent(buscador.value.trim());
+            if (e.key === "Enter" && !location.pathname.endsWith("terrenos-admin.html")) {
+                location.href = "terrenos-admin.html?q=" + encodeURIComponent(buscador.value.trim());
             }
         });
     }

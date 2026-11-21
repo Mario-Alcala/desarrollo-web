@@ -3,7 +3,7 @@ var formulario = document.getElementById('formulario-login');
 
 if (crearCuenta) {
     crearCuenta.addEventListener('click', function () {
-        document.getElementById('mensaje-registro').textContent = ""
+        window.location.href = 'crear-cuenta.html';
     });
 }
 
@@ -41,7 +41,17 @@ if (formulario) {
             return;
         }
 
-        // ruta que envia a la siguiente pantalla
-        window.location.href = 'catalogo.html';
+        var tipoAcceso = document.getElementById('tipo-acceso').value;
+
+        // Cuenta de prueba local; pendiente conectar al login del backend.
+        if (tipoAcceso === 'trabajador') {
+            if (correo.value.trim().toLowerCase() !== 'trabajador@gmail.com' || contrasena.value !== '1234') {
+                mensaje.textContent = 'Correo o contraseña del trabajador incorrectos.';
+                return;
+            }
+            window.location.href = 'cultivos.html';
+        } else {
+            window.location.href = 'catalogo.html';
+        }
     });
 }

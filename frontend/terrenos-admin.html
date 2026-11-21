@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<!--
+  ARCHIVO: terrenos.html
+  CAPA: FRONTEND
+  BACKEND: la lista sale de la API /api/terrenos (lo conecta js/terrenos.js).
+  LE FALTA: versión con fichas escritas directamente en HTML si el cascarón debe ser sin JS.
+  Las parcelas se consultan en /api/parcelas/terreno/{id}.
+-->
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terrenos - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/terrenos.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="terrenos"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin"></header>
+
+            <main class="pagina">
+                <div class="encabezado-terrenos">
+                    <div>
+                        <h1>Terrenos</h1>
+                        <p>Consulta los terrenos y abre uno para ver sus parcelas.</p>
+                    </div>
+                    <button id="agregar-terreno" class="boton" type="button">Agregar terreno</button>
+                </div>
+
+                <p id="mensaje-terrenos" class="mensaje" role="status"></p>
+                <section aria-label="Terrenos registrados">
+                    <div id="lista-terrenos" class="lista-terrenos"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="dialogo-terreno" aria-labelledby="titulo-dialogo">
+        <h2 id="titulo-dialogo">Agregar terreno</h2>
+        <form id="formulario-terreno">
+            <label for="t-nombre">Nombre</label>
+            <input id="t-nombre" type="text" maxlength="80" required>
+
+            <label for="t-ubicacion">Ubicación</label>
+            <input id="t-ubicacion" type="text" maxlength="120" required>
+
+            <label for="t-superficie">Superficie (m²)</label>
+            <input id="t-superficie" type="number" min="0.01" step="0.01" required>
+
+            <label for="t-estado">Estado</label>
+            <select id="t-estado" required>
+                <option value="disponible">Disponible</option>
+                <option value="ocupado">Ocupado</option>
+            </select>
+
+            <p id="mensaje-formulario" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar terreno</button>
+                <button id="cancelar-terreno" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/terrenos.js"></script>
+</body>
+</html>

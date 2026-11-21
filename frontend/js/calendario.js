@@ -125,6 +125,7 @@ function dibujarCalendario() {
         contenedor.innerHTML = '';
         var anio = fechaVista.getFullYear();
         var mes = fechaVista.getMonth();
+        document.getElementById('anio-calendario').value = anio;
         document.getElementById('titulo-mes').textContent = fechaVista.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
         var comienzo = (new Date(anio, mes, 1).getDay() + 6) % 7;
         var dias = new Date(anio, mes + 1, 0).getDate();
@@ -156,9 +157,6 @@ function dibujarCalendario() {
                     if (evento.inicio === fecha) {
                         agregarMarca(casilla, evento, evento.etapa);
                     }
-                    if (evento.cosecha === fecha && (evento.etapa !== 'Cosecha' || evento.inicio !== fecha)) {
-                        agregarMarca(casilla, evento, 'Cosecha estimada');
-                    }
                 });
             }
             contenedor.appendChild(casilla);
@@ -170,11 +168,11 @@ function dibujarCalendario() {
 }
 function agregarMarca(casilla, evento, etiqueta) {
     var marca = document.createElement('span');
-    marca.className = 'marca-etapa ' + colorEtapa(etiqueta === 'Cosecha estimada' ? 'Cosecha' : evento.etapa);
-    if (evento.completada && etiqueta !== 'Cosecha estimada') {
+    marca.className = 'marca-etapa ' + colorEtapa(evento.etapa);
+    if (evento.completada) {
         marca.classList.add('completada');
     }
-    marca.textContent = evento.cultivoNombre + ' · ' + etiqueta + (evento.completada && etiqueta !== 'Cosecha estimada' ? ' ✓' : '');
+    marca.textContent = evento.cultivoNombre + ' · ' + etiqueta + (evento.completada ? ' ✓' : '');
     casilla.appendChild(marca);
 }
 function mostrarTareas(eventos) {
@@ -191,7 +189,7 @@ function mostrarTareas(eventos) {
         var titulo = document.createElement('h3');
         titulo.textContent = evento.cultivoNombre + ' · ' + evento.etapa;
         var fechas = document.createElement('p');
-        fechas.textContent = 'Inicio: ' + evento.inicio + ' · Cosecha estimada: ' + evento.cosecha;
+        fechas.textContent = 'Fecha: ' + evento.inicio;
         var notas = document.createElement('p');
         notas.textContent = (evento.completada ? 'Completada. ' : 'Pendiente. ') + (evento.notas || 'Sin notas.');
         var completar = document.createElement('button');
@@ -229,13 +227,8 @@ if (formularioEtapa) {
 formularioEtapa.addEventListener('submit', function (evento) {
     evento.preventDefault();
     var inicio = document.getElementById('fecha-inicio').value;
-    var cosecha = document.getElementById('fecha-cosecha').value;
-    if (!inicio || !cosecha) {
-        mensajeEtapa.textContent = 'Completa ambas fechas.';
-        return;
-    }
-    if (cosecha < inicio) {
-        mensajeEtapa.textContent = 'La cosecha no puede ser anterior al inicio o siembra.';
+    if (!inicio) {
+        mensajeEtapa.textContent = 'Selecciona la fecha de la etapa.';
         return;
     }
     if (!formularioEtapa.reportValidity()) {
@@ -250,7 +243,7 @@ formularioEtapa.addEventListener('submit', function (evento) {
     try {
         var datos = leerCalendario();
         datos.eventos.push({ id: datos.siguienteId++, origen: 'local', cultivoId: cultivo.id, cultivoNombre: cultivo.nombre,
-            etapa: document.getElementById('etapa').value, inicio: inicio, cosecha: cosecha,
+            etapa: document.getElementById('etapa').value, inicio: inicio,
             notas: document.getElementById('notas').value.trim(), completada: false });
         guardarCalendario(datos);
         var partes = inicio.split('-');
@@ -266,6 +259,12 @@ formularioEtapa.addEventListener('submit', function (evento) {
 });
 }
 if (document.getElementById('dias-calendario')) {
+document.getElementById('anio-calendario').onchange = function () {
+    if (!this.reportValidity() || !this.value) { return; }
+    fechaVista = new Date(Number(this.value), fechaVista.getMonth(), 1);
+    diaElegido = '';
+    dibujarCalendario();
+};
 document.getElementById('mes-anterior').onclick = function () {
     fechaVista = new Date(fechaVista.getFullYear(), fechaVista.getMonth() - 1, 1);
     diaElegido = '';
@@ -295,7 +294,7 @@ window.addEventListener('storage', function (evento) {
         cargarCultivosCalendario();
     }
 });
-// El backend actual no guarda fechas de cosecha ni notas de calendario.
+// Los eventos quedan locales hasta conectar el calendario con Java.
 // Mantener los eventos locales hasta que el equipo agregue ese endpoint.
 dibujarCalendario();
 cargarCultivosCalendario();

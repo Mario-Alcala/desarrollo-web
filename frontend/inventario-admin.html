@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-vistas.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="inventario"></aside>
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar semilla, abono o fertilizante" data-local="true"></header>
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Inventario</h1>
+                        <p>Controla las existencias de semillas, abonos orgánicos y fertilizantes. Las cosechas empacadas se controlan en Bodega.</p>
+                    </div>
+                    <button id="registrar-entrada" class="boton" type="button">Registrar entrada</button>
+                </div>
+                <div id="filtros-categoria" class="barra-herramientas" role="group" aria-label="Filtrar por tipo de insumo">
+                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
+                    <button class="filtro" type="button" data-valor="semilla" aria-pressed="false">Semillas</button>
+                    <button class="filtro" type="button" data-valor="abono" aria-pressed="false">Abonos orgánicos</button>
+                    <button class="filtro" type="button" data-valor="fertilizante" aria-pressed="false">Fertilizantes</button>
+                </div>
+                <p id="mensaje-inventario" class="mensaje" role="status"></p>
+                <div class="tabla-admin-contenedor">
+                    <table class="tabla-admin">
+                        <thead><tr><th>Insumo</th><th>Tipo</th><th>Existencia</th><th>Ingreso</th><th>Caducidad</th><th>Acciones</th></tr></thead>
+                        <tbody id="tabla-inventario"></tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+    <dialog id="dialogo-entrada" class="ancho" aria-labelledby="titulo-entrada">
+        <h2 id="titulo-entrada">Registrar entrada de inventario</h2>
+        <form id="formulario-entrada">
+            <label for="entrada-insumo">Insumo</label>
+            <select id="entrada-insumo" required></select>
+            <div class="campos-dos">
+                <div><label for="entrada-cantidad">Cantidad</label><input id="entrada-cantidad" type="number" min="0.01" step="0.01" required></div>
+                <div><label for="entrada-ingreso">Fecha de ingreso</label><input id="entrada-ingreso" type="date" required></div>
+                <div><label for="entrada-caducidad">Fecha de caducidad (opcional)</label><input id="entrada-caducidad" type="date"></div>
+            </div>
+            <p id="mensaje-entrada" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar entrada</button>
+                <button id="cancelar-entrada" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+    <dialog id="dialogo-movimiento-inventario" class="ancho" aria-labelledby="titulo-movimiento-inventario">
+        <h2 id="titulo-movimiento-inventario">Registrar movimiento</h2>
+        <form id="formulario-movimiento-inventario">
+            <p id="lote-movimiento" class="nota"></p>
+            <div class="campos-dos">
+                <div><label for="tipo-movimiento">Tipo</label><select id="tipo-movimiento" required><option value="entrada">Entrada</option><option value="salida">Salida</option></select></div>
+                <div><label for="cantidad-movimiento">Cantidad</label><input id="cantidad-movimiento" type="number" min="0.01" step="0.01" required></div>
+                <div><label for="usuario-movimiento">Registrado por</label><select id="usuario-movimiento" required></select></div>
+                <div><label for="nota-movimiento">Observación (opcional)</label><input id="nota-movimiento" type="text" maxlength="255"></div>
+            </div>
+            <p id="mensaje-movimiento-inventario" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido"><button class="boton" type="submit">Guardar movimiento</button><button id="cancelar-movimiento-inventario" class="boton boton-secundario" type="button">Cancelar</button></div>
+        </form>
+    </dialog>
+    <script src="js/sidebar.js"></script>
+    <script src="js/admin-comun.js"></script>
+    <script src="js/inventario-admin.js"></script>
+</body>
+</html>
