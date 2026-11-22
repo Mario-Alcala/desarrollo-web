@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Panel Gestor - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Gestor</span>
+            <nav aria-label="Navegación del gestor">
+                <a href="../index.html">Inicio</a>
+                <a href="../cliente/catalogo.html">Ver catálogo</a>
+                <a href="gestor.html" aria-current="page">Panel Gestor</a>
+                <a href="../empleado/cultivos.html">Área del trabajador</a>
+                <a href="../empleado/calendario.html">Calendario</a>
+            </nav>
+        </header>
+        <main class="pagina">
+            <h1>Administración de cultivos</h1>
+            <p>Agrega y actualiza los productos que aparecen en el catálogo.</p>
+            <p id="mensaje-gestor" class="mensaje" role="status"></p>
+            <div class="vista-gestor">
+                <section class="panel">
+                    <h2 id="titulo-formulario">Agregar cultivo</h2>
+                    <form id="formulario-cultivo">
+                        <label for="nombre-cultivo">Nombre</label>
+                        <input id="nombre-cultivo" type="text" maxlength="80" required>
+                        <label for="precio">Precio por kilo (MXN)</label>
+                        <input id="precio" type="number" min="0.01" max="1000000" step="0.01" required>
+                        <label for="stock">Stock (kilos enteros)</label>
+                        <input id="stock" type="number" min="0" max="1000000" step="1" required>
+                        <div class="botones-pedido espacio">
+                            <button id="guardar-cultivo" class="boton" type="submit">Agregar cultivo</button>
+                            <button id="cancelar-edicion" class="boton boton-secundario" type="button" hidden>Cancelar edición</button>
+                        </div>
+                    </form>
+                </section>
+                <section class="panel">
+                    <h2>Cultivos registrados</h2>
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Precio/kg</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-cultivos"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+        <script src="../js/datos.js"></script>
+        <script src="../js/gestor.js"></script>
+    </body>
+</html>

@@ -11,7 +11,6 @@ var filtroCultivo = document.getElementById('filtro-cultivo');
 var cultivoSeleccionado = document.getElementById('cultivo');
 var mensajeEtapa = document.getElementById('mensaje-etapa');
 var formularioEtapa = document.getElementById('formulario-etapa');
-var numeroCarga = 0;
 
 function leerCalendario() {
     var datos = localStorage.getItem(claveCalendario);
@@ -41,70 +40,63 @@ function colorEtapa(etapa) {
     return 'riego';
 }
 function eventosVisibles() {
-    return leerCalendario().eventos.filter(function (evento) {
-        return (evento.origen || 'local') === 'local' && (!filtroCultivo.value || String(evento.cultivoId) === filtroCultivo.value);
-    });
-}
-function consultarCultivosBackend() {
-    return fetch('http://localhost:8080/api/cultivos').then(function (respuesta) {
-        if (!respuesta.ok) {
-            throw new Error('No se pudieron consultar los cultivos.');
+    var todos = leerCalendario().eventos;
+    var visibles = [];
+    for (var i = 0; i < todos.length; i++) {
+        var evento = todos[i];
+        var esLocal = (evento.origen || 'local') === 'local';
+        var coincideCultivo = !filtroCultivo.value || String(evento.cultivoId) === filtroCultivo.value;
+        if (esLocal && coincideCultivo) {
+            visibles.push(evento);
         }
-        return respuesta.json();
-    });
+    }
+    return visibles;
 }
 
 function cargarCultivosCalendario() {
-    var cargaActual = ++numeroCarga;
     if (formularioEtapa) { document.getElementById('guardar-etapa').disabled = true; }
     mensajeEtapa.textContent = '';
-    var consulta;
     try {
         // Por ahora los cultivos se cargan siempre desde los datos locales.
-        consulta = Promise.resolve(leerDatos().productos);
-    } catch (error) {
-        mensajeEtapa.textContent = error.message;
-        return;
-    }
-    consulta.then(function (cultivos) {
-        if (cargaActual !== numeroCarga) {
-            return;
-        }
-        cultivosCalendario = cultivos || [];
+        cultivosCalendario = leerDatos().productos || [];
         mostrarSeguimiento();
+
         var anterior = filtroCultivo.value;
         filtroCultivo.innerHTML = '<option value="">Todos los cultivos</option>';
-        if (cultivoSeleccionado) { cultivoSeleccionado.innerHTML = '<option value="">Selecciona un cultivo</option>'; }
-        cultivosCalendario.forEach(function (cultivo) {
-            [filtroCultivo, cultivoSeleccionado].forEach(function (select) {
-                if (!select) { return; }
-                var opcion = document.createElement('option');
-                opcion.value = cultivo.id;
-                opcion.textContent = cultivo.nombre + (cultivo.etapaFenologica ? ' · ' + cultivo.etapaFenologica : '');
-                select.appendChild(opcion);
-            });
-        });
+        if (cultivoSeleccionado) {
+            cultivoSeleccionado.innerHTML = '<option value="">Selecciona un cultivo</option>';
+        }
+
+        for (var i = 0; i < cultivosCalendario.length; i++) {
+            var cultivo = cultivosCalendario[i];
+            var opcionFiltro = document.createElement('option');
+            opcionFiltro.value = cultivo.id;
+            opcionFiltro.textContent = cultivo.nombre + (cultivo.etapaFenologica ? ' · ' + cultivo.etapaFenologica : '');
+            filtroCultivo.appendChild(opcionFiltro);
+
+            if (cultivoSeleccionado) {
+                var opcionFormulario = document.createElement('option');
+                opcionFormulario.value = cultivo.id;
+                opcionFormulario.textContent = cultivo.nombre + (cultivo.etapaFenologica ? ' · ' + cultivo.etapaFenologica : '');
+                cultivoSeleccionado.appendChild(opcionFormulario);
+            }
+        }
+
         filtroCultivo.value = anterior;
-        if (formularioEtapa) { document.getElementById('guardar-etapa').disabled = !cultivosCalendario.length; }
+        if (formularioEtapa) { document.getElementById('guardar-etapa').disabled = cultivosCalendario.length === 0; }
         mensajeEtapa.textContent = cultivosCalendario.length ? '' : 'No hay cultivos registrados.';
         dibujarCalendario();
-    }).catch(function (error) {
-        if (cargaActual !== numeroCarga) {
-            return;
-        }
-        cultivosCalendario = [];
-        mostrarSeguimiento();
-        if (cultivoSeleccionado) { cultivoSeleccionado.innerHTML = '<option value="">Sin conexión</option>'; }
-        mensajeEtapa.textContent = '';
-        dibujarCalendario();
-    });
+    } catch (error) {
+        mensajeEtapa.textContent = error.message;
+    }
 }
 
 function mostrarSeguimiento() {
     var lista = document.getElementById('cultivos-seguimiento');
     if (!lista) { return; }
     lista.innerHTML = '';
-    cultivosCalendario.forEach(function (cultivo) {
+    for (var i = 0; i < cultivosCalendario.length; i++) {
+        var cultivo = cultivosCalendario[i];
         var tarjeta = document.createElement('div');
         tarjeta.className = 'cultivo-seguimiento';
         var nombre = document.createElement('strong');
@@ -114,7 +106,7 @@ function mostrarSeguimiento() {
         tarjeta.appendChild(nombre);
         tarjeta.appendChild(etapa);
         lista.appendChild(tarjeta);
-    });
+    }
 }
 
 function dibujarCalendario() {
@@ -153,11 +145,12 @@ function dibujarCalendario() {
                 if (fecha === diaElegido) {
                     casilla.classList.add('seleccionado');
                 }
-                eventos.forEach(function (evento) {
+                for (var j = 0; j < eventos.length; j++) {
+                    var evento = eventos[j];
                     if (evento.inicio === fecha) {
                         agregarMarca(casilla, evento, evento.etapa);
                     }
-                });
+                }
             }
             contenedor.appendChild(casilla);
         }
@@ -183,7 +176,8 @@ function mostrarTareas(eventos) {
     if (!eventos.length) {
         lista.textContent = 'No hay tareas programadas para esta selección.';
     }
-    eventos.forEach(function (evento) {
+    for (let i = 0; i < eventos.length; i++) {
+        let evento = eventos[i];
         var bloque = document.createElement('article');
         bloque.className = 'tarea';
         var titulo = document.createElement('h3');
@@ -202,20 +196,31 @@ function mostrarTareas(eventos) {
         var eliminar = document.createElement('button');
         eliminar.className = 'boton boton-secundario';
         eliminar.textContent = 'Eliminar';
-        eliminar.onclick = function () { if (confirm('¿Eliminar esta etapa?')) { cambiarEvento(evento.id, true); } };
+        eliminar.onclick = function () {
+            if (confirm('¿Eliminar esta etapa?')) { cambiarEvento(evento.id, true); }
+        };
         bloque.appendChild(titulo);
         bloque.appendChild(fechas);
         bloque.appendChild(notas);
         bloque.appendChild(completar);
         bloque.appendChild(eliminar);
         lista.appendChild(bloque);
-    });
+    }
 }
 function cambiarEvento(id, eliminar) {
     try {
         var datos = leerCalendario();
-        if (eliminar) { datos.eventos = datos.eventos.filter(function (evento) { return evento.id !== id; }); }
-        else { datos.eventos.forEach(function (evento) { if (evento.id === id) { evento.completada = true; } }); }
+        if (eliminar) {
+            var eventosRestantes = [];
+            for (var i = 0; i < datos.eventos.length; i++) {
+                if (datos.eventos[i].id !== id) eventosRestantes.push(datos.eventos[i]);
+            }
+            datos.eventos = eventosRestantes;
+        } else {
+            for (var i = 0; i < datos.eventos.length; i++) {
+                if (datos.eventos[i].id === id) datos.eventos[i].completada = true;
+            }
+        }
         guardarCalendario(datos);
         dibujarCalendario();
         mensajeEtapa.textContent = eliminar ? 'Etapa eliminada.' : 'Etapa completada.';
@@ -235,7 +240,12 @@ formularioEtapa.addEventListener('submit', function (evento) {
         return;
     }
     var cultivo = null;
-    cultivosCalendario.forEach(function (actual) { if (String(actual.id) === cultivoSeleccionado.value) { cultivo = actual; } });
+    for (var i = 0; i < cultivosCalendario.length; i++) {
+        if (String(cultivosCalendario[i].id) === cultivoSeleccionado.value) {
+            cultivo = cultivosCalendario[i];
+            break;
+        }
+    }
     if (!cultivo) {
         mensajeEtapa.textContent = 'Actualiza y selecciona un cultivo disponible.';
         return;

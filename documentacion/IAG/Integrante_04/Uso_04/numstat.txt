@@ -1,0 +1,10 @@
+git diff --numstat d2c9ce6 1e425ea
+90	0	frontend/css/pago.css
+37	0	frontend/historial.html
+68	62	frontend/js/carrito.js
+36	0	frontend/js/historial.js
+134	0	frontend/js/pago.js
+25	0	frontend/js/pedido.js
+89	0	frontend/js/recoleccion.js
+86	0	frontend/pago.html
+40	0	frontend/recoleccion.html

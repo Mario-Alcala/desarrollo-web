@@ -1,0 +1,314 @@
+diff --git a/frontend/js/proveedores.js b/frontend/js/proveedores.js
+new file mode 100644
+index 0000000..36f9ec1
+--- /dev/null
++++ b/frontend/js/proveedores.js
+@@ -0,0 +1,179 @@
++/*
++ * ARCHIVO: js/proveedores.js
++ * CAPA: FRONTEND (lógica). ¿ES CASCARÓN? NO: alterna pestañas, filtra, valida y maneja formularios.
++ * QUÉ USA DEL BACKEND: nada todavía; lee PROVEEDORES e INSUMOS de js/admin-datos.js.
++ * REGLA DEL DOCUMENTO: semilla, abono y fertilizante son categorías de una sola tabla (insumos).
++ * LE FALTA: GET, POST y PUT contra la API; desactivar proveedores; mostrar existencias por insumo.
++ * AÑADIDO POR BACKEND INCOMPLETO: los cambios viven solo en memoria (se pierden al recargar).
++ */
++
++const buscador = document.querySelector("#topbar input");
++const mensaje = document.getElementById("mensaje-prov");
++const cabecera = document.getElementById("tabla-cabecera");
++const cuerpo = document.getElementById("tabla-cuerpo");
++const filtrosCategoria = document.getElementById("filtros-categoria");
++const botonAgregar = document.getElementById("agregar");
++
++const dlgProveedor = document.getElementById("dialogo-proveedor");
++const formProveedor = document.getElementById("formulario-proveedor");
++const msgProveedor = document.getElementById("mensaje-proveedor");
++const dlgInsumo = document.getElementById("dialogo-insumo");
++const formInsumo = document.getElementById("formulario-insumo");
++const msgInsumo = document.getElementById("mensaje-insumo");
++
++let vista = "proveedores";
++let categoriaActiva = "todos";
++let editandoProveedor = null;
++let editandoInsumo = null;
++
++function texto(id) {
++    return document.getElementById(id).value.trim();
++}
++
++function coincide(q, campos) {
++    return !q || campos.some(c => String(c || "").toLowerCase().includes(q));
++}
++
++function dibujarTabla(columnas, filas) {
++    cabecera.replaceChildren(...columnas.map(c => crear("th", c)));
++    cuerpo.replaceChildren(...filas.map(celdas => {
++        const tr = crear("tr");
++        celdas.forEach(c => {
++            const td = crear("td");
++            td.append(c);
++            tr.append(td);
++        });
++        return tr;
++    }));
++}
++
++function dibujar() {
++    const q = buscador.value.trim().toLowerCase();
++    let total;
++
++    if (vista === "proveedores") {
++        const filas = PROVEEDORES
++            .filter(p => coincide(q, [p.nombreEmpresa, p.contacto, p.email, p.direccion]))
++            .map(p => [
++                p.nombreEmpresa, p.contacto || "—", p.telefono || "—", p.email || "—", p.direccion || "—",
++                crearBoton("Editar", "boton boton-secundario boton-chico", () => abrirProveedor(p))
++            ]);
++        dibujarTabla(["Empresa", "Contacto", "Teléfono", "Correo", "Dirección", "Acciones"], filas);
++        total = filas.length;
++    } else {
++        const filas = INSUMOS
++            .filter(i => (categoriaActiva === "todos" || i.categoria === categoriaActiva) &&
++                         coincide(q, [i.nombre, i.varTipo, i.categoria]))
++            .map(i => [
++                i.nombre,
++                etiqueta(capitalizar(i.categoria), i.categoria === "semilla" ? "ok" : i.categoria === "abono" ? "aviso" : ""),
++                i.varTipo || "—",
++                i.unidad,
++                i.activo ? etiqueta("Activo", "ok") : etiqueta("Inactivo"),
++                crearBoton("Editar", "boton boton-secundario boton-chico", () => abrirInsumo(i))
++            ]);
++        dibujarTabla(["Nombre", "Categoría", "Variedad o tipo", "Unidad", "Estado", "Acciones"], filas);
++        total = filas.length;
++    }
++
++    if (!total) mensaje.textContent = "No hay registros para mostrar.";
++    else if (mensaje.textContent === "No hay registros para mostrar.") mensaje.textContent = "";
++}
++
++/* ---------- Proveedores ---------- */
++function abrirProveedor(p) {
++    editandoProveedor = p ? p.id : null;
++    document.getElementById("titulo-proveedor").textContent = p ? "Editar proveedor" : "Agregar proveedor";
++    msgProveedor.textContent = "";
++    formProveedor.reset();
++    if (p) {
++        document.getElementById("pv-empresa").value = p.nombreEmpresa;
++        document.getElementById("pv-contacto").value = p.contacto;
++        document.getElementById("pv-telefono").value = p.telefono;
++        document.getElementById("pv-email").value = p.email;
++        document.getElementById("pv-direccion").value = p.direccion;
++    }
++    dlgProveedor.showModal();
++}
++
++formProveedor.addEventListener("submit", e => {
++    e.preventDefault();
++    msgProveedor.textContent = "";
++    const datos = {
++        nombreEmpresa: texto("pv-empresa"),
++        contacto: texto("pv-contacto"),
++        telefono: texto("pv-telefono"),
++        email: texto("pv-email"),
++        direccion: texto("pv-direccion")
++    };
++    if (datos.telefono && !/^[0-9+\s-]{7,15}$/.test(datos.telefono)) {
++        msgProveedor.textContent = "El teléfono solo puede llevar números, espacios, + o guiones (7 a 15 caracteres).";
++        return;
++    }
++    if (editandoProveedor === null) {
++        datos.id = Math.max(0, ...PROVEEDORES.map(p => p.id)) + 1;
++        PROVEEDORES.push(datos);
++    } else {
++        Object.assign(PROVEEDORES.find(p => p.id === editandoProveedor), datos);
++    }
++    dlgProveedor.close();
++    mensaje.textContent = MENSAJE_SESION;
++    dibujar();
++});
++
++/* ---------- Insumos ---------- */
++function abrirInsumo(i) {
++    editandoInsumo = i ? i.id : null;
++    document.getElementById("titulo-insumo").textContent = i ? "Editar insumo" : "Agregar insumo";
++    msgInsumo.textContent = "";
++    formInsumo.reset();
++    if (i) {
++        document.getElementById("in-nombre").value = i.nombre;
++        document.getElementById("in-categoria").value = i.categoria;
++        document.getElementById("in-unidad").value = i.unidad;
++        document.getElementById("in-tipo").value = i.varTipo;
++        document.getElementById("in-activo").checked = i.activo;
++    }
++    dlgInsumo.showModal();
++}
++
++formInsumo.addEventListener("submit", e => {
++    e.preventDefault();
++    msgInsumo.textContent = "";
++    const datos = {
++        nombre: texto("in-nombre"),
++        categoria: texto("in-categoria"),
++        unidad: texto("in-unidad"),
++        varTipo: texto("in-tipo"),
++        activo: document.getElementById("in-activo").checked
++    };
++    if (editandoInsumo === null) {
++        datos.id = Math.max(0, ...INSUMOS.map(i => i.id)) + 1;
++        INSUMOS.push(datos);
++    } else {
++        Object.assign(INSUMOS.find(i => i.id === editandoInsumo), datos);
++    }
++    dlgInsumo.close();
++    mensaje.textContent = MENSAJE_SESION;
++    dibujar();
++});
++
++/* ---------- Eventos generales ---------- */
++botonAgregar.addEventListener("click", () => (vista === "proveedores" ? abrirProveedor(null) : abrirInsumo(null)));
++document.getElementById("cancelar-proveedor").addEventListener("click", () => dlgProveedor.close());
++document.getElementById("cancelar-insumo").addEventListener("click", () => dlgInsumo.close());
++
++iniciarFiltros(document.getElementById("pestanas"), valor => {
++    vista = valor;
++    filtrosCategoria.hidden = valor !== "insumos";
++    botonAgregar.textContent = valor === "insumos" ? "Agregar insumo" : "Agregar proveedor";
++    mensaje.textContent = "";
++    dibujar();
++});
++iniciarFiltros(filtrosCategoria, valor => {
++    categoriaActiva = valor;
++    dibujar();
++});
++buscador.addEventListener("input", dibujar);
++
++dibujar();
+\ No newline at end of file
+diff --git a/frontend/proveedores.html b/frontend/proveedores.html
+new file mode 100644
+index 0000000..a54d494
+--- /dev/null
++++ b/frontend/proveedores.html
+@@ -0,0 +1,121 @@
++<!DOCTYPE html>
++<!--
++  ARCHIVO: proveedores.html
++  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
++    superior y la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
++  BACKEND: no se verificó una ruta de proveedores e insumos; los datos salen de js/admin-datos.js.
++  LE FALTA: guardar altas y cambios en la API; eliminar o desactivar proveedores.
++  AÑADIDO POR BACKEND INCOMPLETO: el script admin-datos.js (proveedores e insumos de ejemplo).
++-->
++<html lang="es">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <title>Proveedores e insumos - Gestión de Cultivos</title>
++    <link rel="stylesheet" href="css/admin.css">
++    <link rel="stylesheet" href="css/admin-vistas.css">
++</head>
++<body class="admin">
++    <div class="app-admin">
++        <aside id="sidebar" class="sidebar-admin" data-activo="proveedores"></aside>
++
++        <div class="contenido-admin">
++            <header id="topbar" class="topbar-admin" data-placeholder="Buscar proveedor o insumo" data-local="true"></header>
++
++            <main class="pagina">
++                <div class="encabezado-pagina">
++                    <div>
++                        <h1>Proveedores e insumos</h1>
++                        <p>Administra los proveedores y los insumos. Semillas, abonos y fertilizantes son categorías de insumo.</p>
++                    </div>
++                    <button id="agregar" class="boton" type="button">Agregar proveedor</button>
++                </div>
++
++                <div id="pestanas" class="barra-herramientas" role="group" aria-label="Elegir lista">
++                    <button class="filtro" type="button" data-valor="proveedores" aria-pressed="true">Proveedores</button>
++                    <button class="filtro" type="button" data-valor="insumos" aria-pressed="false">Insumos</button>
++                </div>
++
++                <div id="filtros-categoria" class="barra-herramientas" role="group" aria-label="Filtrar insumos por categoría" hidden>
++                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
++                    <button class="filtro" type="button" data-valor="semilla" aria-pressed="false">Semillas</button>
++                    <button class="filtro" type="button" data-valor="abono" aria-pressed="false">Abonos</button>
++                    <button class="filtro" type="button" data-valor="fertilizante" aria-pressed="false">Fertilizantes</button>
++                </div>
++
++                <p id="mensaje-prov" class="mensaje" role="status"></p>
++                <div class="tabla-admin-contenedor">
++                    <table class="tabla-admin">
++                        <thead><tr id="tabla-cabecera"></tr></thead>
++                        <tbody id="tabla-cuerpo"></tbody>
++                    </table>
++                </div>
++            </main>
++        </div>
++    </div>
++
++    <dialog id="dialogo-proveedor" class="ancho" aria-labelledby="titulo-proveedor">
++        <h2 id="titulo-proveedor">Agregar proveedor</h2>
++        <form id="formulario-proveedor">
++            <label for="pv-empresa">Nombre de la empresa</label>
++            <input id="pv-empresa" type="text" maxlength="100" required>
++            <div class="campos-dos">
++                <div>
++                    <label for="pv-contacto">Contacto</label>
++                    <input id="pv-contacto" type="text" maxlength="100">
++                </div>
++                <div>
++                    <label for="pv-telefono">Teléfono</label>
++                    <input id="pv-telefono" type="tel" maxlength="15">
++                </div>
++            </div>
++            <label for="pv-email">Correo</label>
++            <input id="pv-email" type="email" maxlength="100">
++            <label for="pv-direccion">Dirección</label>
++            <input id="pv-direccion" type="text" maxlength="200">
++            <p id="mensaje-proveedor" class="mensaje error" role="alert"></p>
++            <div class="botones-pedido">
++                <button class="boton" type="submit">Guardar proveedor</button>
++                <button id="cancelar-proveedor" class="boton boton-secundario" type="button">Cancelar</button>
++            </div>
++        </form>
++    </dialog>
++
++    <dialog id="dialogo-insumo" class="ancho" aria-labelledby="titulo-insumo">
++        <h2 id="titulo-insumo">Agregar insumo</h2>
++        <form id="formulario-insumo">
++            <label for="in-nombre">Nombre</label>
++            <input id="in-nombre" type="text" maxlength="100" required>
++            <div class="campos-dos">
++                <div>
++                    <label for="in-categoria">Categoría</label>
++                    <select id="in-categoria" required>
++                        <option value="semilla">Semilla</option>
++                        <option value="abono">Abono</option>
++                        <option value="fertilizante">Fertilizante</option>
++                    </select>
++                </div>
++                <div>
++                    <label for="in-unidad">Unidad de medida</label>
++                    <input id="in-unidad" type="text" maxlength="20" placeholder="kg, litros, piezas" required>
++                </div>
++            </div>
++            <label for="in-tipo">Variedad o tipo</label>
++            <input id="in-tipo" type="text" maxlength="100">
++            <label class="casilla" for="in-activo">
++                <input id="in-activo" type="checkbox" checked> Activo
++            </label>
++            <p id="mensaje-insumo" class="mensaje error" role="alert"></p>
++            <div class="botones-pedido">
++                <button class="boton" type="submit">Guardar insumo</button>
++                <button id="cancelar-insumo" class="boton boton-secundario" type="button">Cancelar</button>
++            </div>
++        </form>
++    </dialog>
++
++    <script src="js/sidebar.js"></script>
++    <script src="js/admin-datos.js"></script>
++    <script src="js/admin-comun.js"></script>
++    <script src="js/proveedores.js"></script>
++</body>
++</html>
+\ No newline at end of file

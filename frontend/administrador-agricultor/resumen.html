@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin-vistas.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="resumen"></aside>
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-sin-buscador="true"></header>
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Resumen</h1>
+                        <p>Consulta rápida de terrenos, cultivos, cosechas, catálogo y pedidos.</p>
+                    </div>
+                </div>
+                <p id="mensaje-resumen" class="mensaje" role="status"></p>
+
+                <section class="rejilla-resumen" aria-label="Indicadores de la operación">
+                    <article class="tarjeta-metrica"><span>Terrenos</span><strong id="total-terrenos">—</strong><a href="terrenos-admin.html">Ver terrenos</a></article>
+                    <article class="tarjeta-metrica"><span>Parcelas</span><strong id="total-parcelas">—</strong><small id="parcelas-ocupadas">Cargando ocupación…</small></article>
+                    <article class="tarjeta-metrica"><span>Cultivos activos</span><strong id="total-cultivos">—</strong><a href="terrenos-admin.html">Ver cultivos</a></article>
+                    <article class="tarjeta-metrica"><span>Productos en catálogo</span><strong id="total-productos">—</strong><a href="catalogo-admin.html">Abrir catálogo</a></article>
+                    <article class="tarjeta-metrica"><span>Cosecha disponible</span><strong id="total-cosecha">—</strong><a href="bodega.html">Abrir bodega</a></article>
+                    <article class="tarjeta-metrica"><span>Pedidos por atender</span><strong id="total-pedidos">—</strong><a href="pedidos.html">Ver pedidos</a></article>
+                </section>
+
+                <div class="rejilla-resumen-secundaria">
+                    <section class="panel-resumen">
+                        <div class="encabezado-panel-resumen">
+                            <div><h2>Clima de los próximos días</h2><p id="clima-ubicacion">Buscando terreno con coordenada</p></div>
+                            <span class="etq">Pronóstico de 7 días</span>
+                        </div>
+                        <p id="mensaje-clima" class="mensaje" role="status"></p>
+                        <p id="clima-actualizado" class="nota"></p>
+                        <div id="pronostico-semanal" class="pronostico-semanal"></div>
+                    </section>
+
+                    <section class="panel-resumen">
+                        <div class="encabezado-panel-resumen">
+                            <div><h2>Recolecciones pendientes</h2><p>Pedidos que el cliente recogerá en bodega.</p></div>
+                            <a href="pedidos.html">Ver pedidos →</a>
+                        </div>
+                        <strong id="total-recolecciones" class="numero-resumen">—</strong>
+                        <p>Horario general de atención: <strong>6:00 a. m. a 6:00 p. m.</strong>, todos los días.</p>
+                        <p id="nota-recolecciones" class="nota"></p>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/admin-comun.js"></script>
+    <script src="../js/resumen-admin.js"></script>
+</body>
+</html>

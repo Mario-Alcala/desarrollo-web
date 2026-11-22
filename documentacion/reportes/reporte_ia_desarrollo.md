@@ -133,6 +133,19 @@ Los prompts siguientes son **borradores breves reconstruidos** a partir de las c
 | Código de uso | [CÓDIGO_DE_USO_SEGÚN_LA_CLASIFICACIÓN_DEL_CURSO] |
 | Reflexión del estudiante | Aprendí a revisar los cambios del equipo antes de subir los míos y a distinguir traer cambios con pull de publicar cambios con push. |
 
+## Consultas técnicas seleccionadas para documentar
+
+Los siguientes prompts se resumen a partir de las dudas de la sesión. Se incluyen los que ayudaron a entender o implementar partes concretas del código, no todas las preguntas de la conversación.
+
+| Tipo | Prompt resumido | Respuesta o apoyo recibido |
+|---|---|---|
+| Generación y modificación de código | “¿Se puede agregar al resumen del administrador el pronóstico de varios días usando la API del clima y hacer que avance conforme pasan los días?” | Se revisó el pronóstico disponible en Open-Meteo y se preparó la consulta de varios días para mostrarlo en el resumen. Después se ajustó la actualización para consultar el clima una vez al día, a medianoche. |
+| Comprensión de código | “¿Cómo funciona `Optional` en un método y cómo devuelve un objeto `Semilla`?” | Se explicó que `Optional<Semilla>` representa que una búsqueda puede encontrar o no un registro, y que al consultar la base de datos el resultado se convierte en el objeto `Semilla` mediante el mapeo de columnas. |
+| Comprensión de capas | “¿Cómo sabe `SemillaService` cuándo ejecutar las validaciones y llamar al repositorio?” | Se aclaró el recorrido desde el controlador al servicio: el controlador llama al método del servicio, el servicio valida los datos y después solicita al repositorio leer o escribir en la base de datos. |
+| Organización de interfaz | “¿Cómo quedaría bien distribuida una página HTML completa para PC y se puede reutilizar un sidebar por cada rol?” | Se explicó cómo organizar el contenedor principal, el menú lateral y el área de contenido, y cómo reutilizar la navegación común sin repetir toda su estructura en cada página. |
+
+Para los cambios de código de esta sesión, el commit anterior registrado es `dfc2d21c84e09635471d93d1aa535b2979878848` (`Merge remote-tracking branch 'origin/main'`). El commit posterior queda pendiente de agregar cuando el estudiante lo comparta después de realizar su commit. No se inventan hashes ni enlaces de diferencias.
+
 ## Observaciones adicionales
 
 El acceso del trabajador es una demostración local, no autenticación del servidor. Crear cuenta sigue siendo solo una interfaz. El catálogo, el gestor, los pedidos, el historial y las etapas del calendario usan almacenamiento del navegador; no se debe afirmar que se sincronizan automáticamente con la base de datos.

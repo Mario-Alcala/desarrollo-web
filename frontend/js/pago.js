@@ -27,7 +27,8 @@ function mostrarPago() {
         var cuerpo = document.getElementById('resumen-pago');
         cuerpo.innerHTML = '';
         var centavos = 0;
-        productosPago.forEach(function (producto) {
+        for (var i = 0; i < productosPago.length; i++) {
+            var producto = productosPago[i];
             var subtotal = Math.round(producto.precio * 100) * producto.kilos;
             centavos += subtotal;
             var fila = document.createElement('tr');
@@ -35,7 +36,7 @@ function mostrarPago() {
             agregarCelda(fila, producto.kilos);
             agregarCelda(fila, dinero(subtotal / 100));
             cuerpo.appendChild(fila);
-        });
+        }
         totalPago = centavos / 100;
         document.getElementById('total-pago').textContent = dinero(totalPago);
         var fecha = leerBorrador().fechaRecoleccion;
@@ -87,9 +88,10 @@ formularioPago.addEventListener('submit', function (evento) {
             productos: actuales,
             total: totalPago
         };
-        actuales.forEach(function (producto) {
+        for (var i = 0; i < actuales.length; i++) {
+            var producto = actuales[i];
             buscarProducto(datos, producto.id).stock -= producto.kilos;
-        });
+        }
         datos.pedidos.push(pedido);
         datos.siguientePedido++;
         // Se guarda el pedido sin los datos de tarjeta.
@@ -99,7 +101,7 @@ formularioPago.addEventListener('submit', function (evento) {
         document.getElementById('contenido-pago').hidden = true;
         document.getElementById('confirmacion-pedido').hidden = false;
         document.getElementById('numero-pedido').textContent = 'Número de pedido: ' + pedido.id;
-        document.getElementById('fecha-confirmada').textContent = 'Día de recolección: ' + pedido.fechaRecoleccion;
+        document.getElementById('fecha-confirmada').textContent = 'Día de recolección: ' + pedido.fechaRecoleccion + ' · Horario: 6:00 a. m. a 6:00 p. m.';
         mensajePago.textContent = 'Pedido de prueba confirmado.';
     } catch (error) {
         mensajePago.textContent = error.message;
@@ -120,9 +122,10 @@ function cambiarMetodoPago() {
     var transferencia = document.getElementById('metodo-pago').value === 'Transferencia';
     document.getElementById('datos-transferencia').hidden = !transferencia;
     document.getElementById('datos-tarjeta').hidden = transferencia;
-    document.querySelectorAll('#datos-tarjeta input').forEach(function (campo) {
-        campo.disabled = transferencia;
-    });
+    var camposTarjeta = document.querySelectorAll('#datos-tarjeta input');
+    for (var i = 0; i < camposTarjeta.length; i++) {
+        camposTarjeta[i].disabled = transferencia;
+    }
 }
 
 document.getElementById('metodo-pago').onchange = cambiarMetodoPago;

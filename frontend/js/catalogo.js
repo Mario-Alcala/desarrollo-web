@@ -10,7 +10,8 @@ function mostrarCatalogo() {
         }
 
         // Mostrar la información; las cantidades se eligen en el carrito.
-        datos.productos.forEach(function (producto) {
+        for (var i = 0; i < datos.productos.length; i++) {
+            var producto = datos.productos[i];
             var tarjeta = document.createElement('article');
             tarjeta.className = 'producto';
             var nombre = document.createElement('h2');
@@ -23,7 +24,7 @@ function mostrarCatalogo() {
             tarjeta.appendChild(precio);
             tarjeta.appendChild(stock);
             lista.appendChild(tarjeta);
-        });
+        }
     } catch (error) {
         mensaje.textContent = 'No se pudieron cargar los datos del navegador.';
     }

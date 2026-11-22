@@ -1,0 +1,9 @@
+git diff --numstat 96a73b0 f46b1aa
+216	0	frontend/css/admin.css
+171	0	frontend/css/terrenos.css
+73	0	frontend/js/sidebar.js
+165	0	frontend/js/terreno-detalle.js
+45	0	frontend/js/terrenos-datos.js
+149	0	frontend/js/terrenos.js
+79	0	frontend/terreno-detalle.html
+77	0	frontend/terrenos.html

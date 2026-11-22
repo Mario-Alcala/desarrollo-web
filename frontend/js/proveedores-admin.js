@@ -25,24 +25,38 @@ async function cargarProveedores() {
 
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
-    const visibles = proveedores.filter(p =>
-        [p.nombreEmpresa, p.contacto, p.telefono, p.email, p.direccion]
-            .some(valor => String(valor || "").toLowerCase().includes(q))
-    );
-    cabecera.replaceChildren(...["Empresa", "Contacto", "Teléfono", "Correo", "Dirección", "Acciones"].map(t => crear("th", t)));
-    cuerpo.replaceChildren(...visibles.map(p => {
+    const visibles = [];
+    for (let i = 0; i < proveedores.length; i++) {
+        const proveedor = proveedores[i];
+        const texto = `${proveedor.nombreEmpresa || ""} ${proveedor.contacto || ""} ${proveedor.telefono || ""} ${proveedor.email || ""} ${proveedor.direccion || ""}`.toLowerCase();
+        if (!q || texto.includes(q)) visibles.push(proveedor);
+    }
+
+    cabecera.replaceChildren();
+    const nombresColumnas = ["Empresa", "Contacto", "Teléfono", "Correo", "Dirección", "Acciones"];
+    for (let i = 0; i < nombresColumnas.length; i++) {
+        cabecera.append(crear("th", nombresColumnas[i]));
+    }
+
+    cuerpo.replaceChildren();
+    for (let i = 0; i < visibles.length; i++) {
+        const p = visibles[i];
         const fila = crear("tr");
-        [p.nombreEmpresa, p.contacto || "—", p.telefono || "—", p.email || "—", p.direccion || "—"].forEach(t => fila.append(crear("td", t)));
+        fila.append(crear("td", p.nombreEmpresa));
+        fila.append(crear("td", p.contacto || "—"));
+        fila.append(crear("td", p.telefono || "—"));
+        fila.append(crear("td", p.email || "—"));
+        fila.append(crear("td", p.direccion || "—"));
         const acciones = crear("td");
-        acciones.append(crearBoton("Editar", "boton boton-secundario boton-chico", () => abrir(p)));
+        acciones.append(crearBoton("Editar", "boton boton-secundario boton-chico", function () { abrir(p); }));
         fila.append(acciones);
-        return fila;
-    }));
+        cuerpo.append(fila);
+    }
     if (visibles.length) mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "proveedor" : "proveedores"}`;
     else if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay proveedores para mostrar.";
 }
 
-function abrir(p = null) {
+function abrir(p) {
     editando = p ? p.idProveedor : null;
     document.getElementById("titulo-proveedor").textContent = p ? "Editar proveedor" : "Agregar proveedor";
     msgFormulario.textContent = "";
@@ -57,7 +71,7 @@ function abrir(p = null) {
     dialogo.showModal();
 }
 
-formulario.addEventListener("submit", async evento => {
+formulario.addEventListener("submit", async function (evento) {
     evento.preventDefault();
     msgFormulario.textContent = "";
     const datos = {
@@ -74,7 +88,8 @@ formulario.addEventListener("submit", async evento => {
             body: JSON.stringify(datos)
         });
         if (!respuesta.ok) {
-            const error = await respuesta.json().catch(() => ({}));
+            let error = {};
+            try { error = await respuesta.json(); } catch (noEsJson) { error = {}; }
             throw new Error(error.mensaje || "No se pudo guardar el proveedor.");
         }
         dialogo.close();
@@ -84,7 +99,7 @@ formulario.addEventListener("submit", async evento => {
     }
 });
 
-document.getElementById("agregar-proveedor").addEventListener("click", () => abrir());
-document.getElementById("cancelar-proveedor").addEventListener("click", () => dialogo.close());
+document.getElementById("agregar-proveedor").addEventListener("click", function () { abrir(null); });
+document.getElementById("cancelar-proveedor").addEventListener("click", function () { dialogo.close(); });
 buscador.addEventListener("input", dibujar);
 cargarProveedores();

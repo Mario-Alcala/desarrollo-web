@@ -1,0 +1,1035 @@
+diff --git a/backend/database/init.sql b/backend/database/init.sql
+index 16b8a9b..6fc7962 100644
+--- a/backend/database/init.sql
++++ b/backend/database/init.sql
+@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
+     nombre_usuario VARCHAR(100) NOT NULL,
+     correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+     contrasena VARCHAR(255) NOT NULL,
+-    rol ENUM('administrador', 'empleado', 'cliente') NOT NULL
++    rol ENUM('agricultor', 'trabajador', 'cliente') NOT NULL
+ )
+ 
+ CREATE TABLE IF NOT EXISTS(
+diff --git a/backend/pom.xml b/backend/pom.xml
+index 5ac9661..14aeb5a 100644
+--- a/backend/pom.xml
++++ b/backend/pom.xml
+@@ -49,6 +49,10 @@
+ 			<artifactId>spring-boot-starter-jdbc-test</artifactId>
+ 			<scope>test</scope>
+ 		</dependency>
++		<dependency>
++    		<groupId>org.springframework.security</groupId>
++    		<artifactId>spring-security-crypto</artifactId>
++		</dependency>
+ 	</dependencies>
+ 
+ 	<build>
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java
+new file mode 100644
+index 0000000..58b8c11
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java
+@@ -0,0 +1,15 @@
++package com.cultivos.gestioncultivos_backend.config;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
++import org.springframework.security.crypto.password.PasswordEncoder;
++
++@Configuration
++public class PasswordConfig {
++
++    @Bean
++    public PasswordEncoder passwordEncoder() {
++        return new BCryptPasswordEncoder();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java
+new file mode 100644
+index 0000000..3e4ee1f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java
+@@ -0,0 +1,59 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++import com.cultivos.gestioncultivos_backend.service.IncidenciaCultivoService;
++
++@RestController
++@RequestMapping("/api/incidencias-cultivo")
++public class IncidenciaCultivoController {
++
++    private final IncidenciaCultivoService servicio;
++
++    public IncidenciaCultivoController(
++            IncidenciaCultivoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<IncidenciaCultivo> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public IncidenciaCultivo obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody IncidenciaCultivo incidencia) {
++        servicio.crear(incidencia);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody IncidenciaCultivo incidencia) {
++        servicio.actualizar(id, incidencia);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java
+new file mode 100644
+index 0000000..d66d839
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java
+@@ -0,0 +1,59 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++import com.cultivos.gestioncultivos_backend.service.ObservacionCultivoService;
++
++@RestController
++@RequestMapping("/api/observaciones-cultivos")
++public class ObservacionCultivoController {
++
++    private final ObservacionCultivoService servicio;
++
++    public ObservacionCultivoController(
++            ObservacionCultivoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<ObservacionCultivo> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public ObservacionCultivo obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody ObservacionCultivo observacion) {
++        servicio.crear(observacion);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody ObservacionCultivo observacion) {
++        servicio.actualizar(id, observacion);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java
+new file mode 100644
+index 0000000..6151182
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++import com.cultivos.gestioncultivos_backend.service.UsuarioService;
++
++@RestController
++@RequestMapping("/api/usuarios")
++public class UsuarioController {
++
++    private final UsuarioService servicio;
++
++    public UsuarioController(UsuarioService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Usuario> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Usuario obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Usuario usuario) {
++        servicio.crear(usuario);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Usuario usuario) {
++        servicio.actualizar(id, usuario);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java
+new file mode 100644
+index 0000000..4ae8c43
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java
+@@ -0,0 +1,73 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class IncidenciaCultivo {
++
++    private Integer idIncidencia;
++    private Long idCultivo;
++    private Integer idUsuario;
++    private LocalDate fechaIncidencia;
++    private String tipoIncidencia;
++    private String descripcion;
++    private String nivelGravedad;
++
++    public IncidenciaCultivo() {
++    }
++
++    public Integer getIdIncidencia() {
++        return idIncidencia;
++    }
++
++    public void setIdIncidencia(Integer idIncidencia) {
++        this.idIncidencia = idIncidencia;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public LocalDate getFechaIncidencia() {
++        return fechaIncidencia;
++    }
++
++    public void setFechaIncidencia(LocalDate fechaIncidencia) {
++        this.fechaIncidencia = fechaIncidencia;
++    }
++
++    public String getTipoIncidencia() {
++        return tipoIncidencia;
++    }
++
++    public void setTipoIncidencia(String tipoIncidencia) {
++        this.tipoIncidencia = tipoIncidencia;
++    }
++
++    public String getDescripcion() {
++        return descripcion;
++    }
++
++    public void setDescripcion(String descripcion) {
++        this.descripcion = descripcion;
++    }
++
++    public String getNivelGravedad() {
++        return nivelGravedad;
++    }
++
++    public void setNivelGravedad(String nivelGravedad) {
++        this.nivelGravedad = nivelGravedad;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java
+new file mode 100644
+index 0000000..9f68c07
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class ObservacionCultivo {
++
++    private Integer idObservacion;
++    private Long idCultivo;
++    private Integer idUsuario;
++    private LocalDate fechaObservacion;
++    private String descripcion;
++
++    public ObservacionCultivo() {
++    }
++
++    public Integer getIdObservacion() {
++        return idObservacion;
++    }
++
++    public void setIdObservacion(Integer idObservacion) {
++        this.idObservacion = idObservacion;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public LocalDate getFechaObservacion() {
++        return fechaObservacion;
++    }
++
++    public void setFechaObservacion(LocalDate fechaObservacion) {
++        this.fechaObservacion = fechaObservacion;
++    }
++
++    public String getDescripcion() {
++        return descripcion;
++    }
++
++    public void setDescripcion(String descripcion) {
++        this.descripcion = descripcion;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java
+new file mode 100644
+index 0000000..86eb5c7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class Usuario {
++
++    private Integer idUsuario;
++    private String nombreUsuario;
++    private String correoElectronico;
++
++    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
++    private String contrasena;
++
++    private String rol;
++
++    public Usuario() {
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public String getNombreUsuario() {
++        return nombreUsuario;
++    }
++
++    public void setNombreUsuario(String nombreUsuario) {
++        this.nombreUsuario = nombreUsuario;
++    }
++
++    public String getCorreoElectronico() {
++        return correoElectronico;
++    }
++
++    public void setCorreoElectronico(String correoElectronico) {
++        this.correoElectronico = correoElectronico;
++    }
++
++    public String getContrasena() {
++        return contrasena;
++    }
++
++    public void setContrasena(String contrasena) {
++        this.contrasena = contrasena;
++    }
++
++    public String getRol() {
++        return rol;
++    }
++
++    public void setRol(String rol) {
++        this.rol = rol;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java
+new file mode 100644
+index 0000000..ab54834
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java
+@@ -0,0 +1,91 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++
++@Repository
++public class IncidenciaCultivoRepository {
++
++    private final JdbcClient jdbc;
++
++    public IncidenciaCultivoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<IncidenciaCultivo> buscarTodas() {
++        return jdbc.sql("""
++                SELECT * FROM incidencias_cultivo
++                ORDER BY id_incidencia
++                """)
++                .query(IncidenciaCultivo.class)
++                .list();
++    }
++
++    public IncidenciaCultivo buscarPorId(int id) {
++        List<IncidenciaCultivo> resultado = jdbc.sql("""
++                SELECT * FROM incidencias_cultivo
++                WHERE id_incidencia = :id
++                """)
++                .param("id", id)
++                .query(IncidenciaCultivo.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(IncidenciaCultivo incidencia) {
++        jdbc.sql("""
++                INSERT INTO incidencias_cultivo
++                (id_cultivo, id_usuario, fecha_incidencia,
++                 tipo_incidencia, descripcion, nivel_gravedad)
++                VALUES
++                (:cultivo, :usuario, :fecha,
++                 :tipo, :descripcion, :gravedad)
++                """)
++                .param("cultivo", incidencia.getIdCultivo())
++                .param("usuario", incidencia.getIdUsuario())
++                .param("fecha", incidencia.getFechaIncidencia())
++                .param("tipo", incidencia.getTipoIncidencia())
++                .param("descripcion", incidencia.getDescripcion())
++                .param("gravedad", incidencia.getNivelGravedad())
++                .update();
++    }
++
++    public void actualizar(IncidenciaCultivo incidencia) {
++        jdbc.sql("""
++                UPDATE incidencias_cultivo
++                SET id_cultivo = :cultivo,
++                    id_usuario = :usuario,
++                    fecha_incidencia = :fecha,
++                    tipo_incidencia = :tipo,
++                    descripcion = :descripcion,
++                    nivel_gravedad = :gravedad
++                WHERE id_incidencia = :id
++                """)
++                .param("cultivo", incidencia.getIdCultivo())
++                .param("usuario", incidencia.getIdUsuario())
++                .param("fecha", incidencia.getFechaIncidencia())
++                .param("tipo", incidencia.getTipoIncidencia())
++                .param("descripcion", incidencia.getDescripcion())
++                .param("gravedad", incidencia.getNivelGravedad())
++                .param("id", incidencia.getIdIncidencia())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("""
++                DELETE FROM incidencias_cultivo
++                WHERE id_incidencia = :id
++                """)
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java
+new file mode 100644
+index 0000000..9f4b489
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++
++@Repository
++public class ObservacionCultivoRepository {
++
++    private final JdbcClient jdbc;
++
++    public ObservacionCultivoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<ObservacionCultivo> buscarTodas() {
++        return jdbc.sql("""
++                SELECT * FROM observaciones_cultivos
++                ORDER BY id_observacion
++                """)
++                .query(ObservacionCultivo.class)
++                .list();
++    }
++
++    public ObservacionCultivo buscarPorId(int id) {
++        List<ObservacionCultivo> resultado = jdbc.sql("""
++                SELECT * FROM observaciones_cultivos
++                WHERE id_observacion = :id
++                """)
++                .param("id", id)
++                .query(ObservacionCultivo.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(ObservacionCultivo observacion) {
++        jdbc.sql("""
++                INSERT INTO observaciones_cultivos
++                (id_cultivo, id_usuario, fecha_observacion, descripcion)
++                VALUES
++                (:cultivo, :usuario, :fecha, :descripcion)
++                """)
++                .param("cultivo", observacion.getIdCultivo())
++                .param("usuario", observacion.getIdUsuario())
++                .param("fecha", observacion.getFechaObservacion())
++                .param("descripcion", observacion.getDescripcion())
++                .update();
++    }
++
++    public void actualizar(ObservacionCultivo observacion) {
++        jdbc.sql("""
++                UPDATE observaciones_cultivos
++                SET id_cultivo = :cultivo,
++                    id_usuario = :usuario,
++                    fecha_observacion = :fecha,
++                    descripcion = :descripcion
++                WHERE id_observacion = :id
++                """)
++                .param("cultivo", observacion.getIdCultivo())
++                .param("usuario", observacion.getIdUsuario())
++                .param("fecha", observacion.getFechaObservacion())
++                .param("descripcion", observacion.getDescripcion())
++                .param("id", observacion.getIdObservacion())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("""
++                DELETE FROM observaciones_cultivos
++                WHERE id_observacion = :id
++                """)
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java
+new file mode 100644
+index 0000000..6810c0e
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java
+@@ -0,0 +1,82 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++
++@Repository
++public class UsuarioRepository {
++
++    private final JdbcClient jdbc;
++
++    public UsuarioRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Usuario> buscarTodos() {
++        return jdbc.sql("""
++                SELECT id_usuario, nombre_usuario, correo_electronico, rol
++                FROM usuarios
++                ORDER BY id_usuario
++                """)
++                .query(Usuario.class)
++                .list();
++    }
++
++    public Usuario buscarPorId(int id) {
++        List<Usuario> resultado = jdbc.sql("""
++                SELECT id_usuario, nombre_usuario, correo_electronico, rol
++                FROM usuarios
++                WHERE id_usuario = :id
++                """)
++                .param("id", id)
++                .query(Usuario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Usuario usuario) {
++        jdbc.sql("""
++                INSERT INTO usuarios
++                (nombre_usuario, correo_electronico, contrasena, rol)
++                VALUES
++                (:nombre, :correo, :contrasena, :rol)
++                """)
++                .param("nombre", usuario.getNombreUsuario())
++                .param("correo", usuario.getCorreoElectronico())
++                .param("contrasena", usuario.getContrasena())
++                .param("rol", usuario.getRol())
++                .update();
++    }
++
++    public void actualizar(Usuario usuario) {
++        jdbc.sql("""
++                UPDATE usuarios
++                SET nombre_usuario = :nombre,
++                    correo_electronico = :correo,
++                    contrasena = :contrasena,
++                    rol = :rol
++                WHERE id_usuario = :id
++                """)
++                .param("nombre", usuario.getNombreUsuario())
++                .param("correo", usuario.getCorreoElectronico())
++                .param("contrasena", usuario.getContrasena())
++                .param("rol", usuario.getRol())
++                .param("id", usuario.getIdUsuario())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM usuarios WHERE id_usuario = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java
+new file mode 100644
+index 0000000..62c129b
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java
+@@ -0,0 +1,100 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++import com.cultivos.gestioncultivos_backend.repository.IncidenciaCultivoRepository;
++
++@Service
++public class IncidenciaCultivoService {
++
++    private final IncidenciaCultivoRepository repositorio;
++
++    public IncidenciaCultivoService(
++            IncidenciaCultivoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<IncidenciaCultivo> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public IncidenciaCultivo obtener(int id) {
++        IncidenciaCultivo incidencia = repositorio.buscarPorId(id);
++
++        if (incidencia == null) {
++            throw new NoSuchElementException(
++                    "No existe la incidencia con id " + id);
++        }
++
++        return incidencia;
++    }
++
++    public void crear(IncidenciaCultivo incidencia) {
++        validar(incidencia);
++        repositorio.insertar(incidencia);
++    }
++
++    public void actualizar(int id, IncidenciaCultivo incidencia) {
++        obtener(id);
++        validar(incidencia);
++        incidencia.setIdIncidencia(id);
++        repositorio.actualizar(incidencia);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(IncidenciaCultivo incidencia) {
++        if (incidencia == null) {
++            throw new IllegalArgumentException(
++                    "La incidencia es obligatoria");
++        }
++
++        if (incidencia.getIdCultivo() == null) {
++            throw new IllegalArgumentException("El cultivo es obligatorio");
++        }
++
++        if (incidencia.getIdUsuario() == null) {
++            throw new IllegalArgumentException("El usuario es obligatorio");
++        }
++
++        if (incidencia.getTipoIncidencia() == null
++                || !(incidencia.getTipoIncidencia().equalsIgnoreCase("plaga")
++                || incidencia.getTipoIncidencia()
++                        .equalsIgnoreCase("enfermedad"))) {
++            throw new IllegalArgumentException(
++                    "El tipo debe ser plaga o enfermedad");
++        }
++
++        if (incidencia.getDescripcion() == null
++                || incidencia.getDescripcion().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La descripción es obligatoria");
++        }
++
++        if (incidencia.getNivelGravedad() == null
++                || !(incidencia.getNivelGravedad().equalsIgnoreCase("bajo")
++                || incidencia.getNivelGravedad().equalsIgnoreCase("medio")
++                || incidencia.getNivelGravedad().equalsIgnoreCase("alto"))) {
++            throw new IllegalArgumentException(
++                    "La gravedad debe ser bajo, medio o alto");
++        }
++
++        if (incidencia.getFechaIncidencia() == null) {
++            incidencia.setFechaIncidencia(LocalDate.now());
++        }
++
++        incidencia.setTipoIncidencia(
++                incidencia.getTipoIncidencia().toLowerCase());
++        incidencia.setNivelGravedad(
++                incidencia.getNivelGravedad().toLowerCase());
++        incidencia.setDescripcion(incidencia.getDescripcion().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java
+new file mode 100644
+index 0000000..72b8de2
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java
+@@ -0,0 +1,82 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++import com.cultivos.gestioncultivos_backend.repository.ObservacionCultivoRepository;
++
++@Service
++public class ObservacionCultivoService {
++
++    private final ObservacionCultivoRepository repositorio;
++
++    public ObservacionCultivoService(
++            ObservacionCultivoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<ObservacionCultivo> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public ObservacionCultivo obtener(int id) {
++        ObservacionCultivo observacion = repositorio.buscarPorId(id);
++
++        if (observacion == null) {
++            throw new NoSuchElementException(
++                    "No existe la observación con id " + id);
++        }
++
++        return observacion;
++    }
++
++    public void crear(ObservacionCultivo observacion) {
++        validar(observacion);
++        repositorio.insertar(observacion);
++    }
++
++    public void actualizar(int id, ObservacionCultivo observacion) {
++        obtener(id);
++        validar(observacion);
++        observacion.setIdObservacion(id);
++        repositorio.actualizar(observacion);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(ObservacionCultivo observacion) {
++        if (observacion == null) {
++            throw new IllegalArgumentException(
++                    "La observación es obligatoria");
++        }
++
++        if (observacion.getIdCultivo() == null) {
++            throw new IllegalArgumentException(
++                    "El cultivo es obligatorio");
++        }
++
++        if (observacion.getIdUsuario() == null) {
++            throw new IllegalArgumentException(
++                    "El usuario es obligatorio");
++        }
++
++        if (observacion.getDescripcion() == null
++                || observacion.getDescripcion().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La descripción es obligatoria");
++        }
++
++        if (observacion.getFechaObservacion() == null) {
++            observacion.setFechaObservacion(LocalDate.now());
++        }
++
++        observacion.setDescripcion(observacion.getDescripcion().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java
+new file mode 100644
+index 0000000..11e4bc7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java
+@@ -0,0 +1,101 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.security.crypto.password.PasswordEncoder;
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++import com.cultivos.gestioncultivos_backend.repository.UsuarioRepository;
++
++@Service
++public class UsuarioService {
++
++    private final UsuarioRepository repositorio;
++    private final PasswordEncoder codificador;
++
++    public UsuarioService(
++            UsuarioRepository repositorio,
++            PasswordEncoder codificador) {
++        this.repositorio = repositorio;
++        this.codificador = codificador;
++    }
++
++    public List<Usuario> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Usuario obtener(int id) {
++        Usuario usuario = repositorio.buscarPorId(id);
++
++        if (usuario == null) {
++            throw new NoSuchElementException(
++                    "No existe el usuario con id " + id);
++        }
++
++        return usuario;
++    }
++
++    public void crear(Usuario usuario) {
++        validar(usuario);
++
++        usuario.setContrasena(
++                codificador.encode(usuario.getContrasena()));
++
++        repositorio.insertar(usuario);
++    }
++
++    public void actualizar(int id, Usuario usuario) {
++        obtener(id);
++        validar(usuario);
++
++        usuario.setIdUsuario(id);
++        usuario.setContrasena(
++                codificador.encode(usuario.getContrasena()));
++
++        repositorio.actualizar(usuario);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Usuario usuario) {
++        if (usuario == null) {
++            throw new IllegalArgumentException("El usuario es obligatorio");
++        }
++
++        if (usuario.getNombreUsuario() == null
++                || usuario.getNombreUsuario().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre de usuario es obligatorio");
++        }
++
++        if (usuario.getCorreoElectronico() == null
++                || usuario.getCorreoElectronico().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El correo electrónico es obligatorio");
++        }
++
++        if (usuario.getContrasena() == null
++                || usuario.getContrasena().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La contraseña es obligatoria");
++        }
++
++        if (usuario.getRol() == null
++                || !(usuario.getRol().equalsIgnoreCase("agricultor")
++                || usuario.getRol().equalsIgnoreCase("trabajador")
++                || usuario.getRol().equalsIgnoreCase("cliente"))) {
++            throw new IllegalArgumentException(
++                    "El rol debe ser agricultor, trabajador o cliente");
++        }
++
++        usuario.setNombreUsuario(usuario.getNombreUsuario().trim());
++        usuario.setCorreoElectronico(
++                usuario.getCorreoElectronico().trim());
++        usuario.setRol(usuario.getRol().toLowerCase());
++    }
++}
+\ No newline at end of file

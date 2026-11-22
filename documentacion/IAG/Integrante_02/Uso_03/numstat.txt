@@ -1,0 +1,10 @@
+git diff --numstat 71c30d3 48dd149
+12	0	backend/database/init.sql
+64	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java
+58	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java
+83	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java
+83	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java
+97	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java
+86	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java
+98	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java
+83	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java

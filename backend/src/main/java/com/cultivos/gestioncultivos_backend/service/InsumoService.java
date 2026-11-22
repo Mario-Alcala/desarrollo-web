@@ -12,6 +12,7 @@ import com.cultivos.gestioncultivos_backend.repository.InsumoRepository;
 public class InsumoService {
 
     private static final List<String> CATEGORIAS = List.of("semilla", "abono", "fertilizante");
+    private static final List<String> TIPOS_ABONO = List.of("organico", "inorganico");
     private final InsumoRepository repositorio;
 
     public InsumoService(InsumoRepository repositorio) {
@@ -70,6 +71,17 @@ public class InsumoService {
         }
         insumo.setCategoria(insumo.getCategoria().trim().toLowerCase());
         validarCategoria(insumo.getCategoria());
+        if ("abono".equals(insumo.getCategoria())) {
+            if (insumo.getTipoAbono() == null || insumo.getTipoAbono().isBlank()) {
+                throw new IllegalArgumentException("Selecciona si el abono es orgánico o inorgánico");
+            }
+            insumo.setTipoAbono(insumo.getTipoAbono().trim().toLowerCase());
+            if (!TIPOS_ABONO.contains(insumo.getTipoAbono())) {
+                throw new IllegalArgumentException("El tipo de abono debe ser organico o inorganico");
+            }
+        } else {
+            insumo.setTipoAbono(null);
+        }
         if (insumo.getUnidadMedida() == null || insumo.getUnidadMedida().isBlank()) {
             throw new IllegalArgumentException("La unidad de medida es obligatoria");
         }

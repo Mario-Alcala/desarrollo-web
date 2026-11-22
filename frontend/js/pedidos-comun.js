@@ -13,17 +13,28 @@
 const HORARIO_RECOLECCION = "7:00 a. m. a 6:00 p. m.";
 
 function totalPedido(pedido) {
-    return pedido.detalle.reduce((suma, renglon) => suma + renglon.kg * renglon.precioPorKg, 0);
+    var total = 0;
+    for (var i = 0; i < pedido.detalle.length; i++) {
+        total += pedido.detalle[i].kg * pedido.detalle[i].precioPorKg;
+    }
+    return total;
 }
 
 function kilosPedido(pedido) {
-    return pedido.detalle.reduce((suma, renglon) => suma + renglon.kg, 0);
+    var kilos = 0;
+    for (var i = 0; i < pedido.detalle.length; i++) {
+        kilos += pedido.detalle[i].kg;
+    }
+    return kilos;
 }
 
 // "2026-11-18" -> "18 nov 2026". Se arma con año, mes y día para evitar corrimientos de zona horaria.
 function fmtFecha(iso) {
     if (!iso) return "—";
-    const [a, m, d] = String(iso).slice(0, 10).split("-").map(Number);
+    const partes = String(iso).slice(0, 10).split("-");
+    const a = Number(partes[0]);
+    const m = Number(partes[1]);
+    const d = Number(partes[2]);
     return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -36,5 +47,8 @@ function tipoEstado(estado) {
 }
 
 function productoPorId(id) {
-    return PRODUCTOS.find(p => p.id === id);
+    for (var i = 0; i < PRODUCTOS.length; i++) {
+        if (PRODUCTOS[i].id === id) return PRODUCTOS[i];
+    }
+    return null;
 }

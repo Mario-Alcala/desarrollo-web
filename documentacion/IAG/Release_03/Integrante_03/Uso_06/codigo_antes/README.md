@@ -1,0 +1,1 @@
+No aplica: la sesión no tuvo cambios de código.

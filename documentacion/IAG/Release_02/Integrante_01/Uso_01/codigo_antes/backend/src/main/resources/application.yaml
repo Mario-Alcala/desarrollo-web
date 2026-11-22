@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gestioncultivos-backend
+  datasource:
+    # La base y el usuario se crean con database/init.sql (ver README)
+    url: jdbc:mysql://localhost:3306/gestion_cultivos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USER:cultivos_user}
+    password: ${DB_PASSWORD:Cultivos_2026!}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always   

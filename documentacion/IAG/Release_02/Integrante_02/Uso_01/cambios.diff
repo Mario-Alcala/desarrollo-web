@@ -1,0 +1,4691 @@
+diff --git a/backend/database/init.sql b/backend/database/init.sql
+index 731ceab..fadbaff 100644
+--- a/backend/database/init.sql
++++ b/backend/database/init.sql
+@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS terrenos (
+     superficie_ha  DECIMAL(10,2),
+     tipo_suelo     VARCHAR(100),
+     estado         VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
++    latitud        DECIMAL(9,6),
++    longitud       DECIMAL(9,6),
+     PRIMARY KEY (id)
+ );
+ 
+@@ -76,45 +78,179 @@ CREATE TABLE IF NOT EXISTS herramientas (
+     PRIMARY KEY (id)
+ );
+ 
++CREATE TABLE IF NOT EXISTS proveedores (
++    id_proveedor INT PRIMARY KEY AUTO_INCREMENT,
++    nombre_empresa VARCHAR(100) NOT NULL,
++    contacto VARCHAR(100),
++    telefono VARCHAR(20),
++    direccion VARCHAR(255)
++);
++
++CREATE TABLE IF NOT EXISTS inventario (
++    id_inventario INT PRIMARY KEY AUTO_INCREMENT,
++    cantidad INT NOT NULL,
++    fecha_ingreso DATE NOT NULL,
++    fecha_caducidad DATE NULL,
++    categoria VARCHAR(50) NOT NULL,
++    id_proveedor INT,
++    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
++);
++
++CREATE TABLE IF NOT EXISTS movimientos_inventario (
++    id_movimiento INT PRIMARY KEY AUTO_INCREMENT,
++    id_inventario INT NOT NULL,
++    tipo_movimiento ENUM('entrada', 'salida') NOT NULL,
++    cantidad INT NOT NULL,
++    fecha_movimiento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    FOREIGN KEY (id_inventario) REFERENCES inventario(id_inventario)
++);
++
++CREATE TABLE IF NOT EXISTS fertilizantes (
++    id_fertilizante INT PRIMARY KEY AUTO_INCREMENT,
++    nombre_fertilizante VARCHAR(100) NOT NULL,
++    tipo_fertilizante VARCHAR(50) NOT NULL,
++    fecha_caducidad DATE NOT NULL,
++    id_proveedor INT,
++    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
++);
++
++CREATE TABLE IF NOT EXISTS abonos (
++    id_abono INT PRIMARY KEY AUTO_INCREMENT,
++    nombre_abono VARCHAR(100) NOT NULL,
++    tipo_abono VARCHAR(50) NOT NULL,
++    fecha_caducidad DATE NOT NULL,
++    id_proveedor INT,
++    FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
++);
++
++CREATE TABLE IF NOT EXISTS cosechas (
++    id_cosecha INT PRIMARY KEY AUTO_INCREMENT,
++    id_cultivo BIGINT NOT NULL,
++    fecha_cosecha DATE NOT NULL,
++    cantidad_cosechada DECIMAL(10,2) NOT NULL,
++    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id)
++);
++
++CREATE TABLE IF NOT EXISTS distribucion (
++    id_distribucion INT PRIMARY KEY AUTO_INCREMENT,
++    fecha_salida DATE NOT NULL,
++    fecha_entrega DATE NULL,
++    destino VARCHAR(100) NOT NULL,
++    responsable VARCHAR(100) NOT NULL,
++    estado ENUM('pendiente', 'en_transito', 'entregado')
++        NOT NULL DEFAULT 'pendiente'
++);
++
++CREATE TABLE IF NOT EXISTS detalle_distribucion (
++    id_detalle INT PRIMARY KEY AUTO_INCREMENT,
++    id_distribucion INT NOT NULL,
++    id_cosecha INT NOT NULL,
++    cantidad INT NOT NULL,
++    FOREIGN KEY (id_distribucion) REFERENCES distribucion(id_distribucion),
++    FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
++);
++
++CREATE TABLE IF NOT EXISTS riesgos (
++    id_riesgo INT PRIMARY KEY AUTO_INCREMENT,
++    descripcion VARCHAR(255) NOT NULL,
++    nivel_riesgo ENUM('bajo', 'medio', 'alto') NOT NULL,
++    fecha_identificacion DATE NOT NULL
++);
++
++CREATE TABLE IF NOT EXISTS usuarios (
++    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
++    nombre_usuario VARCHAR(100) NOT NULL,
++    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
++    contrasena VARCHAR(255) NOT NULL,
++    rol ENUM('agricultor', 'trabajador', 'cliente') NOT NULL
++);
++
++CREATE TABLE IF NOT EXISTS observaciones_cultivos (
++    id_observacion INT PRIMARY KEY AUTO_INCREMENT,
++    id_cultivo BIGINT NOT NULL,
++    id_usuario INT NOT NULL,
++    fecha_observacion DATE NOT NULL,
++    descripcion TEXT NOT NULL,
++    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
++    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
++);
++
++CREATE TABLE IF NOT EXISTS incidencias_cultivo (
++    id_incidencia INT PRIMARY KEY AUTO_INCREMENT,
++    id_cultivo BIGINT NOT NULL,
++    id_usuario INT NOT NULL,
++    fecha_incidencia DATE NOT NULL,
++    tipo_incidencia ENUM('plaga', 'enfermedad') NOT NULL,
++    descripcion TEXT NOT NULL,
++    nivel_gravedad ENUM('bajo', 'medio', 'alto') NOT NULL,
++    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
++    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
++);
++
++CREATE TABLE IF NOT EXISTS riegos (
++    id_riego INT PRIMARY KEY AUTO_INCREMENT,
++    id_cultivo BIGINT NOT NULL,
++    id_terreno BIGINT NOT NULL,
++    fecha_riego DATE NOT NULL,
++    cantidad_agua DECIMAL(10,2) NOT NULL,
++    unidad_medida VARCHAR(20) NOT NULL,
++    metodo VARCHAR(50) NULL,
++    observaciones VARCHAR(255),
++    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
++    FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
++);
++
+ -- ---------------------------------------------------------------------
+ -- Datos de ejemplo (solo se insertan si la tabla está vacía)
+ -- ---------------------------------------------------------------------
+ INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
+ SELECT * FROM (
+-    SELECT 'Maíz criollo' AS nombre, 'Cereal'     AS tipo, 'Siembra'     AS etapa_fenologica, '2026-11-01' AS fecha_registro
++    SELECT 'Maíz criollo' AS nombre, 'Cereal' AS tipo,
++           'Siembra' AS etapa_fenologica, '2026-11-01' AS fecha_registro
+     UNION ALL
+-    SELECT 'Frijol negro',           'Leguminosa',          'Germinación',                      '2026-11-03'
++    SELECT 'Frijol negro', 'Leguminosa', 'Germinación', '2026-11-03'
+     UNION ALL
+-    SELECT 'Tomate saladette',       'Hortaliza',           'Floración',                        '2026-11-05'
++    SELECT 'Tomate saladette', 'Hortaliza', 'Floración', '2026-11-05'
+ ) AS datos
+ WHERE NOT EXISTS (SELECT 1 FROM cultivos);
+ 
+ INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
+ SELECT * FROM (
+-    SELECT 'Maíz blanco H-520' AS variedad, 120 AS stock_disponible, 'Agroinsumos del Golfo' AS proveedor_origen, '2027-06-30' AS fecha_caducidad
++    SELECT 'Maíz blanco H-520' AS variedad, 120 AS stock_disponible,
++           'Agroinsumos del Golfo' AS proveedor_origen,
++           '2027-06-30' AS fecha_caducidad
+     UNION ALL
+-    SELECT 'Frijol Jamapa',                  80,                      'Semillas Veracruz',                         '2027-03-15'
++    SELECT 'Frijol Jamapa', 80, 'Semillas Veracruz', '2027-03-15'
+     UNION ALL
+-    SELECT 'Tomate Río Grande',              45,                      'Agroinsumos del Golfo',                     '2026-12-31'
++    SELECT 'Tomate Río Grande', 45, 'Agroinsumos del Golfo', '2026-12-31'
+ ) AS datos
+ WHERE NOT EXISTS (SELECT 1 FROM semillas);
+ 
+-INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
++INSERT INTO terrenos
++(nombre, ubicacion, superficie_ha, tipo_suelo, estado)
+ SELECT * FROM (
+-    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion, 2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo, 'Disponible' AS estado
++    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion,
++           2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo,
++           'Disponible' AS estado
+     UNION ALL
+-    SELECT 'Parcela Sur',             'Veracruz, Ver.',              1.80,                     'Arenoso',                       'En uso'
++    SELECT 'Parcela Sur', 'Veracruz, Ver.', 1.80,
++           'Arenoso', 'En uso'
+     UNION ALL
+-    SELECT 'Invernadero 1',           'Boca del Río, Ver.',          0.30,                     'Sustrato',                      'En descanso'
++    SELECT 'Invernadero 1', 'Boca del Río, Ver.', 0.30,
++           'Sustrato', 'En descanso'
+ ) AS datos
+ WHERE NOT EXISTS (SELECT 1 FROM terrenos);
+ 
+ INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
+ SELECT * FROM (
+-    SELECT 'Pala de punta' AS nombre, 'Manual' AS tipo, 10 AS cantidad, 'Disponible' AS estado, '2026-01-15' AS fecha_adquisicion
++    SELECT 'Pala de punta' AS nombre, 'Manual' AS tipo,
++           10 AS cantidad, 'Disponible' AS estado,
++           '2026-01-15' AS fecha_adquisicion
+     UNION ALL
+-    SELECT 'Tractor agrícola',        'Maquinaria',      1,             'En uso',                '2025-08-20'
++    SELECT 'Tractor agrícola', 'Maquinaria', 1,
++           'En uso', '2025-08-20'
+     UNION ALL
+-    SELECT 'Riego por goteo',         'Riego',           4,             'Mantenimiento',         '2026-03-10'
++    SELECT 'Riego por goteo', 'Riego', 4,
++           'Mantenimiento', '2026-03-10'
+ ) AS datos
+-WHERE NOT EXISTS (SELECT 1 FROM herramientas);
++WHERE NOT EXISTS (SELECT 1 FROM herramientas);
+\ No newline at end of file
+diff --git a/backend/pom.xml b/backend/pom.xml
+index 5ac9661..14aeb5a 100644
+--- a/backend/pom.xml
++++ b/backend/pom.xml
+@@ -49,6 +49,10 @@
+ 			<artifactId>spring-boot-starter-jdbc-test</artifactId>
+ 			<scope>test</scope>
+ 		</dependency>
++		<dependency>
++    		<groupId>org.springframework.security</groupId>
++    		<artifactId>spring-security-crypto</artifactId>
++		</dependency>
+ 	</dependencies>
+ 
+ 	<build>
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java
+new file mode 100644
+index 0000000..656eb3b
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java
+@@ -0,0 +1,16 @@
++package com.cultivos.gestioncultivos_backend.config;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.web.client.RestClient;
++
++@Configuration
++public class ClimaConfig {
++
++    @Bean
++    public RestClient climaRestClient() {
++        return RestClient.builder()
++                .baseUrl("https://api.open-meteo.com")
++                .build();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java
+new file mode 100644
+index 0000000..58b8c11
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/PasswordConfig.java
+@@ -0,0 +1,15 @@
++package com.cultivos.gestioncultivos_backend.config;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
++import org.springframework.security.crypto.password.PasswordEncoder;
++
++@Configuration
++public class PasswordConfig {
++
++    @Bean
++    public PasswordEncoder passwordEncoder() {
++        return new BCryptPasswordEncoder();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/AbonoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/AbonoController.java
+new file mode 100644
+index 0000000..100ab9f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/AbonoController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Abono;
++import com.cultivos.gestioncultivos_backend.service.AbonoService;
++
++@RestController
++@RequestMapping("/api/abonos")
++public class AbonoController {
++
++    private final AbonoService servicio;
++
++    public AbonoController(AbonoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Abono> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Abono obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Abono abono) {
++        servicio.crear(abono);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Abono abono) {
++        servicio.actualizar(id, abono);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CosechaController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CosechaController.java
+new file mode 100644
+index 0000000..6f26137
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CosechaController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Cosecha;
++import com.cultivos.gestioncultivos_backend.service.CosechaService;
++
++@RestController
++@RequestMapping("/api/cosechas")
++public class CosechaController {
++
++    private final CosechaService servicio;
++
++    public CosechaController(CosechaService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Cosecha> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Cosecha obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Cosecha cosecha) {
++        servicio.crear(cosecha);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Cosecha cosecha) {
++        servicio.actualizar(id, cosecha);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DetalleDistribucionController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DetalleDistribucionController.java
+new file mode 100644
+index 0000000..b114799
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DetalleDistribucionController.java
+@@ -0,0 +1,65 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.DetalleDistribucion;
++import com.cultivos.gestioncultivos_backend.service.DetalleDistribucionService;
++
++@RestController
++@RequestMapping("/api/detalles-distribucion")
++public class DetalleDistribucionController {
++
++    private final DetalleDistribucionService servicio;
++
++    public DetalleDistribucionController(
++            DetalleDistribucionService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<DetalleDistribucion> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/distribucion/{idDistribucion}")
++    public List<DetalleDistribucion> listarPorDistribucion(
++            @PathVariable("idDistribucion") int idDistribucion) {
++        return servicio.listarPorDistribucion(idDistribucion);
++    }
++
++    @GetMapping("/{id}")
++    public DetalleDistribucion obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody DetalleDistribucion detalle) {
++        servicio.crear(detalle);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody DetalleDistribucion detalle) {
++        servicio.actualizar(id, detalle);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DistribucionController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DistribucionController.java
+new file mode 100644
+index 0000000..eb605bd
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/DistribucionController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Distribucion;
++import com.cultivos.gestioncultivos_backend.service.DistribucionService;
++
++@RestController
++@RequestMapping("/api/distribuciones")
++public class DistribucionController {
++
++    private final DistribucionService servicio;
++
++    public DistribucionController(DistribucionService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Distribucion> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Distribucion obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Distribucion distribucion) {
++        servicio.crear(distribucion);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Distribucion distribucion) {
++        servicio.actualizar(id, distribucion);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/FertilizanteController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/FertilizanteController.java
+new file mode 100644
+index 0000000..8ec1f25
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/FertilizanteController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Fertilizante;
++import com.cultivos.gestioncultivos_backend.service.FertilizanteService;
++
++@RestController
++@RequestMapping("/api/fertilizantes")
++public class FertilizanteController {
++
++    private final FertilizanteService servicio;
++
++    public FertilizanteController(FertilizanteService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Fertilizante> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Fertilizante obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Fertilizante fertilizante) {
++        servicio.crear(fertilizante);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Fertilizante fertilizante) {
++        servicio.actualizar(id, fertilizante);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java
+new file mode 100644
+index 0000000..3e4ee1f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/IncidenciaCultivoController.java
+@@ -0,0 +1,59 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++import com.cultivos.gestioncultivos_backend.service.IncidenciaCultivoService;
++
++@RestController
++@RequestMapping("/api/incidencias-cultivo")
++public class IncidenciaCultivoController {
++
++    private final IncidenciaCultivoService servicio;
++
++    public IncidenciaCultivoController(
++            IncidenciaCultivoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<IncidenciaCultivo> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public IncidenciaCultivo obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody IncidenciaCultivo incidencia) {
++        servicio.crear(incidencia);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody IncidenciaCultivo incidencia) {
++        servicio.actualizar(id, incidencia);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java
+new file mode 100644
+index 0000000..7f31133
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java
+@@ -0,0 +1,64 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.service.InventarioService;
++
++@RestController
++@RequestMapping("/api/inventario")
++public class InventarioController {
++
++    private final InventarioService servicio;
++
++    public InventarioController(InventarioService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Inventario> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Inventario obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Inventario producto) {
++        servicio.crear(producto);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Inventario producto) {
++        servicio.actualizar(id, producto);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++
++    @GetMapping("/categoria/{categoria}")
++    public List<Inventario> buscarPorCategoria(
++            @PathVariable("categoria") String categoria) {
++        return servicio.buscarPorCategoria(categoria);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/MovimientoInventarioController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/MovimientoInventarioController.java
+new file mode 100644
+index 0000000..bf79647
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/MovimientoInventarioController.java
+@@ -0,0 +1,49 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.MovimientoInventario;
++import com.cultivos.gestioncultivos_backend.service.MovimientoInventarioService;
++
++@RestController
++@RequestMapping("/api/movimientos-inventario")
++public class MovimientoInventarioController {
++
++    private final MovimientoInventarioService servicio;
++
++    public MovimientoInventarioController(
++            MovimientoInventarioService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<MovimientoInventario> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public MovimientoInventario obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @GetMapping("/inventario/{idInventario}")
++    public List<MovimientoInventario> listarPorInventario(
++            @PathVariable("idInventario") int idInventario) {
++        return servicio.listarPorInventario(idInventario);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody MovimientoInventario movimiento) {
++        servicio.crear(movimiento);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java
+new file mode 100644
+index 0000000..d66d839
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ObservacionCultivoController.java
+@@ -0,0 +1,59 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++import com.cultivos.gestioncultivos_backend.service.ObservacionCultivoService;
++
++@RestController
++@RequestMapping("/api/observaciones-cultivos")
++public class ObservacionCultivoController {
++
++    private final ObservacionCultivoService servicio;
++
++    public ObservacionCultivoController(
++            ObservacionCultivoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<ObservacionCultivo> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public ObservacionCultivo obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody ObservacionCultivo observacion) {
++        servicio.crear(observacion);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody ObservacionCultivo observacion) {
++        servicio.actualizar(id, observacion);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ProveedorController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ProveedorController.java
+new file mode 100644
+index 0000000..78a7bc5
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ProveedorController.java
+@@ -0,0 +1,54 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Proveedor;
++import com.cultivos.gestioncultivos_backend.service.ProveedorService;
++
++@RestController 
++@RequestMapping("/api/proveedores")
++public class ProveedorController {
++
++    private final ProveedorService servicio;
++
++    public ProveedorController(ProveedorService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping 
++    public List<Proveedor> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Proveedor obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    public void crear(@RequestBody Proveedor proveedor) {
++        servicio.crear(proveedor);
++    }
++
++    @PutMapping("/{id}")
++    public void actualizar(@PathVariable("id") int id, @RequestBody Proveedor proveedor) {
++        servicio.actualizar(id, proveedor);
++    }
++
++    @DeleteMapping("/{id}")
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++
++
++    
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java
+new file mode 100644
+index 0000000..13ea2e3
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++import com.cultivos.gestioncultivos_backend.service.RiegoService;
++
++@RestController
++@RequestMapping("/api/riegos")
++public class RiegoController {
++
++    private final RiegoService servicio;
++
++    public RiegoController(RiegoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Riego> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Riego obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Riego riego) {
++        servicio.crear(riego);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Riego riego) {
++        servicio.actualizar(id, riego);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+index 3755256..fda6ce2 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ import com.cultivos.gestioncultivos_backend.service.TerrenoService;
+ 
+-/** API REST de terrenos: GET, POST, PUT y DELETE sobre /api/terrenos. */
+ 
+ @RestController
+ @RequestMapping("/api/terrenos")
+@@ -45,7 +44,9 @@ public class TerrenoController {
+     }
+ 
+     @PutMapping("/{id}")
+-    public Terreno actualizar(@PathVariable("id") Long id, @RequestBody Terreno terreno) {
++    public Terreno actualizar(
++            @PathVariable("id") Long id,
++            @RequestBody Terreno terreno) {
+         return servicio.actualizar(id, terreno);
+     }
+ 
+@@ -54,4 +55,4 @@ public class TerrenoController {
+     public void eliminar(@PathVariable("id") Long id) {
+         servicio.eliminar(id);
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java
+new file mode 100644
+index 0000000..6151182
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/UsuarioController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++import com.cultivos.gestioncultivos_backend.service.UsuarioService;
++
++@RestController
++@RequestMapping("/api/usuarios")
++public class UsuarioController {
++
++    private final UsuarioService servicio;
++
++    public UsuarioController(UsuarioService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Usuario> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Usuario obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Usuario usuario) {
++        servicio.crear(usuario);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Usuario usuario) {
++        servicio.actualizar(id, usuario);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Abono.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Abono.java
+new file mode 100644
+index 0000000..7b76b9d
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Abono.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Abono {
++
++    private Integer idAbono;
++    private String nombreAbono;
++    private String tipoAbono;
++    private LocalDate fechaCaducidad;
++    private Integer idProveedor;
++
++    public Abono() {
++    }
++
++    public Integer getIdAbono() {
++        return idAbono;
++    }
++
++    public void setIdAbono(Integer idAbono) {
++        this.idAbono = idAbono;
++    }
++
++    public String getNombreAbono() {
++        return nombreAbono;
++    }
++
++    public void setNombreAbono(String nombreAbono) {
++        this.nombreAbono = nombreAbono;
++    }
++
++    public String getTipoAbono() {
++        return tipoAbono;
++    }
++
++    public void setTipoAbono(String tipoAbono) {
++        this.tipoAbono = tipoAbono;
++    }
++
++    public LocalDate getFechaCaducidad() {
++        return fechaCaducidad;
++    }
++
++    public void setFechaCaducidad(LocalDate fechaCaducidad) {
++        this.fechaCaducidad = fechaCaducidad;
++    }
++
++    public Integer getIdProveedor() {
++        return idProveedor;
++    }
++
++    public void setIdProveedor(Integer idProveedor) {
++        this.idProveedor = idProveedor;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaController.java
+new file mode 100644
+index 0000000..0d2499e
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaController.java
+@@ -0,0 +1,41 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++import org.springframework.web.bind.annotation.RestController;
++import org.springframework.web.server.ResponseStatusException;
++
++import com.cultivos.gestioncultivos_backend.service.ClimaService;
++
++@RestController
++@RequestMapping("/api/clima")
++public class ClimaController {
++
++    private final ClimaService servicio;
++
++    public ClimaController(ClimaService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public ClimaRespuesta consultar(
++            @RequestParam double latitud,
++            @RequestParam double longitud) {
++
++        if (latitud < -90 || latitud > 90) {
++            throw new ResponseStatusException(
++                    HttpStatus.BAD_REQUEST,
++                    "La latitud debe estar entre -90 y 90");
++        }
++
++        if (longitud < -180 || longitud > 180) {
++            throw new ResponseStatusException(
++                    HttpStatus.BAD_REQUEST,
++                    "La longitud debe estar entre -180 y 180");
++        }
++
++        return servicio.consultar(latitud, longitud);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java
+new file mode 100644
+index 0000000..6efe51e
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java
+@@ -0,0 +1,118 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.util.List;
++
++public class ClimaRespuesta {
++
++    private double latitud;
++    private double longitud;
++    private String horaActualizacion;
++    private String fechaPronostico;
++    private double temperaturaCelsius;
++    private int humedadRelativa;
++    private double precipitacionActualMm;
++    private double vientoKmH;
++    private int probabilidadLluvia;
++    private double lluviaEsperadaMm;
++    private double temperaturaMaximaCelsius;
++    private List<String> sugerencias;
++
++    public ClimaRespuesta() {
++    }
++
++    public double getLatitud() {
++        return latitud;
++    }
++
++    public void setLatitud(double latitud) {
++        this.latitud = latitud;
++    }
++
++    public double getLongitud() {
++        return longitud;
++    }
++
++    public void setLongitud(double longitud) {
++        this.longitud = longitud;
++    }
++
++    public String getHoraActualizacion() {
++        return horaActualizacion;
++    }
++
++    public void setHoraActualizacion(String horaActualizacion) {
++        this.horaActualizacion = horaActualizacion;
++    }
++
++    public String getFechaPronostico() {
++        return fechaPronostico;
++    }
++
++    public void setFechaPronostico(String fechaPronostico) {
++        this.fechaPronostico = fechaPronostico;
++    }
++
++    public double getTemperaturaCelsius() {
++        return temperaturaCelsius;
++    }
++
++    public void setTemperaturaCelsius(double temperaturaCelsius) {
++        this.temperaturaCelsius = temperaturaCelsius;
++    }
++
++    public int getHumedadRelativa() {
++        return humedadRelativa;
++    }
++
++    public void setHumedadRelativa(int humedadRelativa) {
++        this.humedadRelativa = humedadRelativa;
++    }
++
++    public double getPrecipitacionActualMm() {
++        return precipitacionActualMm;
++    }
++
++    public void setPrecipitacionActualMm(double precipitacionActualMm) {
++        this.precipitacionActualMm = precipitacionActualMm;
++    }
++
++    public double getVientoKmH() {
++        return vientoKmH;
++    }
++
++    public void setVientoKmH(double vientoKmH) {
++        this.vientoKmH = vientoKmH;
++    }
++
++    public int getProbabilidadLluvia() {
++        return probabilidadLluvia;
++    }
++
++    public void setProbabilidadLluvia(int probabilidadLluvia) {
++        this.probabilidadLluvia = probabilidadLluvia;
++    }
++
++    public double getLluviaEsperadaMm() {
++        return lluviaEsperadaMm;
++    }
++
++    public void setLluviaEsperadaMm(double lluviaEsperadaMm) {
++        this.lluviaEsperadaMm = lluviaEsperadaMm;
++    }
++
++    public double getTemperaturaMaximaCelsius() {
++        return temperaturaMaximaCelsius;
++    }
++
++    public void setTemperaturaMaximaCelsius(double temperaturaMaximaCelsius) {
++        this.temperaturaMaximaCelsius = temperaturaMaximaCelsius;
++    }
++
++    public List<String> getSugerencias() {
++        return sugerencias;
++    }
++
++    public void setSugerencias(List<String> sugerencias) {
++        this.sugerencias = sugerencias;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cosecha.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cosecha.java
+new file mode 100644
+index 0000000..04ffcb6
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cosecha.java
+@@ -0,0 +1,47 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++public class Cosecha {
++
++    private Integer idCosecha;
++    private Long idCultivo;
++    private LocalDate fechaCosecha;
++    private BigDecimal cantidadCosechada;
++
++    public Cosecha() {
++    }
++
++    public Integer getIdCosecha() {
++        return idCosecha;
++    }
++
++    public void setIdCosecha(Integer idCosecha) {
++        this.idCosecha = idCosecha;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public LocalDate getFechaCosecha() {
++        return fechaCosecha;
++    }
++
++    public void setFechaCosecha(LocalDate fechaCosecha) {
++        this.fechaCosecha = fechaCosecha;
++    }
++
++    public BigDecimal getCantidadCosechada() {
++        return cantidadCosechada;
++    }
++
++    public void setCantidadCosechada(BigDecimal cantidadCosechada) {
++        this.cantidadCosechada = cantidadCosechada;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/DetalleDistribucion.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/DetalleDistribucion.java
+new file mode 100644
+index 0000000..4a3cf16
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/DetalleDistribucion.java
+@@ -0,0 +1,44 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++public class DetalleDistribucion {
++
++    private Integer idDetalle;
++    private Integer idDistribucion;
++    private Integer idCosecha;
++    private Integer cantidad;
++
++    public DetalleDistribucion() {
++    }
++
++    public Integer getIdDetalle() {
++        return idDetalle;
++    }
++
++    public void setIdDetalle(Integer idDetalle) {
++        this.idDetalle = idDetalle;
++    }
++
++    public Integer getIdDistribucion() {
++        return idDistribucion;
++    }
++
++    public void setIdDistribucion(Integer idDistribucion) {
++        this.idDistribucion = idDistribucion;
++    }
++
++    public Integer getIdCosecha() {
++        return idCosecha;
++    }
++
++    public void setIdCosecha(Integer idCosecha) {
++        this.idCosecha = idCosecha;
++    }
++
++    public Integer getCantidad() {
++        return cantidad;
++    }
++
++    public void setCantidad(Integer cantidad) {
++        this.cantidad = cantidad;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Distribucion.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Distribucion.java
+new file mode 100644
+index 0000000..3737ba5
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Distribucion.java
+@@ -0,0 +1,64 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Distribucion {
++
++    private Integer idDistribucion;
++    private LocalDate fechaSalida;
++    private LocalDate fechaEntrega;
++    private String destino;
++    private String responsable;
++    private String estado;
++
++    public Distribucion() {
++    }
++
++    public Integer getIdDistribucion() {
++        return idDistribucion;
++    }
++
++    public void setIdDistribucion(Integer idDistribucion) {
++        this.idDistribucion = idDistribucion;
++    }
++
++    public LocalDate getFechaSalida() {
++        return fechaSalida;
++    }
++
++    public void setFechaSalida(LocalDate fechaSalida) {
++        this.fechaSalida = fechaSalida;
++    }
++
++    public LocalDate getFechaEntrega() {
++        return fechaEntrega;
++    }
++
++    public void setFechaEntrega(LocalDate fechaEntrega) {
++        this.fechaEntrega = fechaEntrega;
++    }
++
++    public String getDestino() {
++        return destino;
++    }
++
++    public void setDestino(String destino) {
++        this.destino = destino;
++    }
++
++    public String getResponsable() {
++        return responsable;
++    }
++
++    public void setResponsable(String responsable) {
++        this.responsable = responsable;
++    }
++
++    public String getEstado() {
++        return estado;
++    }
++
++    public void setEstado(String estado) {
++        this.estado = estado;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Fertilizante.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Fertilizante.java
+new file mode 100644
+index 0000000..eb4a4b3
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Fertilizante.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Fertilizante {
++
++    private Integer idFertilizante;
++    private String nombreFertilizante;
++    private String tipoFertilizante;
++    private LocalDate fechaCaducidad;
++    private Integer idProveedor;
++
++    public Fertilizante() {
++    }
++
++    public Integer getIdFertilizante() {
++        return idFertilizante;
++    }
++
++    public void setIdFertilizante(Integer idFertilizante) {
++        this.idFertilizante = idFertilizante;
++    }
++
++    public String getNombreFertilizante() {
++        return nombreFertilizante;
++    }
++
++    public void setNombreFertilizante(String nombreFertilizante) {
++        this.nombreFertilizante = nombreFertilizante;
++    }
++
++    public String getTipoFertilizante() {
++        return tipoFertilizante;
++    }
++
++    public void setTipoFertilizante(String tipoFertilizante) {
++        this.tipoFertilizante = tipoFertilizante;
++    }
++
++    public LocalDate getFechaCaducidad() {
++        return fechaCaducidad;
++    }
++
++    public void setFechaCaducidad(LocalDate fechaCaducidad) {
++        this.fechaCaducidad = fechaCaducidad;
++    }
++
++    public Integer getIdProveedor() {
++        return idProveedor;
++    }
++
++    public void setIdProveedor(Integer idProveedor) {
++        this.idProveedor = idProveedor;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java
+new file mode 100644
+index 0000000..4ae8c43
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/IncidenciaCultivo.java
+@@ -0,0 +1,73 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class IncidenciaCultivo {
++
++    private Integer idIncidencia;
++    private Long idCultivo;
++    private Integer idUsuario;
++    private LocalDate fechaIncidencia;
++    private String tipoIncidencia;
++    private String descripcion;
++    private String nivelGravedad;
++
++    public IncidenciaCultivo() {
++    }
++
++    public Integer getIdIncidencia() {
++        return idIncidencia;
++    }
++
++    public void setIdIncidencia(Integer idIncidencia) {
++        this.idIncidencia = idIncidencia;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public LocalDate getFechaIncidencia() {
++        return fechaIncidencia;
++    }
++
++    public void setFechaIncidencia(LocalDate fechaIncidencia) {
++        this.fechaIncidencia = fechaIncidencia;
++    }
++
++    public String getTipoIncidencia() {
++        return tipoIncidencia;
++    }
++
++    public void setTipoIncidencia(String tipoIncidencia) {
++        this.tipoIncidencia = tipoIncidencia;
++    }
++
++    public String getDescripcion() {
++        return descripcion;
++    }
++
++    public void setDescripcion(String descripcion) {
++        this.descripcion = descripcion;
++    }
++
++    public String getNivelGravedad() {
++        return nivelGravedad;
++    }
++
++    public void setNivelGravedad(String nivelGravedad) {
++        this.nivelGravedad = nivelGravedad;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java
+new file mode 100644
+index 0000000..188947c
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++public class Inventario {
++
++    private Integer idInventario;
++    private String nombreProducto;
++    private String categoria;
++    private BigDecimal cantidad;
++    private String unidadMedida;
++    private BigDecimal stockMinimo;
++    private LocalDate fechaCaducidad;
++    private Integer idProveedor;
++
++    public Inventario() {
++    }
++
++    public Integer getIdInventario() {
++        return idInventario;
++    }
++
++    public void setIdInventario(Integer idInventario) {
++        this.idInventario = idInventario;
++    }
++
++    public String getNombreProducto() {
++        return nombreProducto;
++    }
++
++    public void setNombreProducto(String nombreProducto) {
++        this.nombreProducto = nombreProducto;
++    }
++
++    public String getCategoria() {
++        return categoria;
++    }
++
++    public void setCategoria(String categoria) {
++        this.categoria = categoria;
++    }
++
++    public BigDecimal getCantidad() {
++        return cantidad;
++    }
++
++    public void setCantidad(BigDecimal cantidad) {
++        this.cantidad = cantidad;
++    }
++
++    public String getUnidadMedida() {
++        return unidadMedida;
++    }
++
++    public void setUnidadMedida(String unidadMedida) {
++        this.unidadMedida = unidadMedida;
++    }
++
++    public BigDecimal getStockMinimo() {
++        return stockMinimo;
++    }
++
++    public void setStockMinimo(BigDecimal stockMinimo) {
++        this.stockMinimo = stockMinimo;
++    }
++
++    public LocalDate getFechaCaducidad() {
++        return fechaCaducidad;
++    }
++
++    public void setFechaCaducidad(LocalDate fechaCaducidad) {
++        this.fechaCaducidad = fechaCaducidad;
++    }
++
++    public Integer getIdProveedor() {
++        return idProveedor;
++    }
++
++    public void setIdProveedor(Integer idProveedor) {
++        this.idProveedor = idProveedor;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/MovimientoInventario.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/MovimientoInventario.java
+new file mode 100644
+index 0000000..00b0d39
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/MovimientoInventario.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDateTime;
++
++public class MovimientoInventario {
++
++    private Integer idMovimiento;
++    private Integer idInventario;
++    private String tipoMovimiento;
++    private Integer cantidad;
++    private LocalDateTime fechaMovimiento;
++
++    public MovimientoInventario() {
++    }
++
++    public Integer getIdMovimiento() {
++        return idMovimiento;
++    }
++
++    public void setIdMovimiento(Integer idMovimiento) {
++        this.idMovimiento = idMovimiento;
++    }
++
++    public Integer getIdInventario() {
++        return idInventario;
++    }
++
++    public void setIdInventario(Integer idInventario) {
++        this.idInventario = idInventario;
++    }
++
++    public String getTipoMovimiento() {
++        return tipoMovimiento;
++    }
++
++    public void setTipoMovimiento(String tipoMovimiento) {
++        this.tipoMovimiento = tipoMovimiento;
++    }
++
++    public Integer getCantidad() {
++        return cantidad;
++    }
++
++    public void setCantidad(Integer cantidad) {
++        this.cantidad = cantidad;
++    }
++
++    public LocalDateTime getFechaMovimiento() {
++        return fechaMovimiento;
++    }
++
++    public void setFechaMovimiento(LocalDateTime fechaMovimiento) {
++        this.fechaMovimiento = fechaMovimiento;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java
+new file mode 100644
+index 0000000..9f68c07
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ObservacionCultivo.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class ObservacionCultivo {
++
++    private Integer idObservacion;
++    private Long idCultivo;
++    private Integer idUsuario;
++    private LocalDate fechaObservacion;
++    private String descripcion;
++
++    public ObservacionCultivo() {
++    }
++
++    public Integer getIdObservacion() {
++        return idObservacion;
++    }
++
++    public void setIdObservacion(Integer idObservacion) {
++        this.idObservacion = idObservacion;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public LocalDate getFechaObservacion() {
++        return fechaObservacion;
++    }
++
++    public void setFechaObservacion(LocalDate fechaObservacion) {
++        this.fechaObservacion = fechaObservacion;
++    }
++
++    public String getDescripcion() {
++        return descripcion;
++    }
++
++    public void setDescripcion(String descripcion) {
++        this.descripcion = descripcion;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Proveedor.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Proveedor.java
+new file mode 100644
+index 0000000..c7e5e79
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Proveedor.java
+@@ -0,0 +1,53 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++public class Proveedor {
++
++    private Integer idProveedor;
++    private String nombreEmpresa;
++    private String contacto;
++    private String telefono;
++    private String direccion;
++
++    public Proveedor() {
++    }
++
++    public Integer getIdProveedor() {
++        return idProveedor;
++    }
++
++    public void setIdProveedor(Integer idProveedor) {
++        this.idProveedor = idProveedor;
++    }
++
++    public String getNombreEmpresa() {
++        return nombreEmpresa;
++    }
++
++    public void setNombreEmpresa(String nombreEmpresa) {
++        this.nombreEmpresa = nombreEmpresa;
++    }
++
++    public String getContacto() {
++        return contacto;
++    }
++
++    public void setContacto(String contacto) {
++        this.contacto = contacto;
++    }
++
++    public String getTelefono() {
++        return telefono;
++    }
++
++    public void setTelefono(String telefono) {
++        this.telefono = telefono;
++    }
++
++    public String getDireccion() {
++        return direccion;
++    }
++
++    public void setDireccion(String direccion) {
++        this.direccion = direccion;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java
+new file mode 100644
+index 0000000..05c5830
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++public class Riego {
++
++    private Integer idRiego;
++    private Long idCultivo;
++    private Long idTerreno;
++    private LocalDate fechaRiego;
++    private BigDecimal cantidadAgua;
++    private String unidadMedida;
++    private String metodo;
++    private String observaciones;
++
++    public Riego() {
++    }
++
++    public Integer getIdRiego() {
++        return idRiego;
++    }
++
++    public void setIdRiego(Integer idRiego) {
++        this.idRiego = idRiego;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Long getIdTerreno() {
++        return idTerreno;
++    }
++
++    public void setIdTerreno(Long idTerreno) {
++        this.idTerreno = idTerreno;
++    }
++
++    public LocalDate getFechaRiego() {
++        return fechaRiego;
++    }
++
++    public void setFechaRiego(LocalDate fechaRiego) {
++        this.fechaRiego = fechaRiego;
++    }
++
++    public BigDecimal getCantidadAgua() {
++        return cantidadAgua;
++    }
++
++    public void setCantidadAgua(BigDecimal cantidadAgua) {
++        this.cantidadAgua = cantidadAgua;
++    }
++
++    public String getUnidadMedida() {
++        return unidadMedida;
++    }
++
++    public void setUnidadMedida(String unidadMedida) {
++        this.unidadMedida = unidadMedida;
++    }
++
++    public String getMetodo() {
++        return metodo;
++    }
++
++    public void setMetodo(String metodo) {
++        this.metodo = metodo;
++    }
++
++    public String getObservaciones() {
++        return observaciones;
++    }
++
++    public void setObservaciones(String observaciones) {
++        this.observaciones = observaciones;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+index 2c91f1c..4306755 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+@@ -8,6 +8,8 @@ public class Terreno {
+     private Double superficieHa;
+     private String tipoSuelo;
+     private String estado;
++    private Double latitud;
++    private Double longitud;
+ 
+     public Terreno() {
+     }
+@@ -59,4 +61,20 @@ public class Terreno {
+     public void setEstado(String estado) {
+         this.estado = estado;
+     }
+-}
++
++    public Double getLatitud() {
++        return latitud;
++    }
++
++    public void setLatitud(Double latitud) {
++        this.latitud = latitud;
++    }
++
++    public Double getLongitud() {
++        return longitud;
++    }
++
++    public void setLongitud(Double longitud) {
++        this.longitud = longitud;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java
+new file mode 100644
+index 0000000..86eb5c7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Usuario.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class Usuario {
++
++    private Integer idUsuario;
++    private String nombreUsuario;
++    private String correoElectronico;
++
++    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
++    private String contrasena;
++
++    private String rol;
++
++    public Usuario() {
++    }
++
++    public Integer getIdUsuario() {
++        return idUsuario;
++    }
++
++    public void setIdUsuario(Integer idUsuario) {
++        this.idUsuario = idUsuario;
++    }
++
++    public String getNombreUsuario() {
++        return nombreUsuario;
++    }
++
++    public void setNombreUsuario(String nombreUsuario) {
++        this.nombreUsuario = nombreUsuario;
++    }
++
++    public String getCorreoElectronico() {
++        return correoElectronico;
++    }
++
++    public void setCorreoElectronico(String correoElectronico) {
++        this.correoElectronico = correoElectronico;
++    }
++
++    public String getContrasena() {
++        return contrasena;
++    }
++
++    public void setContrasena(String contrasena) {
++        this.contrasena = contrasena;
++    }
++
++    public String getRol() {
++        return rol;
++    }
++
++    public void setRol(String rol) {
++        this.rol = rol;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/AbonoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/AbonoRepository.java
+new file mode 100644
+index 0000000..d6f6923
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/AbonoRepository.java
+@@ -0,0 +1,77 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Abono;
++
++@Repository
++public class AbonoRepository {
++
++    private final JdbcClient jdbc;
++
++    public AbonoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Abono> buscarTodos() {
++        return jdbc.sql("SELECT * FROM abonos ORDER BY id_abono")
++                .query(Abono.class)
++                .list();
++    }
++
++    public Abono buscarPorId(int id) {
++        List<Abono> resultado = jdbc.sql("""
++                SELECT * FROM abonos
++                WHERE id_abono = :id
++                """)
++                .param("id", id)
++                .query(Abono.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Abono abono) {
++        jdbc.sql("""
++                INSERT INTO abonos
++                (nombre_abono, tipo_abono, fecha_caducidad, id_proveedor)
++                VALUES
++                (:nombre, :tipo, :fecha, :proveedor)
++                """)
++                .param("nombre", abono.getNombreAbono())
++                .param("tipo", abono.getTipoAbono())
++                .param("fecha", abono.getFechaCaducidad())
++                .param("proveedor", abono.getIdProveedor())
++                .update();
++    }
++
++    public void actualizar(Abono abono) {
++        jdbc.sql("""
++                UPDATE abonos
++                SET nombre_abono = :nombre,
++                    tipo_abono = :tipo,
++                    fecha_caducidad = :fecha,
++                    id_proveedor = :proveedor
++                WHERE id_abono = :id
++                """)
++                .param("nombre", abono.getNombreAbono())
++                .param("tipo", abono.getTipoAbono())
++                .param("fecha", abono.getFechaCaducidad())
++                .param("proveedor", abono.getIdProveedor())
++                .param("id", abono.getIdAbono())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM abonos WHERE id_abono = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CosechaRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CosechaRepository.java
+new file mode 100644
+index 0000000..ab28ce1
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CosechaRepository.java
+@@ -0,0 +1,72 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Cosecha;
++
++@Repository
++public class CosechaRepository {
++
++    private final JdbcClient jdbc;
++
++    public CosechaRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Cosecha> buscarTodas() {
++        return jdbc.sql("SELECT * FROM cosechas ORDER BY id_cosecha")
++                .query(Cosecha.class)
++                .list();
++    }
++
++    public Cosecha buscarPorId(int id) {
++        List<Cosecha> resultado = jdbc.sql(
++                "SELECT * FROM cosechas WHERE id_cosecha = :id")
++                .param("id", id)
++                .query(Cosecha.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Cosecha cosecha) {
++        jdbc.sql("""
++                INSERT INTO cosechas
++                (id_cultivo, fecha_cosecha, cantidad_cosechada)
++                VALUES
++                (:idCultivo, :fecha, :cantidad)
++                """)
++                .param("idCultivo", cosecha.getIdCultivo())
++                .param("fecha", cosecha.getFechaCosecha())
++                .param("cantidad", cosecha.getCantidadCosechada())
++                .update();
++    }
++
++    public void actualizar(Cosecha cosecha) {
++        jdbc.sql("""
++                UPDATE cosechas
++                SET id_cultivo = :idCultivo,
++                    fecha_cosecha = :fecha,
++                    cantidad_cosechada = :cantidad
++                WHERE id_cosecha = :id
++                """)
++                .param("idCultivo", cosecha.getIdCultivo())
++                .param("fecha", cosecha.getFechaCosecha())
++                .param("cantidad", cosecha.getCantidadCosechada())
++                .param("id", cosecha.getIdCosecha())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM cosechas WHERE id_cosecha = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DetalleDistribucionRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DetalleDistribucionRepository.java
+new file mode 100644
+index 0000000..92d4658
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DetalleDistribucionRepository.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.DetalleDistribucion;
++
++@Repository
++public class DetalleDistribucionRepository {
++
++    private final JdbcClient jdbc;
++
++    public DetalleDistribucionRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<DetalleDistribucion> buscarTodos() {
++        return jdbc.sql("SELECT * FROM detalle_distribucion ORDER BY id_detalle")
++                .query(DetalleDistribucion.class)
++                .list();
++    }
++
++    public List<DetalleDistribucion> buscarPorDistribucion(int idDistribucion) {
++        return jdbc.sql("""
++                SELECT * FROM detalle_distribucion
++                WHERE id_distribucion = :idDistribucion
++                ORDER BY id_detalle
++                """)
++                .param("idDistribucion", idDistribucion)
++                .query(DetalleDistribucion.class)
++                .list();
++    }
++
++    public DetalleDistribucion buscarPorId(int id) {
++        List<DetalleDistribucion> resultado = jdbc.sql(
++                "SELECT * FROM detalle_distribucion WHERE id_detalle = :id")
++                .param("id", id)
++                .query(DetalleDistribucion.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(DetalleDistribucion detalle) {
++        jdbc.sql("""
++                INSERT INTO detalle_distribucion
++                (id_distribucion, id_cosecha, cantidad)
++                VALUES
++                (:idDistribucion, :idCosecha, :cantidad)
++                """)
++                .param("idDistribucion", detalle.getIdDistribucion())
++                .param("idCosecha", detalle.getIdCosecha())
++                .param("cantidad", detalle.getCantidad())
++                .update();
++    }
++
++    public void actualizar(DetalleDistribucion detalle) {
++        jdbc.sql("""
++                UPDATE detalle_distribucion
++                SET id_distribucion = :idDistribucion,
++                    id_cosecha = :idCosecha,
++                    cantidad = :cantidad
++                WHERE id_detalle = :id
++                """)
++                .param("idDistribucion", detalle.getIdDistribucion())
++                .param("idCosecha", detalle.getIdCosecha())
++                .param("cantidad", detalle.getCantidad())
++                .param("id", detalle.getIdDetalle())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM detalle_distribucion WHERE id_detalle = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DistribucionRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DistribucionRepository.java
+new file mode 100644
+index 0000000..2f557e7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/DistribucionRepository.java
+@@ -0,0 +1,78 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Distribucion;
++
++@Repository
++public class DistribucionRepository {
++
++    private final JdbcClient jdbc;
++
++    public DistribucionRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Distribucion> buscarTodas() {
++        return jdbc.sql("SELECT * FROM distribucion ORDER BY id_distribucion")
++                .query(Distribucion.class)
++                .list();
++    }
++
++    public Distribucion buscarPorId(int id) {
++        List<Distribucion> resultado = jdbc.sql(
++                "SELECT * FROM distribucion WHERE id_distribucion = :id")
++                .param("id", id)
++                .query(Distribucion.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Distribucion distribucion) {
++        jdbc.sql("""
++                INSERT INTO distribucion
++                (fecha_salida, fecha_entrega, destino, responsable, estado)
++                VALUES
++                (:fechaSalida, :fechaEntrega, :destino, :responsable, :estado)
++                """)
++                .param("fechaSalida", distribucion.getFechaSalida())
++                .param("fechaEntrega", distribucion.getFechaEntrega())
++                .param("destino", distribucion.getDestino())
++                .param("responsable", distribucion.getResponsable())
++                .param("estado", distribucion.getEstado())
++                .update();
++    }
++
++    public void actualizar(Distribucion distribucion) {
++        jdbc.sql("""
++                UPDATE distribucion
++                SET fecha_salida = :fechaSalida,
++                    fecha_entrega = :fechaEntrega,
++                    destino = :destino,
++                    responsable = :responsable,
++                    estado = :estado
++                WHERE id_distribucion = :id
++                """)
++                .param("fechaSalida", distribucion.getFechaSalida())
++                .param("fechaEntrega", distribucion.getFechaEntrega())
++                .param("destino", distribucion.getDestino())
++                .param("responsable", distribucion.getResponsable())
++                .param("estado", distribucion.getEstado())
++                .param("id", distribucion.getIdDistribucion())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM distribucion WHERE id_distribucion = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/FertilizanteRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/FertilizanteRepository.java
+new file mode 100644
+index 0000000..219a5d7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/FertilizanteRepository.java
+@@ -0,0 +1,80 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Fertilizante;
++
++@Repository
++public class FertilizanteRepository {
++
++    private final JdbcClient jdbc;
++
++    public FertilizanteRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Fertilizante> buscarTodos() {
++        return jdbc.sql("SELECT * FROM fertilizantes ORDER BY id_fertilizante")
++                .query(Fertilizante.class)
++                .list();
++    }
++
++    public Fertilizante buscarPorId(int id) {
++        List<Fertilizante> resultado = jdbc.sql("""
++                SELECT * FROM fertilizantes
++                WHERE id_fertilizante = :id
++                """)
++                .param("id", id)
++                .query(Fertilizante.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Fertilizante fertilizante) {
++        jdbc.sql("""
++                INSERT INTO fertilizantes
++                (nombre_fertilizante, tipo_fertilizante, fecha_caducidad, id_proveedor)
++                VALUES
++                (:nombre, :tipo, :fecha, :proveedor)
++                """)
++                .param("nombre", fertilizante.getNombreFertilizante())
++                .param("tipo", fertilizante.getTipoFertilizante())
++                .param("fecha", fertilizante.getFechaCaducidad())
++                .param("proveedor", fertilizante.getIdProveedor())
++                .update();
++    }
++
++    public void actualizar(Fertilizante fertilizante) {
++        jdbc.sql("""
++                UPDATE fertilizantes
++                SET nombre_fertilizante = :nombre,
++                    tipo_fertilizante = :tipo,
++                    fecha_caducidad = :fecha,
++                    id_proveedor = :proveedor
++                WHERE id_fertilizante = :id
++                """)
++                .param("nombre", fertilizante.getNombreFertilizante())
++                .param("tipo", fertilizante.getTipoFertilizante())
++                .param("fecha", fertilizante.getFechaCaducidad())
++                .param("proveedor", fertilizante.getIdProveedor())
++                .param("id", fertilizante.getIdFertilizante())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("""
++                DELETE FROM fertilizantes
++                WHERE id_fertilizante = :id
++                """)
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java
+new file mode 100644
+index 0000000..ab54834
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/IncidenciaCultivoRepository.java
+@@ -0,0 +1,91 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++
++@Repository
++public class IncidenciaCultivoRepository {
++
++    private final JdbcClient jdbc;
++
++    public IncidenciaCultivoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<IncidenciaCultivo> buscarTodas() {
++        return jdbc.sql("""
++                SELECT * FROM incidencias_cultivo
++                ORDER BY id_incidencia
++                """)
++                .query(IncidenciaCultivo.class)
++                .list();
++    }
++
++    public IncidenciaCultivo buscarPorId(int id) {
++        List<IncidenciaCultivo> resultado = jdbc.sql("""
++                SELECT * FROM incidencias_cultivo
++                WHERE id_incidencia = :id
++                """)
++                .param("id", id)
++                .query(IncidenciaCultivo.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(IncidenciaCultivo incidencia) {
++        jdbc.sql("""
++                INSERT INTO incidencias_cultivo
++                (id_cultivo, id_usuario, fecha_incidencia,
++                 tipo_incidencia, descripcion, nivel_gravedad)
++                VALUES
++                (:cultivo, :usuario, :fecha,
++                 :tipo, :descripcion, :gravedad)
++                """)
++                .param("cultivo", incidencia.getIdCultivo())
++                .param("usuario", incidencia.getIdUsuario())
++                .param("fecha", incidencia.getFechaIncidencia())
++                .param("tipo", incidencia.getTipoIncidencia())
++                .param("descripcion", incidencia.getDescripcion())
++                .param("gravedad", incidencia.getNivelGravedad())
++                .update();
++    }
++
++    public void actualizar(IncidenciaCultivo incidencia) {
++        jdbc.sql("""
++                UPDATE incidencias_cultivo
++                SET id_cultivo = :cultivo,
++                    id_usuario = :usuario,
++                    fecha_incidencia = :fecha,
++                    tipo_incidencia = :tipo,
++                    descripcion = :descripcion,
++                    nivel_gravedad = :gravedad
++                WHERE id_incidencia = :id
++                """)
++                .param("cultivo", incidencia.getIdCultivo())
++                .param("usuario", incidencia.getIdUsuario())
++                .param("fecha", incidencia.getFechaIncidencia())
++                .param("tipo", incidencia.getTipoIncidencia())
++                .param("descripcion", incidencia.getDescripcion())
++                .param("gravedad", incidencia.getNivelGravedad())
++                .param("id", incidencia.getIdIncidencia())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("""
++                DELETE FROM incidencias_cultivo
++                WHERE id_incidencia = :id
++                """)
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java
+new file mode 100644
+index 0000000..93936ea
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java
+@@ -0,0 +1,97 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++
++@Repository
++public class InventarioRepository {
++
++    private final JdbcClient jdbc;
++
++    public InventarioRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Inventario> buscarTodos() {
++        return jdbc.sql("SELECT * FROM inventario ORDER BY id_inventario")
++                .query(Inventario.class)
++                .list();
++    }
++
++    public Inventario buscarPorId(int id) {
++        List<Inventario> resultado = jdbc.sql(
++                "SELECT * FROM inventario WHERE id_inventario = :id")
++                .param("id", id)
++                .query(Inventario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Inventario producto) {
++        jdbc.sql("""
++                INSERT INTO inventario
++                (nombre_producto, categoria, cantidad, unidad_medida,
++                 stock_minimo, fecha_caducidad, id_proveedor)
++                VALUES
++                (:nombre, :categoria, :cantidad, :unidad,
++                 :minimo, :caducidad, :proveedor)
++                """)
++                .param("nombre", producto.getNombreProducto())
++                .param("categoria", producto.getCategoria())
++                .param("cantidad", producto.getCantidad())
++                .param("unidad", producto.getUnidadMedida())
++                .param("minimo", producto.getStockMinimo())
++                .param("caducidad", producto.getFechaCaducidad())
++                .param("proveedor", producto.getIdProveedor())
++                .update();
++    }
++
++    public void actualizar(Inventario producto) {
++        jdbc.sql("""
++                UPDATE inventario
++                SET nombre_producto = :nombre,
++                    categoria = :categoria,
++                    cantidad = :cantidad,
++                    unidad_medida = :unidad,
++                    stock_minimo = :minimo,
++                    fecha_caducidad = :caducidad,
++                    id_proveedor = :proveedor
++                WHERE id_inventario = :id
++                """)
++                .param("nombre", producto.getNombreProducto())
++                .param("categoria", producto.getCategoria())
++                .param("cantidad", producto.getCantidad())
++                .param("unidad", producto.getUnidadMedida())
++                .param("minimo", producto.getStockMinimo())
++                .param("caducidad", producto.getFechaCaducidad())
++                .param("proveedor", producto.getIdProveedor())
++                .param("id", producto.getIdInventario())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM inventario WHERE id_inventario = :id")
++                .param("id", id)
++                .update();
++    }
++
++    public List<Inventario> buscarPorCategoria(String categoria) {
++        return jdbc.sql("""
++                SELECT * FROM inventario
++                WHERE categoria = :categoria
++                ORDER BY id_inventario
++                """)
++                .param("categoria", categoria)
++                .query(Inventario.class)
++                .list();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/MovimientoInventarioRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/MovimientoInventarioRepository.java
+new file mode 100644
+index 0000000..63dfc70
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/MovimientoInventarioRepository.java
+@@ -0,0 +1,107 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.model.MovimientoInventario;
++
++@Repository
++public class MovimientoInventarioRepository {
++
++    private final JdbcClient jdbc;
++
++    public MovimientoInventarioRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<MovimientoInventario> buscarTodos() {
++        return jdbc.sql("""
++                SELECT * FROM movimientos_inventario
++                ORDER BY fecha_movimiento DESC
++                """)
++                .query(MovimientoInventario.class)
++                .list();
++    }
++
++    public MovimientoInventario buscarPorId(int id) {
++        List<MovimientoInventario> resultado = jdbc.sql("""
++                SELECT * FROM movimientos_inventario
++                WHERE id_movimiento = :id
++                """)
++                .param("id", id)
++                .query(MovimientoInventario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public List<MovimientoInventario> buscarPorInventario(int idInventario) {
++        return jdbc.sql("""
++                SELECT * FROM movimientos_inventario
++                WHERE id_inventario = :idInventario
++                ORDER BY fecha_movimiento DESC
++                """)
++                .param("idInventario", idInventario)
++                .query(MovimientoInventario.class)
++                .list();
++    }
++
++    public Inventario buscarInventario(int idInventario) {
++        List<Inventario> resultado = jdbc.sql("""
++                SELECT * FROM inventario
++                WHERE id_inventario = :id
++                """)
++                .param("id", idInventario)
++                .query(Inventario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public int registrarEntrada(int idInventario, int cantidad) {
++        return jdbc.sql("""
++                UPDATE inventario
++                SET cantidad = cantidad + :cantidad
++                WHERE id_inventario = :id
++                """)
++                .param("cantidad", cantidad)
++                .param("id", idInventario)
++                .update();
++    }
++
++    public int registrarSalida(int idInventario, int cantidad) {
++        return jdbc.sql("""
++                UPDATE inventario
++                SET cantidad = cantidad - :cantidad
++                WHERE id_inventario = :id
++                  AND cantidad >= :cantidad
++                """)
++                .param("cantidad", cantidad)
++                .param("id", idInventario)
++                .update();
++    }
++
++    public void insertar(MovimientoInventario movimiento) {
++        jdbc.sql("""
++                INSERT INTO movimientos_inventario
++                (id_inventario, tipo_movimiento, cantidad)
++                VALUES
++                (:idInventario, :tipo, :cantidad)
++                """)
++                .param("idInventario", movimiento.getIdInventario())
++                .param("tipo", movimiento.getTipoMovimiento())
++                .param("cantidad", movimiento.getCantidad())
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java
+new file mode 100644
+index 0000000..9f4b489
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ObservacionCultivoRepository.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++
++@Repository
++public class ObservacionCultivoRepository {
++
++    private final JdbcClient jdbc;
++
++    public ObservacionCultivoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<ObservacionCultivo> buscarTodas() {
++        return jdbc.sql("""
++                SELECT * FROM observaciones_cultivos
++                ORDER BY id_observacion
++                """)
++                .query(ObservacionCultivo.class)
++                .list();
++    }
++
++    public ObservacionCultivo buscarPorId(int id) {
++        List<ObservacionCultivo> resultado = jdbc.sql("""
++                SELECT * FROM observaciones_cultivos
++                WHERE id_observacion = :id
++                """)
++                .param("id", id)
++                .query(ObservacionCultivo.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(ObservacionCultivo observacion) {
++        jdbc.sql("""
++                INSERT INTO observaciones_cultivos
++                (id_cultivo, id_usuario, fecha_observacion, descripcion)
++                VALUES
++                (:cultivo, :usuario, :fecha, :descripcion)
++                """)
++                .param("cultivo", observacion.getIdCultivo())
++                .param("usuario", observacion.getIdUsuario())
++                .param("fecha", observacion.getFechaObservacion())
++                .param("descripcion", observacion.getDescripcion())
++                .update();
++    }
++
++    public void actualizar(ObservacionCultivo observacion) {
++        jdbc.sql("""
++                UPDATE observaciones_cultivos
++                SET id_cultivo = :cultivo,
++                    id_usuario = :usuario,
++                    fecha_observacion = :fecha,
++                    descripcion = :descripcion
++                WHERE id_observacion = :id
++                """)
++                .param("cultivo", observacion.getIdCultivo())
++                .param("usuario", observacion.getIdUsuario())
++                .param("fecha", observacion.getFechaObservacion())
++                .param("descripcion", observacion.getDescripcion())
++                .param("id", observacion.getIdObservacion())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("""
++                DELETE FROM observaciones_cultivos
++                WHERE id_observacion = :id
++                """)
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ProveedorRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ProveedorRepository.java
+new file mode 100644
+index 0000000..e38c368
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ProveedorRepository.java
+@@ -0,0 +1,67 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Proveedor;
++
++@Repository 
++public class ProveedorRepository {
++
++    private final JdbcClient jdbc;
++
++    public ProveedorRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++
++    }
++    
++
++    public List<Proveedor> buscarTodos() {
++        return jdbc.sql("SELECT * FROM proveedores ORDER BY id_proveedor")
++               .query(Proveedor.class)
++                .list();
++    }
++
++    public Proveedor buscarPorId(int id){
++        List<Proveedor> resultado = jdbc.sql("SELECT * FROM proveedores WHERE id_proveedor = :id")
++                .param("id", id)
++                .query(Proveedor.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return (Proveedor) resultado;
++                
++    }
++
++    public void insertar(Proveedor p) {
++        jdbc.sql("INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion) VALUES (:nombre_empresa, :contacto, :telefono, :email, :direccion)")
++                .param("nombre_empresa", p.getNombreEmpresa())
++                .param("contacto", p.getContacto())
++                .param("telefono", p.getTelefono())
++                
++                .param("direccion", p.getDireccion())
++                .update();
++    }
++
++    public void actualizar(Proveedor p){
++        jdbc.sql("UPDATE proveedores SET nombre_empresa = :nombre_empresa, contacto = :contacto, telefono = :telefono, direccion = :direccion WHERE id_proveedor = :id")
++                .param("nombre_empresa", p.getNombreEmpresa())
++                .param("contacto", p.getContacto())
++                .param("telefono", p.getTelefono())
++                .param("direccion", p.getDireccion())
++                .param("id", p.getIdProveedor())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM proveedores WHERE id_proveedor = :id")
++                .param("id", id)
++                .update();
++    }
++
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java
+new file mode 100644
+index 0000000..ad92769
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java
+@@ -0,0 +1,86 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++
++@Repository
++public class RiegoRepository {
++
++    private final JdbcClient jdbc;
++
++    public RiegoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Riego> buscarTodos() {
++        return jdbc.sql("SELECT * FROM riegos ORDER BY id_riego")
++                .query(Riego.class)
++                .list();
++    }
++
++    public Riego buscarPorId(int id) {
++        List<Riego> resultado = jdbc.sql(
++                "SELECT * FROM riegos WHERE id_riego = :id")
++                .param("id", id)
++                .query(Riego.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Riego riego) {
++        jdbc.sql("""
++                INSERT INTO riegos
++                (id_cultivo, id_terreno, fecha_riego, cantidad_agua,
++                 unidad_medida, metodo, observaciones)
++                VALUES
++                (:cultivo, :terreno, :fecha, :cantidad,
++                 :unidad, :metodo, :observaciones)
++                """)
++                .param("cultivo", riego.getIdCultivo())
++                .param("terreno", riego.getIdTerreno())
++                .param("fecha", riego.getFechaRiego())
++                .param("cantidad", riego.getCantidadAgua())
++                .param("unidad", riego.getUnidadMedida())
++                .param("metodo", riego.getMetodo())
++                .param("observaciones", riego.getObservaciones())
++                .update();
++    }
++
++    public void actualizar(Riego riego) {
++        jdbc.sql("""
++                UPDATE riegos
++                SET id_cultivo = :cultivo,
++                    id_terreno = :terreno,
++                    fecha_riego = :fecha,
++                    cantidad_agua = :cantidad,
++                    unidad_medida = :unidad,
++                    metodo = :metodo,
++                    observaciones = :observaciones
++                WHERE id_riego = :id
++                """)
++                .param("cultivo", riego.getIdCultivo())
++                .param("terreno", riego.getIdTerreno())
++                .param("fecha", riego.getFechaRiego())
++                .param("cantidad", riego.getCantidadAgua())
++                .param("unidad", riego.getUnidadMedida())
++                .param("metodo", riego.getMetodo())
++                .param("observaciones", riego.getObservaciones())
++                .param("id", riego.getIdRiego())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM riegos WHERE id_riego = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+index 3a6d920..5601fea 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
+ 
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ 
+-/** Capa de datos: SQL puro con JdbcClient. */
+-
+ @Repository
+ public class TerrenoRepository {
+ 
+@@ -34,36 +32,51 @@ public class TerrenoRepository {
+                 .optional();
+     }
+ 
+-    /** Inserta el terreno y devuelve el id generado por MySQL. */
+-    public Long insertar(Terreno t) {
++    public Long insertar(Terreno terreno) {
+         KeyHolder llaves = new GeneratedKeyHolder();
++
+         jdbc.sql("""
+-                INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
+-                VALUES (:nombre, :ubicacion, :superficie, :suelo, :estado)
++                INSERT INTO terrenos
++                (nombre, ubicacion, superficie_ha, tipo_suelo, estado,
++                 latitud, longitud)
++                VALUES
++                (:nombre, :ubicacion, :superficie, :suelo, :estado,
++                 :latitud, :longitud)
+                 """)
+-                .param("nombre", t.getNombre())
+-                .param("ubicacion", t.getUbicacion())
+-                .param("superficie", t.getSuperficieHa())
+-                .param("suelo", t.getTipoSuelo())
+-                .param("estado", t.getEstado())
++                .param("nombre", terreno.getNombre())
++                .param("ubicacion", terreno.getUbicacion())
++                .param("superficie", terreno.getSuperficieHa())
++                .param("suelo", terreno.getTipoSuelo())
++                .param("estado", terreno.getEstado())
++                .param("latitud", terreno.getLatitud())
++                .param("longitud", terreno.getLongitud())
+                 .update(llaves);
++
+         return llaves.getKey().longValue();
+     }
+ 
+-    public boolean actualizar(Terreno t) {
++    public boolean actualizar(Terreno terreno) {
+         int filas = jdbc.sql("""
+                 UPDATE terrenos
+-                   SET nombre = :nombre, ubicacion = :ubicacion, superficie_ha = :superficie,
+-                       tipo_suelo = :suelo, estado = :estado
+-                 WHERE id = :id
++                SET nombre = :nombre,
++                    ubicacion = :ubicacion,
++                    superficie_ha = :superficie,
++                    tipo_suelo = :suelo,
++                    estado = :estado,
++                    latitud = :latitud,
++                    longitud = :longitud
++                WHERE id = :id
+                 """)
+-                .param("nombre", t.getNombre())
+-                .param("ubicacion", t.getUbicacion())
+-                .param("superficie", t.getSuperficieHa())
+-                .param("suelo", t.getTipoSuelo())
+-                .param("estado", t.getEstado())
+-                .param("id", t.getId())
++                .param("nombre", terreno.getNombre())
++                .param("ubicacion", terreno.getUbicacion())
++                .param("superficie", terreno.getSuperficieHa())
++                .param("suelo", terreno.getTipoSuelo())
++                .param("estado", terreno.getEstado())
++                .param("latitud", terreno.getLatitud())
++                .param("longitud", terreno.getLongitud())
++                .param("id", terreno.getId())
+                 .update();
++
+         return filas > 0;
+     }
+ 
+@@ -71,6 +84,7 @@ public class TerrenoRepository {
+         int filas = jdbc.sql("DELETE FROM terrenos WHERE id = :id")
+                 .param("id", id)
+                 .update();
++
+         return filas > 0;
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java
+new file mode 100644
+index 0000000..6810c0e
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/UsuarioRepository.java
+@@ -0,0 +1,82 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++
++@Repository
++public class UsuarioRepository {
++
++    private final JdbcClient jdbc;
++
++    public UsuarioRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Usuario> buscarTodos() {
++        return jdbc.sql("""
++                SELECT id_usuario, nombre_usuario, correo_electronico, rol
++                FROM usuarios
++                ORDER BY id_usuario
++                """)
++                .query(Usuario.class)
++                .list();
++    }
++
++    public Usuario buscarPorId(int id) {
++        List<Usuario> resultado = jdbc.sql("""
++                SELECT id_usuario, nombre_usuario, correo_electronico, rol
++                FROM usuarios
++                WHERE id_usuario = :id
++                """)
++                .param("id", id)
++                .query(Usuario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Usuario usuario) {
++        jdbc.sql("""
++                INSERT INTO usuarios
++                (nombre_usuario, correo_electronico, contrasena, rol)
++                VALUES
++                (:nombre, :correo, :contrasena, :rol)
++                """)
++                .param("nombre", usuario.getNombreUsuario())
++                .param("correo", usuario.getCorreoElectronico())
++                .param("contrasena", usuario.getContrasena())
++                .param("rol", usuario.getRol())
++                .update();
++    }
++
++    public void actualizar(Usuario usuario) {
++        jdbc.sql("""
++                UPDATE usuarios
++                SET nombre_usuario = :nombre,
++                    correo_electronico = :correo,
++                    contrasena = :contrasena,
++                    rol = :rol
++                WHERE id_usuario = :id
++                """)
++                .param("nombre", usuario.getNombreUsuario())
++                .param("correo", usuario.getCorreoElectronico())
++                .param("contrasena", usuario.getContrasena())
++                .param("rol", usuario.getRol())
++                .param("id", usuario.getIdUsuario())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM usuarios WHERE id_usuario = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/AbonoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/AbonoService.java
+new file mode 100644
+index 0000000..c5b5d96
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/AbonoService.java
+@@ -0,0 +1,77 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Abono;
++import com.cultivos.gestioncultivos_backend.repository.AbonoRepository;
++
++@Service
++public class AbonoService {
++
++    private final AbonoRepository repositorio;
++
++    public AbonoService(AbonoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Abono> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Abono obtener(int id) {
++        Abono abono = repositorio.buscarPorId(id);
++
++        if (abono == null) {
++            throw new NoSuchElementException(
++                    "No existe el abono con id " + id);
++        }
++
++        return abono;
++    }
++
++    public void crear(Abono abono) {
++        validar(abono);
++        repositorio.insertar(abono);
++    }
++
++    public void actualizar(int id, Abono abono) {
++        obtener(id);
++        validar(abono);
++        abono.setIdAbono(id);
++        repositorio.actualizar(abono);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Abono abono) {
++        if (abono == null) {
++            throw new IllegalArgumentException("El abono es obligatorio");
++        }
++
++        if (abono.getNombreAbono() == null
++                || abono.getNombreAbono().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre del abono es obligatorio");
++        }
++
++        if (abono.getTipoAbono() == null
++                || abono.getTipoAbono().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El tipo de abono es obligatorio");
++        }
++
++        if (abono.getFechaCaducidad() == null) {
++            throw new IllegalArgumentException(
++                    "La fecha de caducidad es obligatoria");
++        }
++
++        abono.setNombreAbono(abono.getNombreAbono().trim());
++        abono.setTipoAbono(abono.getTipoAbono().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java
+new file mode 100644
+index 0000000..34b016f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java
+@@ -0,0 +1,119 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.stereotype.Service;
++import org.springframework.web.client.RestClient;
++import org.springframework.web.client.RestClientException;
++import org.springframework.web.server.ResponseStatusException;
++import org.springframework.web.util.UriBuilder;
++
++import com.cultivos.gestioncultivos_backend.model.ClimaRespuesta;
++
++import tools.jackson.databind.JsonNode;
++
++@Service
++public class ClimaService {
++
++    private final RestClient climaRestClient;
++
++    public ClimaService(RestClient climaRestClient) {
++        this.climaRestClient = climaRestClient;
++    }
++
++    public ClimaRespuesta consultar(double latitud, double longitud) {
++        try {
++            JsonNode datos = climaRestClient.get()
++                    .uri(uriBuilder -> construirUrl(uriBuilder, latitud, longitud))
++                    .retrieve()
++                    .body(JsonNode.class);
++
++            if (datos == null) {
++                throw new ResponseStatusException(
++                        HttpStatus.BAD_GATEWAY,
++                        "El servicio meteorológico no devolvió datos");
++            }
++
++            JsonNode actual = datos.path("current");
++            JsonNode diario = datos.path("daily");
++
++            ClimaRespuesta resultado = new ClimaRespuesta();
++
++            resultado.setLatitud(latitud);
++            resultado.setLongitud(longitud);
++            resultado.setHoraActualizacion(
++                    actual.path("time").asText());
++            resultado.setFechaPronostico(
++                    diario.path("time").path(0).asText());
++
++            resultado.setTemperaturaCelsius(
++                    actual.path("temperature_2m").asDouble());
++            resultado.setHumedadRelativa(
++                    actual.path("relative_humidity_2m").asInt());
++            resultado.setPrecipitacionActualMm(
++                    actual.path("precipitation").asDouble());
++            resultado.setVientoKmH(
++                    actual.path("wind_speed_10m").asDouble());
++
++            resultado.setProbabilidadLluvia(
++                    diario.path("precipitation_probability_max")
++                            .path(0).asInt());
++            resultado.setLluviaEsperadaMm(
++                    diario.path("precipitation_sum").path(0).asDouble());
++            resultado.setTemperaturaMaximaCelsius(
++                    diario.path("temperature_2m_max").path(0).asDouble());
++
++            resultado.setSugerencias(generarSugerencias(resultado));
++
++            return resultado;
++
++        } catch (RestClientException error) {
++            throw new ResponseStatusException(
++                    HttpStatus.BAD_GATEWAY,
++                    "No se pudo consultar el servicio meteorológico");
++        }
++    }
++
++    private java.net.URI construirUrl(
++            UriBuilder uriBuilder,
++            double latitud,
++            double longitud) {
++
++        return uriBuilder
++                .path("/v1/forecast")
++                .queryParam("latitude", latitud)
++                .queryParam("longitude", longitud)
++                .queryParam(
++                        "current",
++                        "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m")
++                .queryParam(
++                        "daily",
++                        "precipitation_probability_max,precipitation_sum,temperature_2m_max")
++                .queryParam("temperature_unit", "celsius")
++                .queryParam("wind_speed_unit", "kmh")
++                .queryParam("precipitation_unit", "mm")
++                .queryParam("timezone", "America/Mexico_City")
++                .build();
++    }
++
++    private List<String> generarSugerencias(ClimaRespuesta clima) {
++        List<String> sugerencias = new ArrayList<>();
++
++        if (clima.getProbabilidadLluvia() >= 60
++                || clima.getLluviaEsperadaMm() >= 5) {
++            sugerencias.add(
++                    "Hay posibilidad de lluvia. Revisa el riego programado para evitar exceso de agua.");
++        } else if (clima.getProbabilidadLluvia() < 20
++                && clima.getTemperaturaMaximaCelsius() >= 30) {
++            sugerencias.add(
++                    "Se pronostica poca lluvia y temperatura alta. Revisa la humedad del suelo antes de regar.");
++        } else {
++            sugerencias.add(
++                    "No hay una alerta de lluvia o calor según las reglas actuales.");
++        }
++
++        return sugerencias;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CosechaService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CosechaService.java
+new file mode 100644
+index 0000000..fa5bd08
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CosechaService.java
+@@ -0,0 +1,74 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Cosecha;
++import com.cultivos.gestioncultivos_backend.repository.CosechaRepository;
++
++@Service
++public class CosechaService {
++
++    private final CosechaRepository repositorio;
++
++    public CosechaService(CosechaRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Cosecha> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public Cosecha obtener(int id) {
++        Cosecha cosecha = repositorio.buscarPorId(id);
++
++        if (cosecha == null) {
++            throw new NoSuchElementException(
++                    "No existe la cosecha con id " + id);
++        }
++
++        return cosecha;
++    }
++
++    public void crear(Cosecha cosecha) {
++        validar(cosecha);
++        repositorio.insertar(cosecha);
++    }
++
++    public void actualizar(int id, Cosecha cosecha) {
++        obtener(id);
++        validar(cosecha);
++        cosecha.setIdCosecha(id);
++        repositorio.actualizar(cosecha);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Cosecha cosecha) {
++        if (cosecha == null) {
++            throw new IllegalArgumentException("La cosecha es obligatoria");
++        }
++
++        if (cosecha.getIdCultivo() == null) {
++            throw new IllegalArgumentException("El cultivo es obligatorio");
++        }
++
++        if (cosecha.getFechaCosecha() == null) {
++            cosecha.setFechaCosecha(LocalDate.now());
++        }
++
++        if (cosecha.getCantidadCosechada() == null
++                || cosecha.getCantidadCosechada()
++                        .compareTo(BigDecimal.ZERO) <= 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad cosechada debe ser mayor que cero");
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java
+index 39e5c33..867a5cd 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java
+@@ -67,4 +67,6 @@ public class CultivoService {
+             throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
+         }
+     }
++
++    
+ }
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DetalleDistribucionService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DetalleDistribucionService.java
+new file mode 100644
+index 0000000..ce7996f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DetalleDistribucionService.java
+@@ -0,0 +1,95 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.DetalleDistribucion;
++import com.cultivos.gestioncultivos_backend.repository.CosechaRepository;
++import com.cultivos.gestioncultivos_backend.repository.DetalleDistribucionRepository;
++import com.cultivos.gestioncultivos_backend.repository.DistribucionRepository;
++
++@Service
++public class DetalleDistribucionService {
++
++    private final DetalleDistribucionRepository repositorio;
++    private final DistribucionRepository distribucionRepositorio;
++    private final CosechaRepository cosechaRepositorio;
++
++    public DetalleDistribucionService(
++            DetalleDistribucionRepository repositorio,
++            DistribucionRepository distribucionRepositorio,
++            CosechaRepository cosechaRepositorio) {
++        this.repositorio = repositorio;
++        this.distribucionRepositorio = distribucionRepositorio;
++        this.cosechaRepositorio = cosechaRepositorio;
++    }
++
++    public List<DetalleDistribucion> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public List<DetalleDistribucion> listarPorDistribucion(int idDistribucion) {
++        if (distribucionRepositorio.buscarPorId(idDistribucion) == null) {
++            throw new NoSuchElementException(
++                    "No existe la distribución con id " + idDistribucion);
++        }
++
++        return repositorio.buscarPorDistribucion(idDistribucion);
++    }
++
++    public DetalleDistribucion obtener(int id) {
++        DetalleDistribucion detalle = repositorio.buscarPorId(id);
++
++        if (detalle == null) {
++            throw new NoSuchElementException(
++                    "No existe el detalle de distribución con id " + id);
++        }
++
++        return detalle;
++    }
++
++    public void crear(DetalleDistribucion detalle) {
++        validar(detalle);
++        repositorio.insertar(detalle);
++    }
++
++    public void actualizar(int id, DetalleDistribucion detalle) {
++        obtener(id);
++        validar(detalle);
++        detalle.setIdDetalle(id);
++        repositorio.actualizar(detalle);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(DetalleDistribucion detalle) {
++        if (detalle == null) {
++            throw new IllegalArgumentException(
++                    "El detalle de distribución es obligatorio");
++        }
++
++        if (detalle.getIdDistribucion() == null
++                || distribucionRepositorio.buscarPorId(
++                        detalle.getIdDistribucion()) == null) {
++            throw new IllegalArgumentException(
++                    "La distribución indicada no existe");
++        }
++
++        if (detalle.getIdCosecha() == null
++                || cosechaRepositorio.buscarPorId(
++                        detalle.getIdCosecha()) == null) {
++            throw new IllegalArgumentException(
++                    "La cosecha indicada no existe");
++        }
++
++        if (detalle.getCantidad() == null || detalle.getCantidad() <= 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad debe ser mayor que cero");
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DistribucionService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DistribucionService.java
+new file mode 100644
+index 0000000..d5692c8
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/DistribucionService.java
+@@ -0,0 +1,79 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Distribucion;
++import com.cultivos.gestioncultivos_backend.repository.DistribucionRepository;
++
++@Service
++public class DistribucionService {
++
++    private final DistribucionRepository repositorio;
++
++    public DistribucionService(DistribucionRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Distribucion> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public Distribucion obtener(int id) {
++        Distribucion distribucion = repositorio.buscarPorId(id);
++
++        if (distribucion == null) {
++            throw new NoSuchElementException(
++                    "No existe la distribución con id " + id);
++        }
++
++        return distribucion;
++    }
++
++    public void crear(Distribucion distribucion) {
++        validar(distribucion);
++        repositorio.insertar(distribucion);
++    }
++
++    public void actualizar(int id, Distribucion distribucion) {
++        obtener(id);
++        validar(distribucion);
++        distribucion.setIdDistribucion(id);
++        repositorio.actualizar(distribucion);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Distribucion distribucion) {
++        if (distribucion == null) {
++            throw new IllegalArgumentException(
++                    "La distribución es obligatoria");
++        }
++
++        if (distribucion.getFechaSalida() == null) {
++            distribucion.setFechaSalida(LocalDate.now());
++        }
++
++        if (distribucion.getDestino() == null
++                || distribucion.getDestino().isBlank()) {
++            throw new IllegalArgumentException("El destino es obligatorio");
++        }
++
++        if (distribucion.getResponsable() == null
++                || distribucion.getResponsable().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El responsable es obligatorio");
++        }
++
++        if (distribucion.getEstado() == null
++                || distribucion.getEstado().isBlank()) {
++            distribucion.setEstado("pendiente");
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/FertilizanteService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/FertilizanteService.java
+new file mode 100644
+index 0000000..29848dd
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/FertilizanteService.java
+@@ -0,0 +1,80 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Fertilizante;
++import com.cultivos.gestioncultivos_backend.repository.FertilizanteRepository;
++
++@Service
++public class FertilizanteService {
++
++    private final FertilizanteRepository repositorio;
++
++    public FertilizanteService(FertilizanteRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Fertilizante> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Fertilizante obtener(int id) {
++        Fertilizante fertilizante = repositorio.buscarPorId(id);
++
++        if (fertilizante == null) {
++            throw new NoSuchElementException(
++                    "No existe el fertilizante con id " + id);
++        }
++
++        return fertilizante;
++    }
++
++    public void crear(Fertilizante fertilizante) {
++        validar(fertilizante);
++        repositorio.insertar(fertilizante);
++    }
++
++    public void actualizar(int id, Fertilizante fertilizante) {
++        obtener(id);
++        validar(fertilizante);
++        fertilizante.setIdFertilizante(id);
++        repositorio.actualizar(fertilizante);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Fertilizante fertilizante) {
++        if (fertilizante == null) {
++            throw new IllegalArgumentException(
++                    "El fertilizante es obligatorio");
++        }
++
++        if (fertilizante.getNombreFertilizante() == null
++                || fertilizante.getNombreFertilizante().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre del fertilizante es obligatorio");
++        }
++
++        if (fertilizante.getTipoFertilizante() == null
++                || fertilizante.getTipoFertilizante().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El tipo de fertilizante es obligatorio");
++        }
++
++        if (fertilizante.getFechaCaducidad() == null) {
++            throw new IllegalArgumentException(
++                    "La fecha de caducidad es obligatoria");
++        }
++
++        fertilizante.setNombreFertilizante(
++                fertilizante.getNombreFertilizante().trim());
++        fertilizante.setTipoFertilizante(
++                fertilizante.getTipoFertilizante().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java
+new file mode 100644
+index 0000000..62c129b
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/IncidenciaCultivoService.java
+@@ -0,0 +1,100 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.IncidenciaCultivo;
++import com.cultivos.gestioncultivos_backend.repository.IncidenciaCultivoRepository;
++
++@Service
++public class IncidenciaCultivoService {
++
++    private final IncidenciaCultivoRepository repositorio;
++
++    public IncidenciaCultivoService(
++            IncidenciaCultivoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<IncidenciaCultivo> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public IncidenciaCultivo obtener(int id) {
++        IncidenciaCultivo incidencia = repositorio.buscarPorId(id);
++
++        if (incidencia == null) {
++            throw new NoSuchElementException(
++                    "No existe la incidencia con id " + id);
++        }
++
++        return incidencia;
++    }
++
++    public void crear(IncidenciaCultivo incidencia) {
++        validar(incidencia);
++        repositorio.insertar(incidencia);
++    }
++
++    public void actualizar(int id, IncidenciaCultivo incidencia) {
++        obtener(id);
++        validar(incidencia);
++        incidencia.setIdIncidencia(id);
++        repositorio.actualizar(incidencia);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(IncidenciaCultivo incidencia) {
++        if (incidencia == null) {
++            throw new IllegalArgumentException(
++                    "La incidencia es obligatoria");
++        }
++
++        if (incidencia.getIdCultivo() == null) {
++            throw new IllegalArgumentException("El cultivo es obligatorio");
++        }
++
++        if (incidencia.getIdUsuario() == null) {
++            throw new IllegalArgumentException("El usuario es obligatorio");
++        }
++
++        if (incidencia.getTipoIncidencia() == null
++                || !(incidencia.getTipoIncidencia().equalsIgnoreCase("plaga")
++                || incidencia.getTipoIncidencia()
++                        .equalsIgnoreCase("enfermedad"))) {
++            throw new IllegalArgumentException(
++                    "El tipo debe ser plaga o enfermedad");
++        }
++
++        if (incidencia.getDescripcion() == null
++                || incidencia.getDescripcion().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La descripción es obligatoria");
++        }
++
++        if (incidencia.getNivelGravedad() == null
++                || !(incidencia.getNivelGravedad().equalsIgnoreCase("bajo")
++                || incidencia.getNivelGravedad().equalsIgnoreCase("medio")
++                || incidencia.getNivelGravedad().equalsIgnoreCase("alto"))) {
++            throw new IllegalArgumentException(
++                    "La gravedad debe ser bajo, medio o alto");
++        }
++
++        if (incidencia.getFechaIncidencia() == null) {
++            incidencia.setFechaIncidencia(LocalDate.now());
++        }
++
++        incidencia.setTipoIncidencia(
++                incidencia.getTipoIncidencia().toLowerCase());
++        incidencia.setNivelGravedad(
++                incidencia.getNivelGravedad().toLowerCase());
++        incidencia.setDescripcion(incidencia.getDescripcion().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java
+new file mode 100644
+index 0000000..baf785d
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java
+@@ -0,0 +1,98 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.repository.InventarioRepository;
++
++@Service
++public class InventarioService {
++
++    private final InventarioRepository repositorio;
++
++    public InventarioService(InventarioRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Inventario> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Inventario obtener(int id) {
++        Inventario producto = repositorio.buscarPorId(id);
++
++        if (producto == null) {
++            throw new NoSuchElementException(
++                    "No existe un producto de inventario con id " + id);
++        }
++
++        return producto;
++    }
++
++    public void crear(Inventario producto) {
++        validar(producto);
++        repositorio.insertar(producto);
++    }
++
++    public void actualizar(int id, Inventario producto) {
++        obtener(id);
++        validar(producto);
++        producto.setIdInventario(id);
++        repositorio.actualizar(producto);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Inventario producto) {
++        if (producto == null) {
++            throw new IllegalArgumentException("El producto es obligatorio");
++        }
++
++        if (producto.getNombreProducto() == null
++                || producto.getNombreProducto().isBlank()) {
++            throw new IllegalArgumentException("El nombre es obligatorio");
++        }
++
++        if (producto.getCategoria() == null
++                || producto.getCategoria().isBlank()) {
++            throw new IllegalArgumentException("La categoría es obligatoria");
++        }
++
++        if (producto.getCantidad() == null
++                || producto.getCantidad().compareTo(BigDecimal.ZERO) < 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad debe ser cero o mayor");
++        }
++
++        if (producto.getUnidadMedida() == null
++                || producto.getUnidadMedida().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La unidad de medida es obligatoria");
++        }
++
++        if (producto.getStockMinimo() == null
++                || producto.getStockMinimo().compareTo(BigDecimal.ZERO) < 0) {
++            throw new IllegalArgumentException(
++                    "El stock mínimo debe ser cero o mayor");
++        }
++
++        if (producto.getIdProveedor() == null) {
++            throw new IllegalArgumentException("El proveedor es obligatorio");
++        }
++    }
++
++    public List<Inventario> buscarPorCategoria(String categoria) {
++        if (categoria == null || categoria.isBlank()) {
++            throw new IllegalArgumentException("La categoría es obligatoria");
++        }
++
++        return repositorio.buscarPorCategoria(categoria.trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/MovimientoInventarioService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/MovimientoInventarioService.java
+new file mode 100644
+index 0000000..1161209
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/MovimientoInventarioService.java
+@@ -0,0 +1,108 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.model.MovimientoInventario;
++import com.cultivos.gestioncultivos_backend.repository.MovimientoInventarioRepository;
++
++@Service
++public class MovimientoInventarioService {
++
++    private final MovimientoInventarioRepository repositorio;
++
++    public MovimientoInventarioService(
++            MovimientoInventarioRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<MovimientoInventario> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public MovimientoInventario obtener(int id) {
++        MovimientoInventario movimiento = repositorio.buscarPorId(id);
++
++        if (movimiento == null) {
++            throw new NoSuchElementException(
++                    "No existe el movimiento con id " + id);
++        }
++
++        return movimiento;
++    }
++
++    public List<MovimientoInventario> listarPorInventario(int idInventario) {
++        verificarInventario(idInventario);
++        return repositorio.buscarPorInventario(idInventario);
++    }
++
++    @Transactional
++    public void crear(MovimientoInventario movimiento) {
++        validar(movimiento);
++
++        String tipo = movimiento.getTipoMovimiento()
++                .trim()
++                .toLowerCase();
++
++        movimiento.setTipoMovimiento(tipo);
++
++        int filasActualizadas;
++
++        if (tipo.equals("entrada")) {
++            filasActualizadas = repositorio.registrarEntrada(
++                    movimiento.getIdInventario(),
++                    movimiento.getCantidad());
++        } else {
++            filasActualizadas = repositorio.registrarSalida(
++                    movimiento.getIdInventario(),
++                    movimiento.getCantidad());
++        }
++
++        if (filasActualizadas == 0) {
++            throw new IllegalArgumentException(
++                    "No se pudo registrar la salida: revisa el inventario y la cantidad disponible");
++        }
++
++        repositorio.insertar(movimiento);
++    }
++
++    private void validar(MovimientoInventario movimiento) {
++        if (movimiento == null) {
++            throw new IllegalArgumentException(
++                    "El movimiento es obligatorio");
++        }
++
++        if (movimiento.getIdInventario() == null) {
++            throw new IllegalArgumentException(
++                    "El id del inventario es obligatorio");
++        }
++
++        verificarInventario(movimiento.getIdInventario());
++
++        if (movimiento.getTipoMovimiento() == null
++                || (!movimiento.getTipoMovimiento().equalsIgnoreCase("entrada")
++                && !movimiento.getTipoMovimiento().equalsIgnoreCase("salida"))) {
++            throw new IllegalArgumentException(
++                    "El tipo debe ser entrada o salida");
++        }
++
++        if (movimiento.getCantidad() == null
++                || movimiento.getCantidad() <= 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad debe ser mayor que cero");
++        }
++    }
++
++    private void verificarInventario(int idInventario) {
++        Inventario inventario = repositorio.buscarInventario(idInventario);
++
++        if (inventario == null) {
++            throw new NoSuchElementException(
++                    "No existe el producto de inventario con id " + idInventario);
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java
+new file mode 100644
+index 0000000..72b8de2
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ObservacionCultivoService.java
+@@ -0,0 +1,82 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.ObservacionCultivo;
++import com.cultivos.gestioncultivos_backend.repository.ObservacionCultivoRepository;
++
++@Service
++public class ObservacionCultivoService {
++
++    private final ObservacionCultivoRepository repositorio;
++
++    public ObservacionCultivoService(
++            ObservacionCultivoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<ObservacionCultivo> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public ObservacionCultivo obtener(int id) {
++        ObservacionCultivo observacion = repositorio.buscarPorId(id);
++
++        if (observacion == null) {
++            throw new NoSuchElementException(
++                    "No existe la observación con id " + id);
++        }
++
++        return observacion;
++    }
++
++    public void crear(ObservacionCultivo observacion) {
++        validar(observacion);
++        repositorio.insertar(observacion);
++    }
++
++    public void actualizar(int id, ObservacionCultivo observacion) {
++        obtener(id);
++        validar(observacion);
++        observacion.setIdObservacion(id);
++        repositorio.actualizar(observacion);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(ObservacionCultivo observacion) {
++        if (observacion == null) {
++            throw new IllegalArgumentException(
++                    "La observación es obligatoria");
++        }
++
++        if (observacion.getIdCultivo() == null) {
++            throw new IllegalArgumentException(
++                    "El cultivo es obligatorio");
++        }
++
++        if (observacion.getIdUsuario() == null) {
++            throw new IllegalArgumentException(
++                    "El usuario es obligatorio");
++        }
++
++        if (observacion.getDescripcion() == null
++                || observacion.getDescripcion().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La descripción es obligatoria");
++        }
++
++        if (observacion.getFechaObservacion() == null) {
++            observacion.setFechaObservacion(LocalDate.now());
++        }
++
++        observacion.setDescripcion(observacion.getDescripcion().trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ProveedorService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ProveedorService.java
+new file mode 100644
+index 0000000..561def4
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ProveedorService.java
+@@ -0,0 +1,72 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Proveedor;
++import com.cultivos.gestioncultivos_backend.repository.ProveedorRepository;
++import com.cultivos.gestioncultivos_backend.service.ProveedorService;
++
++@Service
++public class ProveedorService {
++
++    private final ProveedorRepository repositorio;
++
++    public ProveedorService(ProveedorRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Proveedor> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Proveedor obtener(int id) {
++        Proveedor proveedor = repositorio.buscarPorId(id);
++
++        if (proveedor == null) {
++            throw new NoSuchElementException(
++                    "No existe ese proveedor con ese id " + id);
++        }
++
++        return proveedor;
++    }
++
++    public void crear(Proveedor proveedor) {
++        validar(proveedor);
++        repositorio.insertar(proveedor);
++    }
++
++    public void actualizar(int id, Proveedor proveedor) {
++        if (repositorio.buscarPorId(id) == null) {
++            throw new NoSuchElementException(
++                    "No existe el proveedor con id " + id);
++        }
++
++        validar(proveedor);
++        proveedor.setIdProveedor(id);
++        repositorio.actualizar(proveedor);
++    }
++
++    public void eliminar(int id) {
++        if (repositorio.buscarPorId(id) == null) {
++            throw new NoSuchElementException(
++                    "No existe el proveedor con id " + id);
++        }
++
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Proveedor proveedor) {
++        if (proveedor == null) {
++            throw new IllegalArgumentException("El proveedor es obligatorio");
++        }
++
++        if (proveedor.getNombreEmpresa() == null
++                || proveedor.getNombreEmpresa().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre de la empresa es obligatorio");
++        }
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java
+new file mode 100644
+index 0000000..19ced44
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++import com.cultivos.gestioncultivos_backend.repository.RiegoRepository;
++
++@Service
++public class RiegoService {
++
++    private final RiegoRepository repositorio;
++
++    public RiegoService(RiegoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Riego> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Riego obtener(int id) {
++        Riego riego = repositorio.buscarPorId(id);
++
++        if (riego == null) {
++            throw new NoSuchElementException(
++                    "No existe el riego con id " + id);
++        }
++
++        return riego;
++    }
++
++    public void crear(Riego riego) {
++        validar(riego);
++        repositorio.insertar(riego);
++    }
++
++    public void actualizar(int id, Riego riego) {
++        obtener(id);
++        validar(riego);
++        riego.setIdRiego(id);
++        repositorio.actualizar(riego);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Riego riego) {
++        if (riego == null) {
++            throw new IllegalArgumentException("El riego es obligatorio");
++        }
++
++        if (riego.getIdCultivo() == null) {
++            throw new IllegalArgumentException("El cultivo es obligatorio");
++        }
++
++        if (riego.getIdTerreno() == null) {
++            throw new IllegalArgumentException("El terreno es obligatorio");
++        }
++
++        if (riego.getFechaRiego() == null) {
++            riego.setFechaRiego(LocalDate.now());
++        }
++
++        if (riego.getCantidadAgua() == null
++                || riego.getCantidadAgua().compareTo(BigDecimal.ZERO) <= 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad de agua debe ser mayor que cero");
++        }
++
++        if (riego.getUnidadMedida() == null
++                || riego.getUnidadMedida().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La unidad de medida es obligatoria");
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+index 7609bc0..51868c9 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+@@ -8,11 +8,14 @@ import org.springframework.stereotype.Service;
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ import com.cultivos.gestioncultivos_backend.repository.TerrenoRepository;
+ 
+-/** Capa de logica de negocio: validaciones y reglas de los terrenos. */
++/**
++ * Capa de lógica de negocio: validaciones y reglas de los terrenos.
++ */
+ @Service
+ public class TerrenoService {
+ 
+-    private static final List<String> ESTADOS = List.of("Disponible", "En uso", "En descanso");
++    private static final List<String> ESTADOS =
++            List.of("Disponible", "En uso", "En descanso");
+ 
+     private final TerrenoRepository repositorio;
+ 
+@@ -26,7 +29,8 @@ public class TerrenoService {
+ 
+     public Terreno obtener(Long id) {
+         return repositorio.buscarPorId(id)
+-                .orElseThrow(() -> new NoSuchElementException("No existe el terreno con id " + id));
++                .orElseThrow(() -> new NoSuchElementException(
++                        "No existe el terreno con id " + id));
+     }
+ 
+     public Terreno crear(Terreno terreno) {
+@@ -36,8 +40,8 @@ public class TerrenoService {
+     }
+ 
+     public Terreno actualizar(Long id, Terreno terreno) {
+-        validar(terreno);
+         obtener(id);
++        validar(terreno);
+         terreno.setId(id);
+         repositorio.actualizar(terreno);
+         return terreno;
+@@ -45,26 +49,67 @@ public class TerrenoService {
+ 
+     public void eliminar(Long id) {
+         if (!repositorio.eliminar(id)) {
+-            throw new NoSuchElementException("No existe el terreno con id " + id);
++            throw new NoSuchElementException(
++                    "No existe el terreno con id " + id);
+         }
+     }
+ 
+     private void validar(Terreno terreno) {
+-        if (terreno.getNombre() == null || terreno.getNombre().isBlank()) {
+-            throw new IllegalArgumentException("El nombre del terreno es obligatorio");
++        if (terreno == null) {
++            throw new IllegalArgumentException(
++                    "Los datos del terreno son obligatorios");
++        }
++
++        if (terreno.getNombre() == null
++                || terreno.getNombre().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre del terreno es obligatorio");
+         }
++
+         terreno.setNombre(terreno.getNombre().trim());
++
+         if (terreno.getNombre().length() > 100) {
+-            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
++            throw new IllegalArgumentException(
++                    "El nombre no puede pasar de 100 caracteres");
+         }
+-        if (terreno.getSuperficieHa() != null && terreno.getSuperficieHa() < 0) {
+-            throw new IllegalArgumentException("La superficie no puede ser negativa");
++
++        if (terreno.getSuperficieHa() != null
++                && terreno.getSuperficieHa() < 0) {
++            throw new IllegalArgumentException(
++                    "La superficie no puede ser negativa");
+         }
+-        if (terreno.getEstado() == null || terreno.getEstado().isBlank()) {
++
++        if (terreno.getEstado() == null
++                || terreno.getEstado().isBlank()) {
+             terreno.setEstado("Disponible");
+         }
++
+         if (!ESTADOS.contains(terreno.getEstado())) {
+-            throw new IllegalArgumentException("Estado inválido. Valores permitidos: " + String.join(", ", ESTADOS));
++            throw new IllegalArgumentException(
++                    "Estado inválido. Valores permitidos: "
++                            + String.join(", ", ESTADOS));
++        }
++
++        boolean faltaLatitud = terreno.getLatitud() == null;
++        boolean faltaLongitud = terreno.getLongitud() == null;
++
++        if (faltaLatitud != faltaLongitud) {
++            throw new IllegalArgumentException(
++                    "Debes proporcionar latitud y longitud juntas");
++        }
++
++        if (!faltaLatitud
++                && (terreno.getLatitud() < -90
++                || terreno.getLatitud() > 90)) {
++            throw new IllegalArgumentException(
++                    "La latitud debe estar entre -90 y 90");
++        }
++
++        if (!faltaLongitud
++                && (terreno.getLongitud() < -180
++                || terreno.getLongitud() > 180)) {
++            throw new IllegalArgumentException(
++                    "La longitud debe estar entre -180 y 180");
+         }
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java
+new file mode 100644
+index 0000000..11e4bc7
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/UsuarioService.java
+@@ -0,0 +1,101 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.security.crypto.password.PasswordEncoder;
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Usuario;
++import com.cultivos.gestioncultivos_backend.repository.UsuarioRepository;
++
++@Service
++public class UsuarioService {
++
++    private final UsuarioRepository repositorio;
++    private final PasswordEncoder codificador;
++
++    public UsuarioService(
++            UsuarioRepository repositorio,
++            PasswordEncoder codificador) {
++        this.repositorio = repositorio;
++        this.codificador = codificador;
++    }
++
++    public List<Usuario> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Usuario obtener(int id) {
++        Usuario usuario = repositorio.buscarPorId(id);
++
++        if (usuario == null) {
++            throw new NoSuchElementException(
++                    "No existe el usuario con id " + id);
++        }
++
++        return usuario;
++    }
++
++    public void crear(Usuario usuario) {
++        validar(usuario);
++
++        usuario.setContrasena(
++                codificador.encode(usuario.getContrasena()));
++
++        repositorio.insertar(usuario);
++    }
++
++    public void actualizar(int id, Usuario usuario) {
++        obtener(id);
++        validar(usuario);
++
++        usuario.setIdUsuario(id);
++        usuario.setContrasena(
++                codificador.encode(usuario.getContrasena()));
++
++        repositorio.actualizar(usuario);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Usuario usuario) {
++        if (usuario == null) {
++            throw new IllegalArgumentException("El usuario es obligatorio");
++        }
++
++        if (usuario.getNombreUsuario() == null
++                || usuario.getNombreUsuario().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre de usuario es obligatorio");
++        }
++
++        if (usuario.getCorreoElectronico() == null
++                || usuario.getCorreoElectronico().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El correo electrónico es obligatorio");
++        }
++
++        if (usuario.getContrasena() == null
++                || usuario.getContrasena().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La contraseña es obligatoria");
++        }
++
++        if (usuario.getRol() == null
++                || !(usuario.getRol().equalsIgnoreCase("agricultor")
++                || usuario.getRol().equalsIgnoreCase("trabajador")
++                || usuario.getRol().equalsIgnoreCase("cliente"))) {
++            throw new IllegalArgumentException(
++                    "El rol debe ser agricultor, trabajador o cliente");
++        }
++
++        usuario.setNombreUsuario(usuario.getNombreUsuario().trim());
++        usuario.setCorreoElectronico(
++                usuario.getCorreoElectronico().trim());
++        usuario.setRol(usuario.getRol().toLowerCase());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/resources/application.yaml b/backend/src/main/resources/application.yaml
+index 0655cee..379a281 100644
+--- a/backend/src/main/resources/application.yaml
++++ b/backend/src/main/resources/application.yaml
+@@ -1,5 +1,5 @@
+ server:
+-  port: 8080
++  port: 8081
+ 
+ spring:
+   application:
+diff --git a/backend/src/main/resources/templates/index.html b/backend/src/main/resources/templates/index.html
+index 215406c..7a84cb4 100644
+--- a/backend/src/main/resources/templates/index.html
++++ b/backend/src/main/resources/templates/index.html
+@@ -40,6 +40,7 @@
+         <a href="/api/semillas">/api/semillas</a> ·
+         <a href="/api/terrenos">/api/terrenos</a> ·
+         <a href="/api/herramientas">/api/herramientas</a>
++        
+     </p>
+ </body>
+-</html>
++</html>
+\ No newline at end of file

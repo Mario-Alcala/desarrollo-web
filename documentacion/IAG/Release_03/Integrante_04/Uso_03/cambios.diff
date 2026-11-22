@@ -1,0 +1,326 @@
+diff --git a/frontend/catalogo.html b/frontend/catalogo.html
+index eac465c..b5c1e65 100644
+--- a/frontend/catalogo.html
++++ b/frontend/catalogo.html
+@@ -1,32 +1,55 @@
+ <!DOCTYPE html>
+ <html lang="es">
+-<head>
+-    <meta charset="UTF-8">
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-    <title>Catálogo - Gestión de Cultivos</title>
+-    <link rel="stylesheet" href="css/styles.css">
+-    <link rel="stylesheet" href="css/cultivos.css">
+-</head>
+-<body>
+-    <header class="barra">
+-        <span class="marca">Gestión de Cultivos</span>
+-        <nav aria-label="Navegación principal">
+-            <a href="index.html">Inicio</a>
+-            <a href="catalogo.html" aria-current="page">Catálogo</a>
+-            <a href="cultivos.html">Cultivos / Carrito</a>
+-        </nav>
+-    </header>
+-    <main class="pagina">
+-        <h1>Catálogo de productos</h1>
+-        <p>Conoce nuestros productos y consulta su precio por kilo y disponibilidad.</p>
+-        <p class="nota">Catálogo de práctica con precios y existencias de ejemplo. Precios en MXN.</p>
+-        <a class="boton" href="cultivos.html">Ir a Cultivos / Carrito</a>
+-        <p id="mensaje-catalogo" class="mensaje" role="status"></p>
+-        <section aria-label="Catálogo de productos">
+-            <div id="productos" class="productos"></div>
+-        </section>
+-    </main>
+-    <script src="js/datos.js"></script>
+-    <script src="js/catalogo.js"></script>
+-</body>
++    <head>
++        <meta charset="UTF-8">
++        <meta name="viewport" content="width=device-width, initial-scale=1.0">
++        <title>Catálogo - Gestión de Cultivos</title>
++        <link rel="stylesheet" href="css/styles.css">
++        <link rel="stylesheet" href="css/cultivos.css">
++    </head>
++    <body>
++        <header class="barra">
++            <span class="marca">Gestión de Cultivos</span>
++            <nav aria-label="Navegación del cliente">
++                <a href="index.html">Inicio</a>
++            </nav>
++        </header>
++        <main class="pagina">
++            <h1>Catálogo de productos</h1>
++            <p>Elige tus productos y la cantidad que necesitas.</p>
++            <p id="mensaje-catalogo" class="mensaje" role="status"></p>
++            <div class="vista-cliente">
++                <section aria-label="Productos disponibles">
++                    <div id="productos" class="productos"></div>
++                </section>
++                <aside class="panel resumen">
++                    <h2>Resumen del pedido</h2>
++                    <div class="tabla-contenedor">
++                        <table>
++                            <thead>
++                                <tr>
++                                    <th>Producto</th>
++                                    <th>Cantidad</th>
++                                    <th>Subtotal</th>
++                                </tr>
++                            </thead>
++                            <tbody id="detalle-pedido"></tbody>
++                        </table>
++                    </div>
++                    <p class="total" aria-live="polite">
++                        Total:
++                        <span id="total">$0.00</span>
++                    </p>
++                    <div class="botones-pedido">
++                        <a class="boton boton-secundario" href="historial.html">Historial de pedidos</a>
++                        <button id="rastrear" class="boton boton-secundario" type="button">Rastrear pedidos</button>
++                        <button id="finalizar" class="boton" type="button" disabled>Finalizar pedido</button>
++                    </div>
++                </aside>
++            </div>
++        </main>
++        <script src="js/datos.js"></script>
++        <script src="js/pedido.js"></script>
++        <script src="js/carrito.js"></script>
++    </body>
+ </html>
+diff --git a/frontend/js/carrito.js b/frontend/js/carrito.js
+index 29d5de0..e1ebbd1 100644
+--- a/frontend/js/carrito.js
++++ b/frontend/js/carrito.js
+@@ -2,59 +2,82 @@ var carrito = {};
+ var datosCatalogo;
+ var totalCentavos = 0;
+ var mensajeCatalogo = document.getElementById('mensaje-catalogo');
+-var pago = document.getElementById('pago');
+-var formularioPago = document.getElementById('formulario-pago');
++
+ 
+ 
+ function mostrarCatalogo() {
+     try {
+         datosCatalogo = leerDatos();
++
+         // Ajustar el pedido si el gestor cambia o elimina un producto.
+         for (var id in carrito) {
+             var actual = buscarProducto(datosCatalogo, Number(id));
+-            if (!actual) { delete carrito[id]; }
+-            else { carrito[id] = Math.min(carrito[id], actual.stock); }
++            if (!actual) {
++                delete carrito[id];
++            } else {
++                carrito[id] = Math.min(carrito[id], actual.stock);
++            }
+         }
++
+         var lista = document.getElementById('productos');
+         lista.innerHTML = '';
++
+         if (datosCatalogo.productos.length === 0) {
+             lista.textContent = 'No hay productos disponibles por el momento.';
+         }
++
+         datosCatalogo.productos.forEach(function (producto) {
+             var tarjeta = document.createElement('article');
+             tarjeta.className = 'producto';
++
+             var nombre = document.createElement('h2');
+             nombre.textContent = producto.nombre;
++
+             var precio = document.createElement('p');
+             precio.textContent = dinero(producto.precio) + ' / kg';
++
+             var stock = document.createElement('p');
+-            stock.textContent = producto.stock === 0 ? 'Agotado' : 'Disponible: ' + producto.stock + ' kg';
++            stock.textContent = producto.stock === 0
++                ? 'Agotado'
++                : 'Disponible: ' + producto.stock + ' kg';
++
+             var controles = document.createElement('div');
+             controles.className = 'cantidad';
++
+             var menos = document.createElement('button');
+             menos.textContent = '−';
+             menos.className = 'boton boton-secundario';
+             menos.setAttribute('aria-label', 'Restar un kilo de ' + producto.nombre);
+             menos.disabled = !carrito[producto.id];
+-            menos.onclick = function () { cambiarCantidad(producto.id, -1); };
++            menos.onclick = function () {
++                cambiarCantidad(producto.id, -1);
++            };
++
+             var cantidad = document.createElement('span');
+             cantidad.textContent = (carrito[producto.id] || 0) + ' kg';
++
+             var mas = document.createElement('button');
+             mas.textContent = '+';
+             mas.className = 'boton';
+             mas.setAttribute('aria-label', 'Sumar un kilo de ' + producto.nombre);
+             mas.disabled = (carrito[producto.id] || 0) >= producto.stock;
+-            mas.onclick = function () { cambiarCantidad(producto.id, 1); };
++            mas.onclick = function () {
++                cambiarCantidad(producto.id, 1);
++            };
++
+             controles.appendChild(menos);
+             controles.appendChild(cantidad);
+             controles.appendChild(mas);
++
+             tarjeta.appendChild(nombre);
+             tarjeta.appendChild(precio);
+             tarjeta.appendChild(stock);
+             tarjeta.appendChild(controles);
+             lista.appendChild(tarjeta);
+         });
++
+         mostrarResumen();
++        guardarCarrito();
+         return true;
+     } catch (error) {
+         mensajeCatalogo.textContent = 'No se pudieron cargar los datos del navegador.';
+@@ -64,13 +87,20 @@ function mostrarCatalogo() {
+ }
+ 
+ function cambiarCantidad(id, cambio) {
+-    if (!mostrarCatalogo()) { return; }
++    if (!mostrarCatalogo()) {
++        return;
++    }
++
+     var producto = buscarProducto(datosCatalogo, id);
+-    if (!producto) { return; }
++    if (!producto) {
++        return;
++    }
++
+     var cantidad = (carrito[id] || 0) + cambio;
+     if (cantidad >= 0 && cantidad <= producto.stock) {
+         carrito[id] = cantidad;
+     }
++
+     mostrarCatalogo();
+ }
+ 
+@@ -78,11 +108,13 @@ function mostrarResumen() {
+     var detalle = document.getElementById('detalle-pedido');
+     detalle.innerHTML = '';
+     totalCentavos = 0;
++
+     datosCatalogo.productos.forEach(function (producto) {
+         var kilos = carrito[producto.id] || 0;
+         if (kilos > 0) {
+             var subtotal = Math.round(producto.precio * 100) * kilos;
+             totalCentavos += subtotal;
++
+             var fila = document.createElement('tr');
+             agregarCelda(fila, producto.nombre);
+             agregarCelda(fila, kilos + ' kg');
+@@ -90,78 +122,52 @@ function mostrarResumen() {
+             detalle.appendChild(fila);
+         }
+     });
++
+     if (totalCentavos === 0) {
+         var fila = document.createElement('tr');
+         agregarCelda(fila, 'Todavía no agregas productos.').colSpan = 3;
+         detalle.appendChild(fila);
+     }
++
+     document.getElementById('total').textContent = dinero(totalCentavos / 100);
+     document.getElementById('finalizar').disabled = totalCentavos === 0;
+ }
+ 
+-document.getElementById('finalizar').onclick = function () {
+-    if (!mostrarCatalogo() || totalCentavos === 0) { return; }
+-    document.getElementById('total-pago').textContent = dinero(totalCentavos / 100);
+-    document.getElementById('mensaje-pago').textContent = '';
+-    var hoy = new Date();
+-    document.getElementById('vencimiento').min = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+-    pago.showModal();
+-};
+-
+-document.getElementById('cancelar-pago').onclick = function () { pago.close(); };
+-pago.addEventListener('close', function () { formularioPago.reset(); });
++function guardarCarrito() {
++    var borrador = leerBorrador();
++    borrador.cantidades = {};
++    for (var id in carrito) {
++        if (carrito[id] > 0) {
++            borrador.cantidades[id] = carrito[id];
++        }
++    }
++    guardarBorrador(borrador);
++}
+ 
+-formularioPago.addEventListener('submit', function (evento) {
+-    evento.preventDefault();
+-    var mensaje = document.getElementById('mensaje-pago');
+-    if (!document.getElementById('titular').value.trim() || !formularioPago.checkValidity()) {
+-        mensaje.textContent = 'Completa los datos ficticios de la tarjeta y revisa el vencimiento.';
++document.getElementById('finalizar').onclick = function () {
++    if (!mostrarCatalogo() || totalCentavos === 0) {
+         return;
+     }
+     try {
+-        var datos = leerDatos();
+-        // Volver a comprobar precio y stock antes de confirmar.
+-        if (JSON.stringify(datos.productos) !== JSON.stringify(datosCatalogo.productos)) {
+-            pago.close();
+-            mostrarCatalogo();
+-            mensajeCatalogo.textContent = 'El catálogo cambió. Revisa tu pedido y vuelve a finalizar.';
+-            return;
+-        }
+-        if (totalCentavos === 0) { pago.close(); return; }
+-        var pedido = {
+-            id: datos.siguientePedido,
+-            fecha: new Date().toLocaleString('es-MX'),
+-            estado: 'Recibido (simulación)',
+-            productos: [],
+-            total: totalCentavos / 100
+-        };
+-        datos.productos.forEach(function (producto) {
+-            var kilos = carrito[producto.id] || 0;
+-            if (kilos > 0) {
+-                pedido.productos.push({ nombre: producto.nombre, kilos: kilos, precio: producto.precio });
+-                producto.stock -= kilos;
+-            }
+-        });
+-        // Solo se guarda el pedido, nunca los datos de tarjeta.
+-        datos.pedidos.push(pedido);
+-        datos.siguientePedido++;
+-        guardarDatos(datos);
+-        carrito = {};
+-        pago.close();
+-        mostrarCatalogo();
+-        mensajeCatalogo.textContent = 'Pedido de prueba #' + pedido.id + ' confirmado.';
++        guardarCarrito();
++        window.location.href = 'pago.html';
+     } catch (error) {
+-        mensaje.textContent = 'No se pudo guardar el pedido. Intenta de nuevo.';
++        mensajeCatalogo.textContent = 'No se pudo guardar el pedido para continuar.';
+     }
+-});
++};
+ 
+ window.addEventListener('storage', function (evento) {
+     if (evento.key === claveDatos || evento.key === null) {
+-        if (pago.open) { pago.close(); }
+         mostrarCatalogo();
+-
+         mensajeCatalogo.textContent = 'El catálogo se actualizó. Revisa las cantidades y el total de tu pedido.';
+     }
+ });
+-window.addEventListener('pageshow', function () { mostrarCatalogo(); });
+-mostrarCatalogo();
++
++window.addEventListener('pageshow', function () {
++    try {
++        carrito = leerBorrador().cantidades;
++        mostrarCatalogo();
++    } catch (error) {
++        mensajeCatalogo.textContent = 'No se pudo recuperar el pedido.';
++    }
++});

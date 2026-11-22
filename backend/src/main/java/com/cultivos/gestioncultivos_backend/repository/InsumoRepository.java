@@ -40,11 +40,12 @@ public class InsumoRepository {
     public Integer insertar(Insumo insumo) {
         KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
-                VALUES (:nombre, :categoria, :unidad, :proveedor)
+                INSERT INTO insumos (nombre, categoria, tipo_abono, unidad_medida, id_proveedor)
+                VALUES (:nombre, :categoria, :tipoAbono, :unidad, :proveedor)
                 """)
                 .param("nombre", insumo.getNombre())
                 .param("categoria", insumo.getCategoria())
+                .param("tipoAbono", insumo.getTipoAbono())
                 .param("unidad", insumo.getUnidadMedida())
                 .param("proveedor", insumo.getIdProveedor())
                 .update(llaves);
@@ -54,12 +55,13 @@ public class InsumoRepository {
     public boolean actualizar(Insumo insumo) {
         int filas = jdbc.sql("""
                 UPDATE insumos
-                SET nombre = :nombre, categoria = :categoria,
+                SET nombre = :nombre, categoria = :categoria, tipo_abono = :tipoAbono,
                     unidad_medida = :unidad, id_proveedor = :proveedor
                 WHERE id_insumo = :id
                 """)
                 .param("nombre", insumo.getNombre())
                 .param("categoria", insumo.getCategoria())
+                .param("tipoAbono", insumo.getTipoAbono())
                 .param("unidad", insumo.getUnidadMedida())
                 .param("proveedor", insumo.getIdProveedor())
                 .param("id", insumo.getIdInsumo())

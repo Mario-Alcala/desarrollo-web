@@ -16,19 +16,22 @@
             <div class="logo" role="img" aria-label="lojo"></div>
             <h1 id="titulo-cuenta">Gestión de Cultivos</h1>
             <h2 class="titulo-cuenta">Crear cuenta</h2>
-            <div class="campos-cuenta">
+            <form id="formulario-registro" class="campos-cuenta" novalidate>
                 <label for="nombre-cuenta">Nombre</label>
-                <input id="nombre-cuenta" type="text" autocomplete="name">
+                <input id="nombre-cuenta" type="text" autocomplete="name" required>
 
                 <label for="correo-cuenta">Correo</label>
-                <input id="correo-cuenta" type="email" autocomplete="email">
+                <input id="correo-cuenta" type="email" autocomplete="email" required>
 
                 <label for="contrasena-cuenta">Contraseña</label>
-                <input id="contrasena-cuenta" type="password" autocomplete="new-password">
+                <input id="contrasena-cuenta" type="password" autocomplete="new-password" required>
 
-                <button class="boton" type="button">Crear cuenta</button>
-            </div>
+                <p id="mensaje-registro" class="mensaje" role="alert"></p>
+                <button class="boton" type="submit">Crear cuenta</button>
+                <a href="login.html">Ya tengo cuenta</a>
+            </form>
         </section>
     </main>
+    <script src="js/ap.js"></script>
 </body>
 </html>

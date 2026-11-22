@@ -44,8 +44,8 @@ const INSUMOS = [
     { id: 1, nombre: "Semilla de tomate cherry", categoria: "semilla", varTipo: "cherry", unidad: "kg", activo: true },
     { id: 2, nombre: "Semilla de calabacita", categoria: "semilla", varTipo: "italiana", unidad: "kg", activo: true },
     { id: 3, nombre: "Semilla de maíz elote", categoria: "semilla", varTipo: "dulce", unidad: "kg", activo: true },
-    { id: 4, nombre: "Composta de lombriz", categoria: "abono", varTipo: "orgánico", unidad: "kg", activo: true },
-    { id: 5, nombre: "Estiércol composteado", categoria: "abono", varTipo: "bovino", unidad: "kg", activo: true },
+    { id: 4, nombre: "Composta de lombriz", categoria: "abono", tipoAbono: "organico", unidad: "kg", activo: true },
+    { id: 5, nombre: "Estiércol composteado", categoria: "abono", tipoAbono: "organico", unidad: "kg", activo: true },
     { id: 6, nombre: "Fertilizante triple 17", categoria: "fertilizante", varTipo: "granulado NPK 17-17-17", unidad: "kg", activo: true },
     { id: 7, nombre: "Fertilizante foliar", categoria: "fertilizante", varTipo: "líquido", unidad: "litros", activo: false }
 ];

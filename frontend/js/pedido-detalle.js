@@ -11,15 +11,24 @@ let cosechas = [];
 async function pedir(url, opciones) {
     const respuesta = await fetch(`${API}${url}`, opciones);
     if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => ({}));
-        throw new Error(error.mensaje || `Error ${respuesta.status}`);
+        let mensajeError = `Error ${respuesta.status}`;
+        try {
+            const error = await respuesta.json();
+            mensajeError = error.mensaje || mensajeError;
+        } catch (noEsJson) {
+            mensajeError = `Error ${respuesta.status}`;
+        }
+        throw new Error(mensajeError);
     }
     return respuesta.status === 204 ? null : respuesta.json();
 }
 
 function formatoFecha(valor) {
     if (!valor) return "—";
-    const [a, m, d] = valor.slice(0, 10).split("-").map(Number);
+    const partes = valor.slice(0, 10).split("-");
+    const a = Number(partes[0]);
+    const m = Number(partes[1]);
+    const d = Number(partes[2]);
     return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -29,54 +38,74 @@ function formatoFechaHora(valor) {
 }
 
 function dibujarLotes(lotes) {
-    const filasLotes = lotes.map(l => {
+    filas.replaceChildren();
+    for (let i = 0; i < lotes.length; i++) {
+        const l = lotes[i];
         const fila = crear("tr");
         fila.append(
             crear("td", `${l.producto} · Lote #${l.idCosecha}`),
             crear("td", l.maduracion ? capitalizar(l.maduracion) : "—"),
             crear("td", `${fmtNum(l.cantidad)} kg`)
         );
-        return fila;
-    });
+        filas.append(fila);
+    }
     if (!lotes.length) {
         const fila = crear("tr");
         const celda = crear("td", "Aún no hay kilos asignados.");
         celda.colSpan = 3;
         fila.append(celda);
-        filasLotes.push(fila);
+        filas.append(fila);
     }
-    filas.replaceChildren(...filasLotes);
 }
 
 function prepararEstado() {
-    const estados = pedido.tipoEntrega === "domicilio"
-        ? [["pendiente", pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación"], ["en_transito", "Enviado"], ["entregado", "Entregado"]]
-        : [["pendiente", pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación"], ["listo_recoleccion", "Listo para recoger"], ["entregado", "Recogido"]];
-    selectorEstado.replaceChildren(...estados.map(([valor, texto]) => {
-        const opcion = crear("option", texto);
-        opcion.value = valor;
-        return opcion;
-    }));
+    const textoPendiente = pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación";
+    let estados;
+    if (pedido.tipoEntrega === "domicilio") {
+        estados = [
+            { valor: "pendiente", texto: textoPendiente },
+            { valor: "en_transito", texto: "Enviado" },
+            { valor: "entregado", texto: "Entregado" }
+        ];
+    } else {
+        estados = [
+            { valor: "pendiente", texto: textoPendiente },
+            { valor: "listo_recoleccion", texto: "Listo para recoger" },
+            { valor: "entregado", texto: "Recogido" }
+        ];
+    }
+    selectorEstado.replaceChildren();
+    for (let i = 0; i < estados.length; i++) {
+        const opcion = crear("option", estados[i].texto);
+        opcion.value = estados[i].valor;
+        selectorEstado.append(opcion);
+    }
     const actual = pedido.estadoEntrega || pedido.estado;
-    if (actual && estados.some(([valor]) => valor === actual)) selectorEstado.value = actual;
+    for (let i = 0; i < estados.length; i++) {
+        if (estados[i].valor === actual) selectorEstado.value = actual;
+    }
 }
 
 async function cargar() {
     mensaje.textContent = "Cargando pedido…";
     try {
-        [pedido, cosechas] = await Promise.all([pedir(`/pedidos/${encodeURIComponent(idPedido)}`), pedir("/cosechas")]);
+        pedido = await pedir(`/pedidos/${encodeURIComponent(idPedido)}`);
+        cosechas = await pedir("/cosechas");
         document.getElementById("miga-pedido").textContent = `#${pedido.idPedido}`;
         document.getElementById("titulo-pedido").textContent = `Pedido #${pedido.idPedido}`;
         const trazaEntrega = pedido.fechaEntrega
             ? ` · ${pedido.tipoEntrega === "domicilio" ? "Entregado" : "Recogido"}: ${formatoFechaHora(pedido.fechaEntrega)}`
             : pedido.fechaSalida ? ` · Enviado: ${formatoFechaHora(pedido.fechaSalida)}` : "";
         document.getElementById("datos-pedido").textContent = `${pedido.cliente} · ${formatoFecha(pedido.fechaPedido)} · ${pedido.tipoEntrega === "domicilio" ? "Envío a domicilio" : "Recoger en bodega"}${trazaEntrega}`;
-        selectorLote.replaceChildren(...cosechas.filter(c => Number(c.cantidadDisponible) > 0).map(c => {
+        selectorLote.replaceChildren();
+        for (let i = 0; i < cosechas.length; i++) {
+            const c = cosechas[i];
+            if (Number(c.cantidadDisponible) <= 0) continue;
             const nombre = c.nombreCultivo || `Cultivo ${c.idCultivo}`;
             const o = crear("option", `${nombre} · ${capitalizar(c.estadoMaduracion || "lote")} · ${fmtNum(c.cantidadDisponible)} kg disponibles`);
             o.value = String(c.idCosecha);
-            return o;
-        }));
+            selectorLote.append(o);
+        }
         prepararEstado();
         await actualizarLotes();
         document.querySelector("#formulario-asignacion button[type=submit]").disabled = !selectorLote.options.length;
@@ -91,7 +120,7 @@ async function actualizarLotes() {
     dibujarLotes(lotes);
 }
 
-formAsignacion.addEventListener("submit", async evento => {
+formAsignacion.addEventListener("submit", async function (evento) {
     evento.preventDefault();
     const aviso = document.getElementById("mensaje-asignacion");
     aviso.textContent = "";
@@ -102,10 +131,12 @@ formAsignacion.addEventListener("submit", async evento => {
         });
         formAsignacion.reset();
         await cargar();
-    } catch (error) { aviso.textContent = error.message; }
+    } catch (error) {
+        aviso.textContent = error.message;
+    }
 });
 
-document.getElementById("formulario-entrega").addEventListener("submit", async evento => {
+document.getElementById("formulario-entrega").addEventListener("submit", async function (evento) {
     evento.preventDefault();
     const aviso = document.getElementById("mensaje-entrega");
     aviso.textContent = "";
@@ -115,7 +146,9 @@ document.getElementById("formulario-entrega").addEventListener("submit", async e
             body: JSON.stringify({ estado: selectorEstado.value })
         });
         await cargar();
-    } catch (error) { aviso.textContent = error.message; }
+    } catch (error) {
+        aviso.textContent = error.message;
+    }
 });
 
 cargar();

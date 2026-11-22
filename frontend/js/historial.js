@@ -10,14 +10,15 @@ function mostrarHistorial() {
         for (var i = pedidos.length - 1; i >= 0; i--) {
             var pedido = pedidos[i];
             var fecha = pedido.fecha ? pedido.fecha.split(',')[0] : '—';
-            pedido.productos.forEach(function (producto) {
+            for (var j = 0; j < pedido.productos.length; j++) {
+                var producto = pedido.productos[j];
                 var fila = document.createElement('tr');
                 agregarCelda(fila, producto.nombre);
                 agregarCelda(fila, producto.kilos + ' kg');
                 agregarCelda(fila, fecha);
                 agregarCelda(fila, pedido.tipoEntrega || 'No especificado');
                 cuerpo.appendChild(fila);
-            });
+            }
         }
         if (pedidos.length === 0) {
             mensaje.textContent = 'Todavía no tienes pedidos.';

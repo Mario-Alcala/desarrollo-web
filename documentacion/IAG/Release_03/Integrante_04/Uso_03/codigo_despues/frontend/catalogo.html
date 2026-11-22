@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Catálogo - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/cultivos.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos</span>
+            <nav aria-label="Navegación del cliente">
+                <a href="index.html">Inicio</a>
+            </nav>
+        </header>
+        <main class="pagina">
+            <h1>Catálogo de productos</h1>
+            <p>Elige tus productos y la cantidad que necesitas.</p>
+            <p id="mensaje-catalogo" class="mensaje" role="status"></p>
+            <div class="vista-cliente">
+                <section aria-label="Productos disponibles">
+                    <div id="productos" class="productos"></div>
+                </section>
+                <aside class="panel resumen">
+                    <h2>Resumen del pedido</h2>
+                    <div class="tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detalle-pedido"></tbody>
+                        </table>
+                    </div>
+                    <p class="total" aria-live="polite">
+                        Total:
+                        <span id="total">$0.00</span>
+                    </p>
+                    <div class="botones-pedido">
+                        <a class="boton boton-secundario" href="historial.html">Historial de pedidos</a>
+                        <button id="rastrear" class="boton boton-secundario" type="button">Rastrear pedidos</button>
+                        <button id="finalizar" class="boton" type="button" disabled>Finalizar pedido</button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+        <script src="js/datos.js"></script>
+        <script src="js/pedido.js"></script>
+        <script src="js/carrito.js"></script>
+    </body>
+</html>

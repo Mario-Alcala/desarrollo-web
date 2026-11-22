@@ -1,0 +1,6 @@
+git diff --numstat 97c0c02 71c30d3
+109	0	backend/database/init.sql
+53	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/ProveedorController.java
+52	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Proveedor.java
+64	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/ProveedorRepository.java
+71	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ProveedorService.java

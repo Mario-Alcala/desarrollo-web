@@ -16,6 +16,7 @@ public class ClimaRespuesta {
     private double lluviaEsperadaMm;
     private double temperaturaMaximaCelsius;
     private List<String> sugerencias;
+    private List<PronosticoDiario> pronostico;
 
     public ClimaRespuesta() {
     }
@@ -114,5 +115,13 @@ public class ClimaRespuesta {
 
     public void setSugerencias(List<String> sugerencias) {
         this.sugerencias = sugerencias;
+    }
+
+    public List<PronosticoDiario> getPronostico() {
+        return pronostico;
+    }
+
+    public void setPronostico(List<PronosticoDiario> pronostico) {
+        this.pronostico = pronostico;
     }
 }

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Riego - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/cultivos.css">
+        <link rel="stylesheet" href="css/operaciones.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <a href="index.html">Inicio</a>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html" aria-current="page">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Riego</h1>
+            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Registrar o actualizar</h2>
+                <form id="formulario-operacion" data-ruta="/riegos" data-id="idRiego" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="idCultivo">Cultivo</label>
+                            <select id="idCultivo" name="idCultivo" data-numero="true" data-ruta="/cultivos" data-id="id" data-nombre="nombre" required>
+                                <option value="">Selecciona una opción</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="idTerreno">Terreno</label>
+                            <select id="idTerreno" name="idTerreno" data-numero="true" data-ruta="/terrenos" data-id="id" data-nombre="nombre" required>
+                                <option value="">Selecciona una opción</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="fechaRiego">Fecha de riego</label>
+                            <input id="fechaRiego" name="fechaRiego" type="date" required>
+                        </div>
+                        <div>
+                            <label for="cantidadAgua">Cantidad de agua</label>
+                            <input id="cantidadAgua" name="cantidadAgua" type="number" required min="0.01" step="0.01">
+                        </div>
+                        <div>
+                            <label for="unidadMedida">Unidad de medida</label>
+                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="20">
+                        </div>
+                        <div>
+                            <label for="metodo">Método</label>
+                            <input id="metodo" name="metodo" type="text" maxlength="50">
+                        </div>
+                        <div>
+                            <label for="observaciones">Observaciones</label>
+                            <textarea id="observaciones" name="observaciones" rows="3" maxlength="255"></textarea>
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
+                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                    </div>
+                </form>
+            </section>
+            <section class="panel espacio">
+                <h2>Registros</h2>
+                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-campo="idCultivo">Cultivo</th>
+                                <th data-campo="idTerreno">Terreno</th>
+                                <th data-campo="fechaRiego">Fecha de riego</th>
+                                <th data-campo="cantidadAgua">Cantidad de agua</th>
+                                <th data-campo="unidadMedida">Unidad de medida</th>
+                                <th data-campo="metodo">Método</th>
+                                <th data-campo="observaciones">Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-operacion"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <script src="js/api.js"></script>
+        <script src="js/operaciones.js"></script>
+    </body>
+</html>

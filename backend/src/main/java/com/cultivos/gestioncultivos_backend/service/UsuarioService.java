@@ -3,8 +3,10 @@ package com.cultivos.gestioncultivos_backend.service;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.cultivos.gestioncultivos_backend.model.Usuario;
 import com.cultivos.gestioncultivos_backend.repository.UsuarioRepository;
@@ -44,6 +46,27 @@ public class UsuarioService {
                 codificador.encode(usuario.getContrasena()));
 
         repositorio.insertar(usuario);
+    }
+
+    public void registrarCliente(Usuario usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("Los datos de la cuenta son obligatorios");
+        }
+        usuario.setRol("cliente");
+        crear(usuario);
+    }
+
+    public Usuario iniciarSesion(String correo, String contrasena) {
+        if (correo == null || correo.isBlank() || contrasena == null || contrasena.isBlank()) {
+            throw new IllegalArgumentException("Escribe tu correo y contraseña");
+        }
+
+        Usuario usuario = repositorio.buscarPorCorreo(correo.trim());
+        if (usuario == null || !codificador.matches(contrasena, usuario.getContrasena())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
+        }
+
+        return usuario;
     }
 
     public void actualizar(int id, Usuario usuario) {
@@ -86,16 +109,19 @@ public class UsuarioService {
         }
 
         if (usuario.getRol() == null
-                || !(usuario.getRol().equalsIgnoreCase("agricultor")
+                || !(usuario.getRol().equalsIgnoreCase("administrador_agricultor")
+                || usuario.getRol().equalsIgnoreCase("agricultor")
                 || usuario.getRol().equalsIgnoreCase("trabajador")
                 || usuario.getRol().equalsIgnoreCase("cliente"))) {
             throw new IllegalArgumentException(
-                    "El rol debe ser agricultor, trabajador o cliente");
+                    "El rol debe ser administrador_agricultor, trabajador o cliente");
         }
 
         usuario.setNombreUsuario(usuario.getNombreUsuario().trim());
         usuario.setCorreoElectronico(
                 usuario.getCorreoElectronico().trim());
-        usuario.setRol(usuario.getRol().toLowerCase());
+        usuario.setRol(usuario.getRol().equalsIgnoreCase("agricultor")
+                ? "administrador_agricultor"
+                : usuario.getRol().toLowerCase());
     }
 }

@@ -63,6 +63,8 @@
 .tabla-admin { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .tabla-admin th,
 .tabla-admin td { padding: 0.7rem 0.9rem; text-align: left; vertical-align: middle; }
+.imagen-miniatura { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; }
+.acciones-encabezado { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .tabla-admin th {
     color: var(--texto-suave);
     font-size: 0.78rem;
@@ -126,6 +128,8 @@ body.admin .boton-chico { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
     color: #1c2e22;
     font-size: 0.85rem;
 }
+.imagen-producto-foto { width: 100%; height: 190px; box-sizing: border-box; display: block; padding: 0; object-fit: cover; }
+.sin-imagen { align-items: center; justify-content: center; }
 .imagen-producto.verdura { background-image: linear-gradient(150deg, #d5e8cf, #8fbf8a 55%, #6f9f66); }
 .imagen-producto.fruta { background-image: linear-gradient(150deg, #f3e3b8, #e0b06a 55%, #b9794a); }
 
@@ -144,6 +148,43 @@ body.admin .boton-chico { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
 /* ---------- Ventanas con formulario ---------- */
 body.admin dialog.ancho { width: min(560px, 94vw); }
 .campos-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.9rem; }
+
+/* ---------- Resumen del administrador ---------- */
+.rejilla-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+    gap: 0.85rem;
+    margin: 1rem 0;
+}
+.tarjeta-metrica,
+.panel-resumen {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    padding: 1rem;
+}
+.tarjeta-metrica { display: grid; gap: 0.45rem; }
+.tarjeta-metrica > span { color: var(--texto-suave); font-size: 0.88rem; }
+.tarjeta-metrica > strong,
+.numero-resumen { color: var(--acento); font-size: 1.65rem; }
+.tarjeta-metrica > small { color: var(--texto-suave); }
+.tarjeta-metrica > a,
+.encabezado-panel-resumen > a { color: var(--acento); font-size: 0.88rem; }
+.rejilla-resumen-secundaria { display: grid; grid-template-columns: minmax(0, 2fr) minmax(270px, 1fr); gap: 1rem; }
+.panel-resumen h2 { margin: 0; font-size: 1.1rem; }
+.panel-resumen p { color: var(--texto-suave); }
+.encabezado-panel-resumen { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
+.encabezado-panel-resumen p { margin: 0.35rem 0 0; font-size: 0.88rem; }
+.pronostico-semanal { display: grid; grid-template-columns: repeat(7, minmax(90px, 1fr)); gap: 0.55rem; overflow-x: auto; padding: 0.5rem 0 0.2rem; }
+.dia-pronostico { display: grid; gap: 0.4rem; min-width: 90px; padding: 0.7rem; background: var(--tarjeta-2); border: 1px solid var(--borde); border-radius: 9px; font-size: 0.78rem; }
+.dia-pronostico > strong { text-transform: capitalize; }
+.temp-pronostico { color: var(--acento); font-size: 1.15rem; font-weight: 700; }
+.numero-resumen { display: block; margin-top: 1rem; }
+
+@media (max-width: 900px) {
+    .rejilla-resumen-secundaria { grid-template-columns: 1fr; }
+    .pronostico-semanal { grid-template-columns: repeat(7, minmax(105px, 1fr)); }
+}
 body.admin label.casilla { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
 body.admin input[type="checkbox"] { width: auto; }
 body.admin textarea { resize: vertical; }

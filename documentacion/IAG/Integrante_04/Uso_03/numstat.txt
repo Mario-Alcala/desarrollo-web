@@ -1,0 +1,3 @@
+git diff --numstat f85c354 1e425ea
+52	29	frontend/catalogo.html
+68	62	frontend/js/carrito.js

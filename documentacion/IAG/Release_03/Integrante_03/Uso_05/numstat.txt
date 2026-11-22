@@ -1,0 +1,6 @@
+git diff --numstat 8153263 5b95117
+49	0	frontend/css/pedidos.css
+49	0	frontend/js/admin-datos.js
+40	0	frontend/js/pedidos-comun.js
+64	0	frontend/js/pedidos.js
+73	0	frontend/pedidos.html

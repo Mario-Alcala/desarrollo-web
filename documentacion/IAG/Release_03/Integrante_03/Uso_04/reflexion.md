@@ -1,0 +1,2 @@
+# Reflexión — Uso_04
+Para Bodega le pedí a la IA que siguiera el mismo patrón de las pantallas anteriores. Lo que más me ayudó a entender fue cómo se relacionan los datos: cada lote de inventario apunta a un insumo, a un proveedor y a una bodega, y la unidad sale del insumo entendí por qué una salida se valida contra la cantidad disponible antes de guardarse como movimiento

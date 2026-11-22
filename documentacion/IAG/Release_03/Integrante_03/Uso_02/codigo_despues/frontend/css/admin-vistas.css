@@ -1,0 +1,142 @@
+/*
+ * ARCHIVO: css/admin-vistas.css
+ * CAPA: FRONTEND (estilos). ¿ES CASCARÓN? SÍ: solo apariencia, sin lógica.
+ * QUÉ HACE: componentes de Catálogo, Proveedores e insumos, Bodega y Pedidos (tablas, pestañas,
+ *   filtros, etiquetas de estado, tarjetas de producto, formularios en ventana y detalle de pedido).
+ *   Usa las variables de color de admin.css (cárgalo antes).
+ * BACKEND: no depende de él.
+ * LE FALTA: estados de carga y de error con estilo propio; imágenes reales de los productos.
+ * AÑADIDO POR BACKEND INCOMPLETO: nada.
+ */
+
+.sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.espacio-arriba { margin-top: 1rem; }
+.vacio { color: var(--texto-suave); padding: 1rem 0; margin: 0; }
+
+/* ---------- Encabezado y barra de herramientas ---------- */
+.encabezado-pagina {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.encabezado-pagina p { margin: 0.2rem 0 0; color: var(--texto-suave); max-width: 62ch; }
+
+.barra-herramientas {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0.4rem 0 1rem;
+}
+
+.filtro {
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    background: var(--tarjeta);
+    color: var(--texto-suave);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.filtro:hover { color: var(--texto); }
+.filtro[aria-pressed="true"] { background: var(--tarjeta-2); border-color: var(--acento); color: var(--acento); }
+/* ---------- Tablas de administración (Proveedores, Bodega, Pedidos) ---------- */
+.tabla-admin-contenedor {
+    overflow-x: auto;
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+}
+.tabla-admin { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tabla-admin th,
+.tabla-admin td { padding: 0.7rem 0.9rem; text-align: left; vertical-align: middle; }
+.tabla-admin th {
+    color: var(--texto-suave);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+}
+.tabla-admin tbody tr + tr td { border-top: 1px solid var(--borde); }
+.tabla-admin tbody tr:hover td { background: var(--tarjeta-2); }
+
+/* ---------- Etiquetas de estado ---------- */
+.etq {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: var(--borde);
+    color: var(--texto);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.etq-ok { background: #2f5a40; color: var(--acento); }
+.etq-aviso { background: #4a4222; color: #e8d27a; }
+.etq-error { background: #4a2a2a; color: #f0a0a0; }
+.etiquetas { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* Botón pequeño (dentro de tarjetas y tablas) */
+body.admin .boton-chico { padding: 0.35rem 0.8rem; font-size: 0.85rem; }
+
+/* ---------- Catálogo: tarjetas de producto ---------- */
+.rejilla-productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 1rem;
+}
+.tarjeta-producto {
+    display: flex;
+    flex-direction: column;
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.tarjeta-producto.inactivo { opacity: 0.65; }
+
+.imagen-producto {
+    height: 130px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.6rem 0.8rem;
+    background-size: cover;
+    background-position: center;
+    color: #1c2e22;
+    font-size: 0.85rem;
+}
+.imagen-producto.verdura { background-image: linear-gradient(150deg, #d5e8cf, #8fbf8a 55%, #6f9f66); }
+.imagen-producto.fruta { background-image: linear-gradient(150deg, #f3e3b8, #e0b06a 55%, #b9794a); }
+
+.cuerpo-producto { display: flex; flex-direction: column; gap: 0.6rem; flex: 1; padding: 0.9rem; }
+.fila-titulo { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.fila-titulo h3 { margin: 0; font-size: 1.1rem; }
+.descripcion-producto { margin: 0; color: var(--texto-suave); font-size: 0.88rem; }
+.precio-producto { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--acento); }
+.existencias { margin: 0; font-size: 0.88rem; color: var(--texto-suave); }
+.pie-producto { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: auto; padding-top: 0.4rem; }
+
+/* ---------- Ventanas con formulario ---------- */
+body.admin dialog.ancho { width: min(560px, 94vw); }
+.campos-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.9rem; }
+body.admin label.casilla { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+body.admin input[type="checkbox"] { width: auto; }
+body.admin textarea { resize: vertical; }
+.ayuda { margin: 0.3rem 0 0; color: var(--texto-suave); font-size: 0.8rem; }
+
+@media (max-width: 800px) {
+    .campos-dos { grid-template-columns: 1fr; }
+}

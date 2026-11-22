@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin-vistas.css">
+    <link rel="stylesheet" href="../css/pedidos.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="pedidos"></aside>
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar pedido" data-local="true"></header>
+            <main class="pagina">
+                <p class="migas"><a href="pedidos.html">Pedidos</a> / <span id="miga-pedido">…</span></p>
+                <div class="encabezado-pagina">
+                    <div><h1 id="titulo-pedido">Pedido</h1><p id="datos-pedido"></p></div>
+                </div>
+                <p id="mensaje-pedido" class="mensaje" role="status"></p>
+                <section class="panel" aria-label="Lotes asignados al pedido">
+                    <h2>Lotes asignados</h2>
+                    <div class="tabla-admin-contenedor">
+                        <table class="tabla-admin"><thead><tr><th>Lote</th><th>Maduración</th><th>Kilos asignados</th></tr></thead><tbody id="lotes-pedido"></tbody></table>
+                    </div>
+                </section>
+                <section class="panel espacio-arriba" aria-label="Asignar kilos de cosecha">
+                    <h2>Asignar kilos disponibles</h2>
+                    <form id="formulario-asignacion" class="campos-dos">
+                        <div><label for="asignacion-lote">Lote de Bodega</label><select id="asignacion-lote" required></select></div>
+                        <div><label for="asignacion-kilos">Kilos</label><input id="asignacion-kilos" type="number" min="0.01" step="0.01" required></div>
+                        <div class="acciones-formulario"><button class="boton" type="submit">Asignar al pedido</button></div>
+                    </form>
+                    <p id="mensaje-asignacion" class="mensaje error" role="alert"></p>
+                </section>
+                <section class="panel espacio-arriba" aria-label="Registrar entrega">
+                    <h2>Entrega</h2>
+                    <form id="formulario-entrega" class="barra-herramientas">
+                        <label for="estado-entrega">Estado</label>
+                        <select id="estado-entrega" required></select>
+                        <button class="boton" type="submit">Guardar entrega</button>
+                    </form>
+                    <p id="mensaje-entrega" class="mensaje error" role="alert"></p>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/admin-comun.js"></script>
+    <script src="../js/pedido-detalle.js"></script>
+</body>
+</html>

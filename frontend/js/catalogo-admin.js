@@ -1,55 +1,213 @@
-const API = "http://localhost:8081/api";
+const API_CATALOGO = "http://localhost:8081/api";
 const lista = document.getElementById("lista-productos");
 const mensaje = document.getElementById("mensaje-catalogo");
 const buscador = document.querySelector("#topbar input");
-let cultivos = [];
-let cosechas = [];
+const filtroNombre = document.getElementById("filtrar-familia");
+const dialogoProducto = document.getElementById("dialogo-producto");
+const formularioProducto = document.getElementById("formulario-producto");
+let familias = [];
+let variedades = [];
+let idFamiliaEditando = null;
+let idVariedadEditando = null;
 
-function dibujar() {
-    const q = buscador.value.trim().toLowerCase();
-    const porCultivo = new Map(cultivos.map(c => [String(c.id), c]));
-    const visibles = [...porCultivo.values()].filter(p =>
-        !q || `${p.nombre} ${p.tipo || ""} ${p.etapaFenologica || ""}`.toLowerCase().includes(q)
-    );
-    lista.replaceChildren(...visibles.map(p => {
-        const lotes = cosechas.filter(l => String(l.idCultivo) === String(p.id));
-        const total = lotes.reduce((suma, l) => suma + Number(l.cantidadDisponible || 0), 0);
-        const tarjeta = crear("article", undefined, "tarjeta-producto");
-        const imagen = crear("div", p.tipo || "Producto", "imagen-producto verdura");
-        const cuerpo = crear("div", undefined, "cuerpo-producto");
-        cuerpo.append(crear("h3", p.nombre), crear("p", p.etapaFenologica || "Producto de temporada", "descripcion-producto"));
-        if (total > 0) {
-            const detalle = crear("div", undefined, "lotes-producto");
-            lotes.filter(l => Number(l.cantidadDisponible || 0) > 0).forEach(l => {
-                const madurez = l.estadoMaduracion ? capitalizar(l.estadoMaduracion) : "Lote";
-                detalle.append(crear("p", `${madurez} · ${fmtNum(l.cantidadDisponible)} kg`, "lote-producto"));
-            });
-            cuerpo.append(detalle, crear("p", `Disponible total: ${fmtNum(total)} kg`, "existencias total-existencias"));
-        } else {
-            cuerpo.append(crear("p", "Agotado", "existencias"));
+async function pedirCatalogo(ruta, metodo, datos) {
+    const opciones = { method: metodo || "GET", headers: {} };
+    if (datos) {
+        opciones.headers["Content-Type"] = "application/json";
+        opciones.body = JSON.stringify(datos);
+    }
+
+    let respuesta;
+    try {
+        respuesta = await fetch(API_CATALOGO + ruta, opciones);
+    } catch (error) {
+        throw new Error("No se pudo conectar con la API. Verifica que Spring Boot esté ejecutándose en el puerto 8081.");
+    }
+
+    let cuerpo = {};
+    try {
+        cuerpo = await respuesta.json();
+    } catch (error) {
+        cuerpo = {};
+    }
+    if (!respuesta.ok) {
+        if (respuesta.status === 404) {
+            throw new Error(`El backend no reconoce ${API_CATALOGO + ruta}. Reinicia Spring Boot para cargar las rutas nuevas del catálogo.`);
         }
-        tarjeta.append(imagen, cuerpo);
-        return tarjeta;
+        throw new Error(cuerpo.mensaje || cuerpo.error || cuerpo.detalle || `La API respondió con el error HTTP ${respuesta.status}.`);
+    }
+    return cuerpo;
+}
+
+function actualizarFiltroNombre() {
+    const valorAnterior = filtroNombre.value;
+    const opcionTodos = crear("option", "Todos los nombres");
+    opcionTodos.value = "";
+    filtroNombre.replaceChildren(opcionTodos);
+    for (let i = 0; i < familias.length; i++) {
+        const familia = familias[i];
+        const opcion = crear("option", familia.nombre);
+        opcion.value = String(familia.idFamilia);
+        filtroNombre.append(opcion);
+    }
+    for (let i = 0; i < familias.length; i++) {
+        if (String(familias[i].idFamilia) === valorAnterior) {
+            filtroNombre.value = valorAnterior;
+            break;
+        }
+    }
+}
+
+function dibujarCatalogo() {
+    const texto = buscador.value.trim().toLowerCase();
+    const idFiltro = filtroNombre.value;
+    const visibles = [];
+    for (let i = 0; i < variedades.length; i++) {
+        const variedad = variedades[i];
+        const coincideNombre = !idFiltro || String(variedad.idFamilia) === idFiltro;
+        const textoProducto = `${variedad.nombreFamilia} ${variedad.nombre} ${variedad.descripcion || ""}`.toLowerCase();
+        const coincideTexto = !texto || textoProducto.includes(texto);
+        if (coincideNombre && coincideTexto) visibles.push(variedad);
+    }
+
+    lista.replaceChildren();
+    for (let i = 0; i < visibles.length; i++) {
+        lista.append(crearTarjeta(visibles[i]));
+    }
+
+    if (visibles.length === 0) {
+        lista.append(crear("p", "No hay productos para mostrar.", "vacio"));
+    }
+    mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "producto" : "productos"}`;
+}
+
+function crearTarjeta(variedad) {
+    const tarjeta = crear("article", undefined, "tarjeta-producto");
+    let imagen;
+
+    if (variedad.imagenUrl) {
+        imagen = crear("img", undefined, "imagen-producto imagen-producto-foto");
+        imagen.src = variedad.imagenUrl;
+        imagen.alt = `${variedad.nombreFamilia} ${variedad.nombre}`;
+        imagen.loading = "lazy";
+        imagen.onerror = function () {
+            const reemplazo = crear("div", "Imagen no disponible", "imagen-producto sin-imagen");
+            imagen.replaceWith(reemplazo);
+        };
+    } else {
+        imagen = crear("div", "Sin imagen", "imagen-producto sin-imagen");
+    }
+
+    const cuerpo = crear("div", undefined, "cuerpo-producto");
+    const titulo = crear("div", undefined, "fila-titulo");
+    titulo.append(crear("h3", `${variedad.nombreFamilia} ${variedad.nombre}`));
+    cuerpo.append(
+        titulo,
+        crear("p", variedad.descripcion || "Sin descripción.", "descripcion-producto"),
+        crear("p", `${fmtMoneda(variedad.precioPorKg)} / kg`, "precio-producto")
+    );
+
+    const pie = crear("div", undefined, "pie-producto");
+    pie.append(crear("span", variedad.nombreFamilia));
+    pie.append(crearBoton("Editar", "boton boton-secundario boton-chico", function () {
+        abrirProducto(variedad);
     }));
-    if (visibles.length) mensaje.textContent = `${visibles.length} productos`;
-    else if (!mensaje.textContent.startsWith("No se pudo")) mensaje.textContent = "No hay productos para mostrar.";
+    cuerpo.append(pie);
+    tarjeta.append(imagen, cuerpo);
+    return tarjeta;
 }
 
 async function cargarCatalogo() {
     mensaje.textContent = "Cargando catálogo…";
     try {
-        const [rCultivos, rCosechas] = await Promise.all([fetch(`${API}/cultivos`), fetch(`${API}/cosechas`)]);
-        if (!rCultivos.ok || !rCosechas.ok) throw new Error();
-        [cultivos, cosechas] = await Promise.all([rCultivos.json(), rCosechas.json()]);
-        dibujar();
-    } catch {
-        cultivos = [];
-        cosechas = [];
-        dibujar();
-        mensaje.textContent = "No se pudo conectar con el API para cargar el catálogo.";
+        familias = await pedirCatalogo("/familias-producto");
+        variedades = await pedirCatalogo("/variedades-producto");
+        actualizarFiltroNombre();
+        dibujarCatalogo();
+    } catch (error) {
+        lista.replaceChildren();
+        mensaje.textContent = error.message;
     }
 }
 
-buscador.addEventListener("input", dibujar);
-window.addEventListener("pageshow", cargarCatalogo);
+function abrirProducto(variedad) {
+    idVariedadEditando = variedad ? variedad.idVariedad : null;
+    idFamiliaEditando = variedad ? variedad.idFamilia : null;
+    document.getElementById("titulo-producto").textContent = variedad ? "Editar producto" : "Agregar producto";
+    document.getElementById("producto-nombre").value = variedad ? variedad.nombreFamilia : "";
+    document.getElementById("producto-variedad").value = variedad ? variedad.nombre : "";
+    document.getElementById("producto-descripcion").value = variedad ? variedad.descripcion || "" : "";
+    document.getElementById("producto-imagen").value = variedad ? variedad.imagenUrl || "" : "";
+    document.getElementById("producto-precio").value = variedad ? variedad.precioPorKg : "";
+    document.getElementById("mensaje-producto").textContent = "";
+    dialogoProducto.showModal();
+}
+
+async function obtenerNombreProducto(nombre) {
+    const nombreNormalizado = nombre.trim().toLowerCase();
+    let familia = null;
+    for (let i = 0; i < familias.length; i++) {
+        if (familias[i].nombre.trim().toLowerCase() === nombreNormalizado) {
+            familia = familias[i];
+            break;
+        }
+    }
+    if (familia !== null) return familia;
+
+    familia = await pedirCatalogo("/familias-producto", "POST", { nombre: nombre.trim() });
+    familias.push(familia);
+    return familia;
+}
+
+formularioProducto.addEventListener("submit", async function (evento) {
+    evento.preventDefault();
+    const aviso = document.getElementById("mensaje-producto");
+    aviso.textContent = "";
+
+    const nombre = document.getElementById("producto-nombre").value.trim();
+    const nombreVariedad = document.getElementById("producto-variedad").value.trim();
+    const datosProducto = {
+        nombre: nombreVariedad,
+        descripcion: document.getElementById("producto-descripcion").value.trim(),
+        imagenUrl: document.getElementById("producto-imagen").value.trim(),
+        precioPorKg: Number(document.getElementById("producto-precio").value)
+    };
+
+    try {
+        let familia;
+        if (idVariedadEditando && idFamiliaEditando !== null) {
+            let familiaOriginal = null;
+            for (let i = 0; i < familias.length; i++) {
+                if (familias[i].idFamilia === idFamiliaEditando) {
+                    familiaOriginal = familias[i];
+                    break;
+                }
+            }
+            if (familiaOriginal && familiaOriginal.nombre.trim().toLowerCase() === nombre.toLowerCase()) {
+                familia = familiaOriginal;
+            } else {
+                familia = await obtenerNombreProducto(nombre);
+            }
+        } else {
+            familia = await obtenerNombreProducto(nombre);
+        }
+
+        datosProducto.idFamilia = familia.idFamilia;
+        const ruta = idVariedadEditando ? `/variedades-producto/${idVariedadEditando}` : "/variedades-producto";
+        await pedirCatalogo(ruta, idVariedadEditando ? "PUT" : "POST", datosProducto);
+        dialogoProducto.close();
+        formularioProducto.reset();
+        idFamiliaEditando = null;
+        idVariedadEditando = null;
+        await cargarCatalogo();
+        mensaje.textContent = "Producto guardado.";
+    } catch (error) {
+        aviso.textContent = error.message;
+    }
+});
+
+document.getElementById("agregar-producto").addEventListener("click", function () { abrirProducto(null); });
+document.getElementById("cancelar-producto").addEventListener("click", function () { dialogoProducto.close(); });
+filtroNombre.addEventListener("change", dibujarCatalogo);
+buscador.addEventListener("input", dibujarCatalogo);
 cargarCatalogo();

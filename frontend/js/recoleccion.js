@@ -37,8 +37,8 @@ function mostrarRecoleccion() {
     document.getElementById('dia-seleccionado').textContent = fechaElegida ? 'Fecha seleccionada: ' + fechaElegida : 'Aún no seleccionas una fecha.';
     document.getElementById('guardar-fecha').disabled = !fechaPermitida(fechaElegida);
     var hoy = new Date();
-    var limite = new Date();
-    limite.setDate(limite.getDate() + 13);
+    var limite = inicioRecoleccion();
+        limite.setDate(limite.getDate() + 6);
     document.getElementById('mes-anterior').disabled = anio * 12 + mes <= hoy.getFullYear() * 12 + hoy.getMonth();
     document.getElementById('mes-siguiente').disabled = anio * 12 + mes >= limite.getFullYear() * 12 + limite.getMonth();
 }

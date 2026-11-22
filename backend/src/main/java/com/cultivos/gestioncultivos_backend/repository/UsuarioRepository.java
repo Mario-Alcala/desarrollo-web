@@ -43,6 +43,23 @@ public class UsuarioRepository {
         return resultado.get(0);
     }
 
+    public Usuario buscarPorCorreo(String correo) {
+        List<Usuario> resultado = jdbc.sql("""
+                SELECT id_usuario, nombre_usuario, correo_electronico, contrasena, rol
+                FROM usuarios
+                WHERE LOWER(correo_electronico) = LOWER(:correo)
+                """)
+                .param("correo", correo)
+                .query(Usuario.class)
+                .list();
+
+        if (resultado.isEmpty()) {
+            return null;
+        }
+
+        return resultado.get(0);
+    }
+
     public void insertar(Usuario usuario) {
         jdbc.sql("""
                 INSERT INTO usuarios

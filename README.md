@@ -33,9 +33,12 @@ desarrollo-web/
 │           ├── application.yaml # conexión a MySQL
 │           └── templates/       # plantilla Thymeleaf
 └── frontend/                    # sitio estático (puerto 5500)
-    ├── index.html
-    ├── css/styles.css
-    └── js/app.js                # consumo de la API con fetch
+    ├── index.html               # inicio y acceso
+    ├── administrador-agricultor/ # vistas de administración agrícola
+    ├── empleado/                 # vistas de trabajo en campo y bodega
+    ├── cliente/                  # catálogo y flujo de pedidos
+    ├── css/                      # estilos compartidos
+    └── js/                       # JavaScript compartido y lógica de vistas
 ```
 
 ## 1. Requisitos

@@ -1,0 +1,7 @@
+git diff --numstat 9c0c506 1e425ea
+34	0	frontend/crear-cuenta.html
+9	0	frontend/css/acceso.css
+14	0	frontend/css/cuenta.css
+30	34	frontend/index.html
+13	3	frontend/js/ap.js
+34	32	frontend/login.html

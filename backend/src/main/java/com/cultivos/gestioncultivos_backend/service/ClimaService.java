@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriBuilder;
 
 import com.cultivos.gestioncultivos_backend.model.ClimaRespuesta;
+import com.cultivos.gestioncultivos_backend.model.PronosticoDiario;
 
 import tools.jackson.databind.JsonNode;
 
@@ -38,6 +39,7 @@ public class ClimaService {
 
             JsonNode actual = datos.path("current");
             JsonNode diario = datos.path("daily");
+            JsonNode fechas = diario.path("time");
 
             ClimaRespuesta resultado = new ClimaRespuesta();
 
@@ -66,6 +68,7 @@ public class ClimaService {
                     diario.path("temperature_2m_max").path(0).asDouble());
 
             resultado.setSugerencias(generarSugerencias(resultado));
+            resultado.setPronostico(crearPronostico(diario, fechas));
 
             return resultado;
 
@@ -74,6 +77,22 @@ public class ClimaService {
                     HttpStatus.BAD_GATEWAY,
                     "No se pudo consultar el servicio meteorológico");
         }
+    }
+
+    private List<PronosticoDiario> crearPronostico(JsonNode diario, JsonNode fechas) {
+        List<PronosticoDiario> pronostico = new ArrayList<>();
+        for (int i = 0; i < fechas.size(); i++) {
+            PronosticoDiario dia = new PronosticoDiario();
+            dia.setFecha(fechas.path(i).asText());
+            dia.setTemperaturaMaximaCelsius(
+                    diario.path("temperature_2m_max").path(i).asDouble());
+            dia.setProbabilidadLluvia(
+                    diario.path("precipitation_probability_max").path(i).asInt());
+            dia.setLluviaEsperadaMm(
+                    diario.path("precipitation_sum").path(i).asDouble());
+            pronostico.add(dia);
+        }
+        return pronostico;
     }
 
     private java.net.URI construirUrl(
@@ -91,6 +110,7 @@ public class ClimaService {
                 .queryParam(
                         "daily",
                         "precipitation_probability_max,precipitation_sum,temperature_2m_max")
+                .queryParam("forecast_days", 7)
                 .queryParam("temperature_unit", "celsius")
                 .queryParam("wind_speed_unit", "kmh")
                 .queryParam("precipitation_unit", "mm")

@@ -28,22 +28,32 @@ function m2(ha) {
 
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
-    const visibles = terrenos.filter(t =>
-        !q ||
-        String(t.nombre).toLowerCase().includes(q) ||
-        String(t.ubicacion).toLowerCase().includes(q) ||
-        (t.parcelas || []).some(p => String(p.cultivoNombre || "").toLowerCase().includes(q))
-    );
+    const visibles = [];
+    for (let i = 0; i < terrenos.length; i++) {
+        const terreno = terrenos[i];
+        let coincide = !q || String(terreno.nombre || "").toLowerCase().includes(q)
+            || String(terreno.ubicacion || "").toLowerCase().includes(q);
+        for (let j = 0; !coincide && j < terreno.parcelas.length; j++) {
+            if (String(terreno.parcelas[j].cultivoNombre || "").toLowerCase().includes(q)) {
+                coincide = true;
+            }
+        }
+        if (coincide) visibles.push(terreno);
+    }
 
     lista.replaceChildren();
-    visibles.forEach(t => {
+    for (let i = 0; i < visibles.length; i++) {
+        const t = visibles[i];
         const tarjeta = crear("article", undefined, "tarjeta-terreno");
 
         const vista = crear("div", "Terreno registrado", "vista");
 
         const chips = crear("div", undefined, "chips");
         const pie = crear("div", undefined, "pie-tarjeta");
-        const activos = t.parcelas.filter(p => p.idCultivo != null).length;
+        let activos = 0;
+        for (let j = 0; j < t.parcelas.length; j++) {
+            if (t.parcelas[j].idCultivo != null) activos++;
+        }
         chips.append(
             crear("span", `${t.parcelas.length} ${t.parcelas.length === 1 ? "parcela" : "parcelas"}`, "chip"),
             crear("span", `${activos} ${activos === 1 ? "cultivo" : "cultivos"}`, "chip")
@@ -64,7 +74,7 @@ function dibujar() {
 
         tarjeta.append(vista, cuerpo);
         lista.append(tarjeta);
-    });
+    }
 
     if (!visibles.length) {
         if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay terrenos para mostrar.";
@@ -79,11 +89,11 @@ async function cargarTerrenos() {
         const respuesta = await fetch(API_TERRENOS);
         if (!respuesta.ok) throw new Error("Error " + respuesta.status);
         terrenos = await respuesta.json();
-        terrenos = await Promise.all(terrenos.map(async terreno => {
-            const r = await fetch(`http://localhost:8081/api/parcelas/terreno/${encodeURIComponent(terreno.id)}`);
+        for (let i = 0; i < terrenos.length; i++) {
+            const r = await fetch(`http://localhost:8081/api/parcelas/terreno/${encodeURIComponent(terrenos[i].id)}`);
             if (!r.ok) throw new Error("No se pudieron cargar las parcelas");
-            return { ...terreno, parcelas: await r.json() };
-        }));
+            terrenos[i].parcelas = await r.json();
+        }
     } catch (error) {
         terrenos = [];
         mensaje.textContent = "No se pudieron cargar los terrenos y sus parcelas desde el API.";
@@ -99,8 +109,15 @@ async function guardarTerreno(evento) {
         nombre: document.getElementById("t-nombre").value.trim(),
         ubicacion: document.getElementById("t-ubicacion").value.trim(),
         superficieHa: Number(document.getElementById("t-superficie").value) / 10000,
+        latitud: document.getElementById("t-latitud").value === "" ? null : Number(document.getElementById("t-latitud").value),
+        longitud: document.getElementById("t-longitud").value === "" ? null : Number(document.getElementById("t-longitud").value),
         estado: document.getElementById("t-estado").value
     };
+
+    if ((datos.latitud === null) !== (datos.longitud === null)) {
+        mensajeFormulario.textContent = "Ingresa latitud y longitud juntas, o deja ambas vacías.";
+        return;
+    }
 
     try {
         const respuesta = await fetch(API_TERRENOS, {
@@ -109,8 +126,14 @@ async function guardarTerreno(evento) {
             body: JSON.stringify(datos)
         });
         if (!respuesta.ok) {
-            const error = await respuesta.json().catch(() => ({}));
-            throw new Error(error.mensaje || "El servidor no pudo guardar el terreno.");
+            let mensajeError = "El servidor no pudo guardar el terreno.";
+            try {
+                const error = await respuesta.json();
+                mensajeError = error.mensaje || mensajeError;
+            } catch (noEsJson) {
+                mensajeError = "El servidor no pudo guardar el terreno.";
+            }
+            throw new Error(mensajeError);
         }
         dialogo.close();
         formulario.reset();
@@ -120,15 +143,16 @@ async function guardarTerreno(evento) {
     }
 }
 
-document.getElementById("agregar-terreno").addEventListener("click", () => {
+document.getElementById("agregar-terreno").addEventListener("click", function () {
     mensajeFormulario.textContent = "";
     dialogo.showModal();
 });
-document.getElementById("cancelar-terreno").addEventListener("click", () => dialogo.close());
+document.getElementById("cancelar-terreno").addEventListener("click", function () { dialogo.close(); });
 formulario.addEventListener("submit", guardarTerreno);
 buscador.addEventListener("input", dibujar);
 
-const busquedaInicial = new URLSearchParams(location.search).get("q");
+const parametros = new URLSearchParams(location.search);
+const busquedaInicial = parametros.get("q");
 if (busquedaInicial) buscador.value = busquedaInicial;
 
 cargarTerrenos();

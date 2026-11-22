@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Terreno - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <a href="../index.html">Inicio</a>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html" aria-current="page">Terreno</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Terreno</h1>
+            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Registrar o actualizar</h2>
+                <form id="formulario-operacion" data-ruta="/terrenos" data-id="id" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="nombre">Nombre</label>
+                            <input id="nombre" name="nombre" type="text" required maxlength="100">
+                        </div>
+                        <div>
+                            <label for="ubicacion">Ubicación</label>
+                            <input id="ubicacion" name="ubicacion" type="text" maxlength="255">
+                        </div>
+                        <div>
+                            <label for="superficieHa">Superficie </label>
+                            <input id="superficieHa" name="superficieHa" type="number" min="0" step="0.01">
+                        </div>
+                        <div>
+                            <label for="tipoSuelo">Tipo de suelo</label>
+                            <input id="tipoSuelo" name="tipoSuelo" type="text" maxlength="100">
+                        </div>
+                        <div>
+                            <label for="estado">Estado</label>
+                            <select id="estado" name="estado" required>
+                                <option>Disponible</option>
+                                <option>En uso</option>
+                                <option>En descanso</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="latitud">Latitud</label>
+                            <input id="latitud" name="latitud" type="number" min="-90" max="90" step="any">
+                        </div>
+                        <div>
+                            <label for="longitud">Longitud</label>
+                            <input id="longitud" name="longitud" type="number" min="-180" max="180" step="any">
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
+                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                    </div>
+                </form>
+            </section>
+            <section class="panel espacio">
+                <h2>Registros</h2>
+                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-campo="nombre">Nombre</th>
+                                <th data-campo="ubicacion">Ubicación</th>
+                                <th data-campo="superficieHa">Superficie (ha)</th>
+                                <th data-campo="tipoSuelo">Tipo de suelo</th>
+                                <th data-campo="estado">Estado</th>
+                                <th data-campo="latitud">Latitud</th>
+                                <th data-campo="longitud">Longitud</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-operacion"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/operaciones.js"></script>
+    </body>
+</html>

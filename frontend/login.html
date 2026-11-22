@@ -16,13 +16,6 @@
                 
                 <h1 id="titulo-login">Gestión de Cultivos</h1>
                 <form id="formulario-login" novalidate>
-                    <label for="tipo-acceso">Acceso</label>
-                    <select id="tipo-acceso">
-                        <option value="cliente">Cliente</option>
-                        <option value="trabajador">Trabajador</option>
-                    </select>
-                    <label for="nombre">Nombre</label>
-                    <input type="text" id="nombre" name="nombre" autocomplete="name" required>
                     <label for="correo">Correo</label>
                     <input type="email" id="correo" name="correo" autocomplete="email" required>
                     <label for="contrasena">Contraseña</label>
@@ -30,6 +23,7 @@
                     <p id="mensaje-login" class="mensaje error" role="alert"></p>
                     <button class="boton" type="submit">Ingresar</button>
                 </form>
+                <p>¿No tienes cuenta? <a href="crear-cuenta.html">Crear cuenta de cliente</a></p>
             </section>
         </main>
         <script src="js/ap.js"></script>

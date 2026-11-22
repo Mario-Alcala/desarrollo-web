@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!--
+  CAPA: FRONTEND 
+  BACKEND: datos del terreno, coordenadas, parcelas, cultivos y bitácora desde la API.
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de terreno - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/terrenos.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="terrenos"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin"></header>
+
+            <main class="pagina">
+                <p class="migas"><a href="terrenos-admin.html">Terrenos</a> / <span id="miga-terreno">…</span></p>
+
+                <div class="encabezado-detalle">
+                    <div>
+                        <h1 id="nombre-terreno">Terreno</h1>
+                        <p id="datos-terreno" class="nota"></p>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="agregar-parcela" class="boton" type="button">Agregar parcela</button>
+                        <button id="editar-terreno" class="boton boton-secundario" type="button">Editar terreno</button>
+                    </div>
+                </div>
+                <p id="mensaje-detalle" class="mensaje" role="status"></p>
+
+                <div class="fila-resumen">
+                    <section class="panel" aria-label="Resumen del terreno">
+                        <div class="titulo-panel"><h2>Resumen</h2></div>
+                        <div id="resumen-terreno" class="chips"></div>
+                    </section>
+                    <section class="panel" aria-label="Clima de la zona">
+                        <div class="titulo-panel"><h2>Clima de la zona</h2><span>Consulta al abrir el terreno</span></div>
+                        <div class="clima">
+                            <div>
+                                <strong id="clima-lugar"></strong>
+                                <p id="clima-detalle">Consultando el clima…</p>
+                            </div>
+                            <span id="clima-temp" class="temperatura"></span>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="vista-parcelas">
+                    <section class="panel" aria-label="Parcelas">
+                        <div class="titulo-panel"><h2>Parcelas</h2><span>Selecciona una</span></div>
+                        <div id="lista-parcelas"></div>
+                    </section>
+                    <section class="panel" aria-label="Detalle de la parcela">
+                        <div class="titulo-panel">
+                            <h2 id="titulo-parcela">Selecciona una parcela</h2>
+                            <span id="insignia-parcela"></span>
+                        </div>
+                        <p id="info-parcela" class="nota"></p>
+                        <button id="gestionar-cultivo" class="boton boton-secundario" type="button" hidden>Asignar cultivo</button>
+                        <div class="pestanas" id="pestanas-parcela" hidden>
+                            <button type="button" data-tab="cultivo" class="activa">Cultivo</button>
+                            <button type="button" data-tab="bitacora">Bitácora</button>
+                        </div>
+                        <div id="contenido-parcela"></div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+    <dialog id="dialogo-editar-terreno" aria-labelledby="titulo-editar-terreno">
+        <h2 id="titulo-editar-terreno">Editar terreno</h2>
+        <form id="formulario-editar-terreno">
+            <label for="e-nombre">Nombre</label>
+            <input id="e-nombre" type="text" maxlength="100" required>
+            <label for="e-ubicacion">Ubicación</label>
+            <input id="e-ubicacion" type="text" maxlength="255">
+            <label for="e-superficie">Superficie total (m²)</label>
+            <input id="e-superficie" type="number" min="0.01" step="0.01" required>
+            <label for="e-latitud">Latitud (opcional)</label>
+            <input id="e-latitud" type="number" min="-90" max="90" step="0.000001">
+            <label for="e-longitud">Longitud (opcional)</label>
+            <input id="e-longitud" type="number" min="-180" max="180" step="0.000001">
+            <label for="e-estado">Estado</label>
+            <select id="e-estado" required><option value="disponible">Disponible</option><option value="ocupado">Ocupado</option></select>
+            <p id="mensaje-editar-terreno" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar cambios</button>
+                <button id="cancelar-editar-terreno" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+    <dialog id="dialogo-parcela" aria-labelledby="titulo-dialogo-parcela">
+        <h2 id="titulo-dialogo-parcela">Agregar parcela</h2>
+        <form id="formulario-parcela">
+            <label for="p-nombre">Nombre de la parcela</label>
+            <input id="p-nombre" type="text" maxlength="100" placeholder="Ej. Parcela B" required>
+            <label for="p-superficie">Superficie (m²)</label>
+            <input id="p-superficie" type="number" min="0.01" step="0.01" required>
+            <p id="superficie-disponible" class="nota"></p>
+            <p id="mensaje-parcela" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar parcela</button>
+                <button id="cancelar-parcela" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+    <dialog id="dialogo-cultivo" aria-labelledby="titulo-dialogo-cultivo">
+        <h2 id="titulo-dialogo-cultivo">Asignar cultivo a la parcela</h2>
+        <form id="formulario-cultivo-parcela">
+            <label for="c-nombre">Nombre del cultivo</label>
+            <input id="c-nombre" type="text" maxlength="100" required>
+            <label for="c-familia">Familia</label>
+            <input id="c-familia" type="text" maxlength="100">
+            <label for="c-etapa">Etapa fenológica</label>
+            <input id="c-etapa" type="text" maxlength="100" placeholder="Ej. Siembra, floración">
+            <label for="c-fecha-siembra">Fecha de siembra</label>
+            <input id="c-fecha-siembra" type="date">
+            <label for="c-estado">Estado</label>
+            <select id="c-estado" required><option value="activo">Activo</option><option value="finalizado">Finalizado</option></select>
+            <p id="mensaje-cultivo-parcela" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button id="guardar-cultivo-parcela" class="boton" type="submit">Guardar cultivo</button>
+                <button id="cancelar-cultivo-parcela" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+    <dialog id="dialogo-bitacora" aria-labelledby="titulo-dialogo-bitacora">
+        <h2 id="titulo-dialogo-bitacora">Editar registro de bitácora</h2>
+        <form id="formulario-bitacora">
+            <p id="tipo-registro-bitacora" class="nota"></p>
+            <label for="b-fecha">Fecha</label>
+            <input id="b-fecha" type="date" required>
+
+            <div id="campos-observacion" hidden>
+                <label for="b-descripcion">Observación</label>
+                <textarea id="b-descripcion" rows="4" required></textarea>
+            </div>
+
+            <div id="campos-incidencia" hidden>
+                <label for="b-tipo-incidencia">Tipo</label>
+                <select id="b-tipo-incidencia"><option value="plaga">Plaga</option><option value="enfermedad">Enfermedad</option></select>
+                <label for="b-gravedad">Gravedad</label>
+                <select id="b-gravedad"><option value="bajo">Baja</option><option value="medio">Media</option><option value="alto">Alta</option></select>
+                <label for="b-descripcion-incidencia">Descripción</label>
+                <textarea id="b-descripcion-incidencia" rows="4"></textarea>
+            </div>
+
+            <div id="campos-riego" hidden>
+                <label for="b-cantidad-agua">Cantidad de agua</label>
+                <input id="b-cantidad-agua" type="number" min="0.01" step="0.01">
+                <label for="b-unidad-agua">Unidad de medida</label>
+                <input id="b-unidad-agua" type="text" maxlength="20">
+                <label for="b-metodo-riego">Método</label>
+                <input id="b-metodo-riego" type="text" maxlength="50">
+                <label for="b-observaciones-riego">Observaciones</label>
+                <textarea id="b-observaciones-riego" rows="3"></textarea>
+            </div>
+
+            <p id="mensaje-bitacora" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar cambios</button>
+                <button id="cancelar-bitacora" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/terreno-detalle.js"></script>
+</body>
+</html>

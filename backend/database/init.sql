@@ -31,13 +31,13 @@ CREATE TABLE IF NOT EXISTS terrenos (
     nombre VARCHAR(100) NOT NULL,
     ubicacion VARCHAR(255),
     superficie_m2 DECIMAL(10,2) NOT NULL DEFAULT 0,
-    superficie_ha DECIMAL(10,4),
     tipo_suelo VARCHAR(100),
     latitud DOUBLE,
     longitud DOUBLE,
     estado VARCHAR(30) NOT NULL DEFAULT 'Disponible'
 );
 
+-- Usuarios y estructura de los terrenos.
 CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
     nombre_usuario VARCHAR(100) NOT NULL,
@@ -66,6 +66,24 @@ CREATE TABLE IF NOT EXISTS cultivos (
     FOREIGN KEY (id_parcela) REFERENCES parcelas(id_parcela)
 );
 
+-- Catálogo: cada familia agrupa sus variedades.
+CREATE TABLE IF NOT EXISTS familias_producto (
+    id_familia INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS variedades_producto (
+    id_variedad INT PRIMARY KEY AUTO_INCREMENT,
+    id_familia INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(500),
+    imagen_url VARCHAR(500),
+    precio_por_kg DECIMAL(10,2) NOT NULL,
+    UNIQUE (id_familia, nombre),
+    FOREIGN KEY (id_familia) REFERENCES familias_producto(id_familia)
+);
+
+-- Proveedores e insumos que pueden recibirse en varias existencias o lotes.
 CREATE TABLE IF NOT EXISTS proveedores (
     id_proveedor INT PRIMARY KEY AUTO_INCREMENT,
     nombre_empresa VARCHAR(100) NOT NULL,
@@ -79,11 +97,13 @@ CREATE TABLE IF NOT EXISTS insumos (
     id_insumo INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     categoria ENUM('semilla', 'abono', 'fertilizante') NOT NULL,
+    tipo_abono ENUM('organico', 'inorganico') NULL,
     unidad_medida VARCHAR(30) NOT NULL,
     id_proveedor INT,
     FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)
 );
 
+-- Existencias por lote y su historial de entradas o salidas.
 CREATE TABLE IF NOT EXISTS inventario (
     id_inventario INT PRIMARY KEY AUTO_INCREMENT,
     id_insumo INT NOT NULL,
@@ -105,6 +125,7 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+-- Herramientas se administran aparte porque tienen estado propio de uso.
 CREATE TABLE IF NOT EXISTS herramientas (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
@@ -114,6 +135,7 @@ CREATE TABLE IF NOT EXISTS herramientas (
     fecha_adquisicion DATE
 );
 
+-- Cada cosecha es un lote almacenado en bodega; pedidos pueden tomar kilos de distintos lotes.
 CREATE TABLE IF NOT EXISTS cosechas (
     id_cosecha INT PRIMARY KEY AUTO_INCREMENT,
     id_cultivo BIGINT NOT NULL,
@@ -127,6 +149,7 @@ CREATE TABLE IF NOT EXISTS cosechas (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+-- Bitácora de campo: observaciones, incidencias y seguimientos son registros distintos.
 CREATE TABLE IF NOT EXISTS observaciones_cultivos (
     id_observacion INT PRIMARY KEY AUTO_INCREMENT,
     id_cultivo BIGINT NOT NULL,
@@ -173,6 +196,7 @@ CREATE TABLE IF NOT EXISTS riegos (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+-- Pedidos y entregas: cada pedido contiene varios productos y tiene una sola entrega o recolección.
 CREATE TABLE IF NOT EXISTS pedidos (
     id_pedido INT PRIMARY KEY AUTO_INCREMENT,
     id_usuario INT NOT NULL,
@@ -215,8 +239,35 @@ INSERT INTO usuarios (nombre_usuario, correo_electronico, contrasena, rol)
 SELECT 'Administrador', 'admin@gestioncultivos.local', 'sin-acceso-web', 'administrador_agricultor'
 WHERE NOT EXISTS (SELECT 1 FROM usuarios);
 
-INSERT INTO terrenos (nombre, ubicacion, superficie_m2, estado)
-SELECT 'El Encino', 'Xalapa, Veracruz', 1200, 'ocupado'
+-- Cuentas de prueba para ingresar desde frontend/login.html.
+-- La contraseña de las tres cuentas es: Prueba123!
+-- Se guarda cifrada con BCrypt, igual que las contraseñas creadas desde el API.
+INSERT INTO usuarios (nombre_usuario, correo_electronico, contrasena, rol)
+SELECT 'Admin de prueba', 'admin.prueba@local.test',
+       '$2a$10$4i9hrc8RWkUDLWB27.EH7OqkRTKUOXLQZy7L7dIXvOI30K0EGNs7q',
+       'administrador_agricultor'
+WHERE NOT EXISTS (
+    SELECT 1 FROM usuarios WHERE correo_electronico = 'admin.prueba@local.test'
+);
+
+INSERT INTO usuarios (nombre_usuario, correo_electronico, contrasena, rol)
+SELECT 'Empleado de prueba', 'empleado.prueba@local.test',
+       '$2a$10$4i9hrc8RWkUDLWB27.EH7OqkRTKUOXLQZy7L7dIXvOI30K0EGNs7q',
+       'trabajador'
+WHERE NOT EXISTS (
+    SELECT 1 FROM usuarios WHERE correo_electronico = 'empleado.prueba@local.test'
+);
+
+INSERT INTO usuarios (nombre_usuario, correo_electronico, contrasena, rol)
+SELECT 'Cliente de prueba', 'cliente.prueba@local.test',
+       '$2a$10$4i9hrc8RWkUDLWB27.EH7OqkRTKUOXLQZy7L7dIXvOI30K0EGNs7q',
+       'cliente'
+WHERE NOT EXISTS (
+    SELECT 1 FROM usuarios WHERE correo_electronico = 'cliente.prueba@local.test'
+);
+
+INSERT INTO terrenos (nombre, ubicacion, superficie_m2, latitud, longitud, estado)
+SELECT 'El Encino', 'Xalapa, Veracruz', 1200, 19.531240, -96.915890, 'ocupado'
 WHERE NOT EXISTS (SELECT 1 FROM terrenos WHERE nombre = 'El Encino');
 
 INSERT INTO parcelas (id_terreno, nombre, superficie_m2, estado)
@@ -249,6 +300,39 @@ AND NOT EXISTS (
     SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'verde'
 );
 
+INSERT INTO familias_producto (nombre)
+SELECT datos.nombre
+FROM (
+    SELECT 'Tomate' AS nombre
+    UNION ALL SELECT 'Calabacita'
+    UNION ALL SELECT 'Maíz'
+    UNION ALL SELECT 'Limón'
+    UNION ALL SELECT 'Aguacate'
+    UNION ALL SELECT 'Chile'
+) AS datos
+WHERE NOT EXISTS (
+    SELECT 1 FROM familias_producto f WHERE LOWER(f.nombre) = LOWER(datos.nombre)
+);
+
+INSERT INTO variedades_producto (id_familia, nombre, descripcion, imagen_url, precio_por_kg)
+SELECT f.id_familia, datos.variedad, datos.descripcion, NULL, datos.precio
+FROM (
+    SELECT 'Tomate' AS familia, 'Cherry' AS variedad,
+           'Tomate pequeño y dulce, ideal para ensaladas y botanas.' AS descripcion, 48.00 AS precio
+    UNION ALL SELECT 'Tomate', 'Saladette', 'Tomate firme de pulpa gruesa, perfecto para salsas.', 32.00
+    UNION ALL SELECT 'Tomate', 'Verde', 'Tomate verde para salsas y guisos.', 30.00
+    UNION ALL SELECT 'Calabacita', 'Italiana', 'Calabacita tierna de cáscara verde.', 28.00
+    UNION ALL SELECT 'Maíz', 'Elote', 'Elote dulce recién cortado.', 18.00
+    UNION ALL SELECT 'Limón', 'Persa', 'Limón jugoso y de cáscara delgada.', 26.00
+    UNION ALL SELECT 'Aguacate', 'Hass', 'Aguacate cremoso de cáscara rugosa.', 85.00
+    UNION ALL SELECT 'Chile', 'Serrano', 'Chile picante de temporada.', 40.00
+) AS datos
+JOIN familias_producto f ON LOWER(f.nombre) = LOWER(datos.familia)
+WHERE NOT EXISTS (
+    SELECT 1 FROM variedades_producto v
+    WHERE v.id_familia = f.id_familia AND LOWER(v.nombre) = LOWER(datos.variedad)
+);
+
 INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)
 SELECT 'AgroSur', 'Laura Méndez', '2281234567', 'ventas@agrosur.local', 'Xalapa, Veracruz'
 WHERE NOT EXISTS (SELECT 1 FROM proveedores WHERE nombre_empresa = 'AgroSur');
@@ -261,13 +345,13 @@ INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)
 SELECT 'Fertiverde', 'Ana Torres', '2288765432', 'ventas@fertiverde.local', 'Coatepec, Veracruz'
 WHERE NOT EXISTS (SELECT 1 FROM proveedores WHERE nombre_empresa = 'Fertiverde');
 
-INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
-SELECT 'Composta orgánica', 'abono', 'kg', p.id_proveedor FROM proveedores p
+INSERT INTO insumos (nombre, categoria, tipo_abono, unidad_medida, id_proveedor)
+SELECT 'Composta orgánica', 'abono', 'organico', 'kg', p.id_proveedor FROM proveedores p
 WHERE p.nombre_empresa = 'AgroSur'
 AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Composta orgánica' AND i.categoria = 'abono');
 
-INSERT INTO insumos (nombre, categoria, unidad_medida, id_proveedor)
-SELECT 'Estiércol composteado', 'abono', 'kg', p.id_proveedor FROM proveedores p
+INSERT INTO insumos (nombre, categoria, tipo_abono, unidad_medida, id_proveedor)
+SELECT 'Estiércol composteado', 'abono', 'organico', 'kg', p.id_proveedor FROM proveedores p
 WHERE p.nombre_empresa = 'AgroSur'
 AND NOT EXISTS (SELECT 1 FROM insumos i WHERE i.nombre = 'Estiércol composteado' AND i.categoria = 'abono');
 

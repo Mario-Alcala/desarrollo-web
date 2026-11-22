@@ -1,0 +1,564 @@
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java
+new file mode 100644
+index 0000000..656eb3b
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java
+@@ -0,0 +1,16 @@
++package com.cultivos.gestioncultivos_backend.config;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.web.client.RestClient;
++
++@Configuration
++public class ClimaConfig {
++
++    @Bean
++    public RestClient climaRestClient() {
++        return RestClient.builder()
++                .baseUrl("https://api.open-meteo.com")
++                .build();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+index 3755256..fda6ce2 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ import com.cultivos.gestioncultivos_backend.service.TerrenoService;
+ 
+-/** API REST de terrenos: GET, POST, PUT y DELETE sobre /api/terrenos. */
+ 
+ @RestController
+ @RequestMapping("/api/terrenos")
+@@ -45,7 +44,9 @@ public class TerrenoController {
+     }
+ 
+     @PutMapping("/{id}")
+-    public Terreno actualizar(@PathVariable("id") Long id, @RequestBody Terreno terreno) {
++    public Terreno actualizar(
++            @PathVariable("id") Long id,
++            @RequestBody Terreno terreno) {
+         return servicio.actualizar(id, terreno);
+     }
+ 
+@@ -54,4 +55,4 @@ public class TerrenoController {
+     public void eliminar(@PathVariable("id") Long id) {
+         servicio.eliminar(id);
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java
+new file mode 100644
+index 0000000..6efe51e
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java
+@@ -0,0 +1,118 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.util.List;
++
++public class ClimaRespuesta {
++
++    private double latitud;
++    private double longitud;
++    private String horaActualizacion;
++    private String fechaPronostico;
++    private double temperaturaCelsius;
++    private int humedadRelativa;
++    private double precipitacionActualMm;
++    private double vientoKmH;
++    private int probabilidadLluvia;
++    private double lluviaEsperadaMm;
++    private double temperaturaMaximaCelsius;
++    private List<String> sugerencias;
++
++    public ClimaRespuesta() {
++    }
++
++    public double getLatitud() {
++        return latitud;
++    }
++
++    public void setLatitud(double latitud) {
++        this.latitud = latitud;
++    }
++
++    public double getLongitud() {
++        return longitud;
++    }
++
++    public void setLongitud(double longitud) {
++        this.longitud = longitud;
++    }
++
++    public String getHoraActualizacion() {
++        return horaActualizacion;
++    }
++
++    public void setHoraActualizacion(String horaActualizacion) {
++        this.horaActualizacion = horaActualizacion;
++    }
++
++    public String getFechaPronostico() {
++        return fechaPronostico;
++    }
++
++    public void setFechaPronostico(String fechaPronostico) {
++        this.fechaPronostico = fechaPronostico;
++    }
++
++    public double getTemperaturaCelsius() {
++        return temperaturaCelsius;
++    }
++
++    public void setTemperaturaCelsius(double temperaturaCelsius) {
++        this.temperaturaCelsius = temperaturaCelsius;
++    }
++
++    public int getHumedadRelativa() {
++        return humedadRelativa;
++    }
++
++    public void setHumedadRelativa(int humedadRelativa) {
++        this.humedadRelativa = humedadRelativa;
++    }
++
++    public double getPrecipitacionActualMm() {
++        return precipitacionActualMm;
++    }
++
++    public void setPrecipitacionActualMm(double precipitacionActualMm) {
++        this.precipitacionActualMm = precipitacionActualMm;
++    }
++
++    public double getVientoKmH() {
++        return vientoKmH;
++    }
++
++    public void setVientoKmH(double vientoKmH) {
++        this.vientoKmH = vientoKmH;
++    }
++
++    public int getProbabilidadLluvia() {
++        return probabilidadLluvia;
++    }
++
++    public void setProbabilidadLluvia(int probabilidadLluvia) {
++        this.probabilidadLluvia = probabilidadLluvia;
++    }
++
++    public double getLluviaEsperadaMm() {
++        return lluviaEsperadaMm;
++    }
++
++    public void setLluviaEsperadaMm(double lluviaEsperadaMm) {
++        this.lluviaEsperadaMm = lluviaEsperadaMm;
++    }
++
++    public double getTemperaturaMaximaCelsius() {
++        return temperaturaMaximaCelsius;
++    }
++
++    public void setTemperaturaMaximaCelsius(double temperaturaMaximaCelsius) {
++        this.temperaturaMaximaCelsius = temperaturaMaximaCelsius;
++    }
++
++    public List<String> getSugerencias() {
++        return sugerencias;
++    }
++
++    public void setSugerencias(List<String> sugerencias) {
++        this.sugerencias = sugerencias;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+index 2c91f1c..4306755 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+@@ -8,6 +8,8 @@ public class Terreno {
+     private Double superficieHa;
+     private String tipoSuelo;
+     private String estado;
++    private Double latitud;
++    private Double longitud;
+ 
+     public Terreno() {
+     }
+@@ -59,4 +61,20 @@ public class Terreno {
+     public void setEstado(String estado) {
+         this.estado = estado;
+     }
+-}
++
++    public Double getLatitud() {
++        return latitud;
++    }
++
++    public void setLatitud(Double latitud) {
++        this.latitud = latitud;
++    }
++
++    public Double getLongitud() {
++        return longitud;
++    }
++
++    public void setLongitud(Double longitud) {
++        this.longitud = longitud;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+index 3a6d920..5601fea 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
+ 
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ 
+-/** Capa de datos: SQL puro con JdbcClient. */
+-
+ @Repository
+ public class TerrenoRepository {
+ 
+@@ -34,36 +32,51 @@ public class TerrenoRepository {
+                 .optional();
+     }
+ 
+-    /** Inserta el terreno y devuelve el id generado por MySQL. */
+-    public Long insertar(Terreno t) {
++    public Long insertar(Terreno terreno) {
+         KeyHolder llaves = new GeneratedKeyHolder();
++
+         jdbc.sql("""
+-                INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
+-                VALUES (:nombre, :ubicacion, :superficie, :suelo, :estado)
++                INSERT INTO terrenos
++                (nombre, ubicacion, superficie_ha, tipo_suelo, estado,
++                 latitud, longitud)
++                VALUES
++                (:nombre, :ubicacion, :superficie, :suelo, :estado,
++                 :latitud, :longitud)
+                 """)
+-                .param("nombre", t.getNombre())
+-                .param("ubicacion", t.getUbicacion())
+-                .param("superficie", t.getSuperficieHa())
+-                .param("suelo", t.getTipoSuelo())
+-                .param("estado", t.getEstado())
++                .param("nombre", terreno.getNombre())
++                .param("ubicacion", terreno.getUbicacion())
++                .param("superficie", terreno.getSuperficieHa())
++                .param("suelo", terreno.getTipoSuelo())
++                .param("estado", terreno.getEstado())
++                .param("latitud", terreno.getLatitud())
++                .param("longitud", terreno.getLongitud())
+                 .update(llaves);
++
+         return llaves.getKey().longValue();
+     }
+ 
+-    public boolean actualizar(Terreno t) {
++    public boolean actualizar(Terreno terreno) {
+         int filas = jdbc.sql("""
+                 UPDATE terrenos
+-                   SET nombre = :nombre, ubicacion = :ubicacion, superficie_ha = :superficie,
+-                       tipo_suelo = :suelo, estado = :estado
+-                 WHERE id = :id
++                SET nombre = :nombre,
++                    ubicacion = :ubicacion,
++                    superficie_ha = :superficie,
++                    tipo_suelo = :suelo,
++                    estado = :estado,
++                    latitud = :latitud,
++                    longitud = :longitud
++                WHERE id = :id
+                 """)
+-                .param("nombre", t.getNombre())
+-                .param("ubicacion", t.getUbicacion())
+-                .param("superficie", t.getSuperficieHa())
+-                .param("suelo", t.getTipoSuelo())
+-                .param("estado", t.getEstado())
+-                .param("id", t.getId())
++                .param("nombre", terreno.getNombre())
++                .param("ubicacion", terreno.getUbicacion())
++                .param("superficie", terreno.getSuperficieHa())
++                .param("suelo", terreno.getTipoSuelo())
++                .param("estado", terreno.getEstado())
++                .param("latitud", terreno.getLatitud())
++                .param("longitud", terreno.getLongitud())
++                .param("id", terreno.getId())
+                 .update();
++
+         return filas > 0;
+     }
+ 
+@@ -71,6 +84,7 @@ public class TerrenoRepository {
+         int filas = jdbc.sql("DELETE FROM terrenos WHERE id = :id")
+                 .param("id", id)
+                 .update();
++
+         return filas > 0;
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java
+new file mode 100644
+index 0000000..34b016f
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java
+@@ -0,0 +1,119 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.stereotype.Service;
++import org.springframework.web.client.RestClient;
++import org.springframework.web.client.RestClientException;
++import org.springframework.web.server.ResponseStatusException;
++import org.springframework.web.util.UriBuilder;
++
++import com.cultivos.gestioncultivos_backend.model.ClimaRespuesta;
++
++import tools.jackson.databind.JsonNode;
++
++@Service
++public class ClimaService {
++
++    private final RestClient climaRestClient;
++
++    public ClimaService(RestClient climaRestClient) {
++        this.climaRestClient = climaRestClient;
++    }
++
++    public ClimaRespuesta consultar(double latitud, double longitud) {
++        try {
++            JsonNode datos = climaRestClient.get()
++                    .uri(uriBuilder -> construirUrl(uriBuilder, latitud, longitud))
++                    .retrieve()
++                    .body(JsonNode.class);
++
++            if (datos == null) {
++                throw new ResponseStatusException(
++                        HttpStatus.BAD_GATEWAY,
++                        "El servicio meteorológico no devolvió datos");
++            }
++
++            JsonNode actual = datos.path("current");
++            JsonNode diario = datos.path("daily");
++
++            ClimaRespuesta resultado = new ClimaRespuesta();
++
++            resultado.setLatitud(latitud);
++            resultado.setLongitud(longitud);
++            resultado.setHoraActualizacion(
++                    actual.path("time").asText());
++            resultado.setFechaPronostico(
++                    diario.path("time").path(0).asText());
++
++            resultado.setTemperaturaCelsius(
++                    actual.path("temperature_2m").asDouble());
++            resultado.setHumedadRelativa(
++                    actual.path("relative_humidity_2m").asInt());
++            resultado.setPrecipitacionActualMm(
++                    actual.path("precipitation").asDouble());
++            resultado.setVientoKmH(
++                    actual.path("wind_speed_10m").asDouble());
++
++            resultado.setProbabilidadLluvia(
++                    diario.path("precipitation_probability_max")
++                            .path(0).asInt());
++            resultado.setLluviaEsperadaMm(
++                    diario.path("precipitation_sum").path(0).asDouble());
++            resultado.setTemperaturaMaximaCelsius(
++                    diario.path("temperature_2m_max").path(0).asDouble());
++
++            resultado.setSugerencias(generarSugerencias(resultado));
++
++            return resultado;
++
++        } catch (RestClientException error) {
++            throw new ResponseStatusException(
++                    HttpStatus.BAD_GATEWAY,
++                    "No se pudo consultar el servicio meteorológico");
++        }
++    }
++
++    private java.net.URI construirUrl(
++            UriBuilder uriBuilder,
++            double latitud,
++            double longitud) {
++
++        return uriBuilder
++                .path("/v1/forecast")
++                .queryParam("latitude", latitud)
++                .queryParam("longitude", longitud)
++                .queryParam(
++                        "current",
++                        "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m")
++                .queryParam(
++                        "daily",
++                        "precipitation_probability_max,precipitation_sum,temperature_2m_max")
++                .queryParam("temperature_unit", "celsius")
++                .queryParam("wind_speed_unit", "kmh")
++                .queryParam("precipitation_unit", "mm")
++                .queryParam("timezone", "America/Mexico_City")
++                .build();
++    }
++
++    private List<String> generarSugerencias(ClimaRespuesta clima) {
++        List<String> sugerencias = new ArrayList<>();
++
++        if (clima.getProbabilidadLluvia() >= 60
++                || clima.getLluviaEsperadaMm() >= 5) {
++            sugerencias.add(
++                    "Hay posibilidad de lluvia. Revisa el riego programado para evitar exceso de agua.");
++        } else if (clima.getProbabilidadLluvia() < 20
++                && clima.getTemperaturaMaximaCelsius() >= 30) {
++            sugerencias.add(
++                    "Se pronostica poca lluvia y temperatura alta. Revisa la humedad del suelo antes de regar.");
++        } else {
++            sugerencias.add(
++                    "No hay una alerta de lluvia o calor según las reglas actuales.");
++        }
++
++        return sugerencias;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+index 7609bc0..51868c9 100644
+--- a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+@@ -8,11 +8,14 @@ import org.springframework.stereotype.Service;
+ import com.cultivos.gestioncultivos_backend.model.Terreno;
+ import com.cultivos.gestioncultivos_backend.repository.TerrenoRepository;
+ 
+-/** Capa de logica de negocio: validaciones y reglas de los terrenos. */
++/**
++ * Capa de lógica de negocio: validaciones y reglas de los terrenos.
++ */
+ @Service
+ public class TerrenoService {
+ 
+-    private static final List<String> ESTADOS = List.of("Disponible", "En uso", "En descanso");
++    private static final List<String> ESTADOS =
++            List.of("Disponible", "En uso", "En descanso");
+ 
+     private final TerrenoRepository repositorio;
+ 
+@@ -26,7 +29,8 @@ public class TerrenoService {
+ 
+     public Terreno obtener(Long id) {
+         return repositorio.buscarPorId(id)
+-                .orElseThrow(() -> new NoSuchElementException("No existe el terreno con id " + id));
++                .orElseThrow(() -> new NoSuchElementException(
++                        "No existe el terreno con id " + id));
+     }
+ 
+     public Terreno crear(Terreno terreno) {
+@@ -36,8 +40,8 @@ public class TerrenoService {
+     }
+ 
+     public Terreno actualizar(Long id, Terreno terreno) {
+-        validar(terreno);
+         obtener(id);
++        validar(terreno);
+         terreno.setId(id);
+         repositorio.actualizar(terreno);
+         return terreno;
+@@ -45,26 +49,67 @@ public class TerrenoService {
+ 
+     public void eliminar(Long id) {
+         if (!repositorio.eliminar(id)) {
+-            throw new NoSuchElementException("No existe el terreno con id " + id);
++            throw new NoSuchElementException(
++                    "No existe el terreno con id " + id);
+         }
+     }
+ 
+     private void validar(Terreno terreno) {
+-        if (terreno.getNombre() == null || terreno.getNombre().isBlank()) {
+-            throw new IllegalArgumentException("El nombre del terreno es obligatorio");
++        if (terreno == null) {
++            throw new IllegalArgumentException(
++                    "Los datos del terreno son obligatorios");
++        }
++
++        if (terreno.getNombre() == null
++                || terreno.getNombre().isBlank()) {
++            throw new IllegalArgumentException(
++                    "El nombre del terreno es obligatorio");
+         }
++
+         terreno.setNombre(terreno.getNombre().trim());
++
+         if (terreno.getNombre().length() > 100) {
+-            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
++            throw new IllegalArgumentException(
++                    "El nombre no puede pasar de 100 caracteres");
+         }
+-        if (terreno.getSuperficieHa() != null && terreno.getSuperficieHa() < 0) {
+-            throw new IllegalArgumentException("La superficie no puede ser negativa");
++
++        if (terreno.getSuperficieHa() != null
++                && terreno.getSuperficieHa() < 0) {
++            throw new IllegalArgumentException(
++                    "La superficie no puede ser negativa");
+         }
+-        if (terreno.getEstado() == null || terreno.getEstado().isBlank()) {
++
++        if (terreno.getEstado() == null
++                || terreno.getEstado().isBlank()) {
+             terreno.setEstado("Disponible");
+         }
++
+         if (!ESTADOS.contains(terreno.getEstado())) {
+-            throw new IllegalArgumentException("Estado inválido. Valores permitidos: " + String.join(", ", ESTADOS));
++            throw new IllegalArgumentException(
++                    "Estado inválido. Valores permitidos: "
++                            + String.join(", ", ESTADOS));
++        }
++
++        boolean faltaLatitud = terreno.getLatitud() == null;
++        boolean faltaLongitud = terreno.getLongitud() == null;
++
++        if (faltaLatitud != faltaLongitud) {
++            throw new IllegalArgumentException(
++                    "Debes proporcionar latitud y longitud juntas");
++        }
++
++        if (!faltaLatitud
++                && (terreno.getLatitud() < -90
++                || terreno.getLatitud() > 90)) {
++            throw new IllegalArgumentException(
++                    "La latitud debe estar entre -90 y 90");
++        }
++
++        if (!faltaLongitud
++                && (terreno.getLongitud() < -180
++                || terreno.getLongitud() > 180)) {
++            throw new IllegalArgumentException(
++                    "La longitud debe estar entre -180 y 180");
+         }
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/backend/src/main/resources/application.yaml b/backend/src/main/resources/application.yaml
+index 0655cee..379a281 100644
+--- a/backend/src/main/resources/application.yaml
++++ b/backend/src/main/resources/application.yaml
+@@ -1,5 +1,5 @@
+ server:
+-  port: 8080
++  port: 8081
+ 
+ spring:
+   application:

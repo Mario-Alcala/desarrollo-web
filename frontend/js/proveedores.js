@@ -1,9 +1,8 @@
 var proveedores = [];
 
-function cargarProveedores() {
-    return pedirApi('/proveedores').then(function (datos) {
-        proveedores = datos || [];
-    });
+async function cargarProveedores() {
+    var datos = await pedirApi('/proveedores');
+    proveedores = datos || [];
 }
 
 function nombreProveedor(id) {
@@ -24,30 +23,24 @@ function buscarProveedorNombre(nombre) {
     return null;
 }
 
-function resolverProveedor(datos) {
+async function resolverProveedor(datos) {
     var campo = document.getElementById('proveedorNombre');
     if (!campo) {
-        return Promise.resolve(datos);
+        return datos;
     }
     var nombre = campo.value.trim();
     delete datos.proveedorNombre;
-    return cargarProveedores().then(function () {
-        var id = buscarProveedorNombre(nombre);
-        if (id !== null) {
-            return id;
-        }
+    await cargarProveedores();
+    var id = buscarProveedorNombre(nombre);
+    if (id === null) {
         // Registrar el nombre nuevo y recuperar el ID asignado por Java.
-        return pedirApi('/proveedores', 'POST', { nombreEmpresa: nombre })
-            .then(cargarProveedores)
-            .then(function () {
-                var nuevoId = buscarProveedorNombre(nombre);
-                if (nuevoId === null) {
-                    throw new Error('No se pudo registrar el proveedor.');
-                }
-                return nuevoId;
-            });
-    }).then(function (id) {
-        datos.idProveedor = id;
-        return datos;
-    });
+        await pedirApi('/proveedores', 'POST', { nombreEmpresa: nombre });
+        await cargarProveedores();
+        id = buscarProveedorNombre(nombre);
+        if (id === null) {
+            throw new Error('No se pudo registrar el proveedor.');
+        }
+    }
+    datos.idProveedor = id;
+    return datos;
 }

@@ -1,0 +1,1 @@
+El archivo 'frontend/bodega.html' no existía en el commit '51821ed'.

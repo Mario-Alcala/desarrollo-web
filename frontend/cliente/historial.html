@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de pedidos</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/cultivos.css">
+</head>
+<body>
+    <header class="barra">
+        <span class="marca">Gestión de Cultivos</span>
+        <a href="catalogo.html">Regresar al catálogo</a>
+    </header>
+    <main class="pagina">
+        <h1>Historial de pedidos</h1>
+        <section class="panel">
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Fecha</th>
+                            <th>Tipo de entrega</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-pedidos"></tbody>
+                </table>
+            </div>
+            <p id="mensaje-historial" class="mensaje" role="status"></p>
+        </section>
+    </main>
+    <script src="../js/datos.js"></script>
+    <script src="../js/historial.js"></script>
+</body>
+</html>

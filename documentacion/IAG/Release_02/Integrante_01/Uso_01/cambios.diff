@@ -1,0 +1,1617 @@
+diff --git a/README.md b/README.md
+index a531c30..e637485 100644
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,7 @@
+ 
+ # Gestión de Cultivos · `desarrollo-web`
+ 
+-Plataforma web para gestionar cultivos y el banco de semillas, con arquitectura de 3 capas:
++Plataforma web para gestionar cultivos, el banco de semillas, terrenos y herramientas, con arquitectura de 3 capas:
+ 
+ |   Capa   | Tecnología                          |
+ |----------|-------------------------------------|
+@@ -16,22 +16,21 @@ Todo el proyecto se desarrolla y ejecuta desde **WSL (Ubuntu)**.
+ ```
+ desarrollo-web/
+ ├── README.md
+-├── database/
+-│   └── init.sql                 # crea la base de datos y el usuario de MySQL
+ ├── backend/                     # Spring Boot (puerto 8080)
+ │   ├── pom.xml
+ │   ├── mvnw                     # Maven Wrapper 
++│   ├── database/
++│   │   └── init.sql             # crea la base, el usuario y las tablas de MySQL
+ │   └── src/main/
+ │       ├── java/com/cultivos/gestioncultivos_backend/
+ │       │   ├── controller/      # API REST (+ página de inicio)
+ │       │   ├── service/         # lógica de negocio y validaciones
+ │       │   ├── repository/      # SQL con JdbcClient
+-│       │   ├── model/           # Cultivo, Semilla
++│       │   ├── model/           # Cultivo, Semilla, Terreno, Herramienta
+ │       │   ├── config/          # CORS
+ │       │   └── exception/       # errores en JSON
+ │       └── resources/
+ │           ├── application.yaml # conexión a MySQL
+-│           ├── schema.sql       # tablas (se ejecuta al arrancar)
+ │           └── templates/       # plantilla Thymeleaf
+ └── frontend/                    # sitio estático (puerto 5500)
+     ├── index.html
+@@ -71,12 +70,13 @@ cd desarrollo-web
+ ## 4. Preparar la base de datos
+ 
+ ```bash
++cd ~/desarrollo-web/backend
+ sudo service mysql start
+ sudo mysql < database/init.sql
+ ```
+ 
+-Esto crea la base `gestion_cultivos` y el usuario `cultivos_user` (credenciales de desarrollo en `database/init.sql`).
+-Las **tablas las crea el backend** al arrancar (`backend/src/main/resources/schema.sql`).
++Esto crea la base `gestion_cultivos`, el usuario `cultivos_user`, las tablas `cultivos`, `semillas`, `terrenos` y `herramientas`, y algunos datos de ejemplo.
++Las credenciales de desarrollo están en `backend/database/init.sql` y deben coincidir con las de `application.yaml`. Es seguro volver a ejecutarlo: no duplica datos.
+ 
+ Si prefieres otro usuario o clave, el backend lee las variables de entorno `DB_USER` y `DB_PASSWORD`.
+ 
+@@ -94,8 +94,8 @@ La primera vez tarda unos minutos (descarga Maven y las dependencias). Está lis
+ Comprobar que funciona y que está conectado a MySQL:
+ 
+ ```bash
+-curl http://localhost:8080/api/cultivos          # responde []  (lista vacía)
+-mysql -u cultivos_user -p gestion_cultivos -e "SHOW TABLES;"   # clave: Cultivos_2026!
++curl http://localhost:8080/api/cultivos          # responde la lista de cultivos de ejemplo
++mysql -u cultivos_user -p gestion_cultivos -e "SHOW TABLES;"   # clave: cultivos-web
+ ```
+ 
+ También puedes abrir <http://localhost:8080> en el navegador (página de inicio con plantilla Thymeleaf).
+@@ -126,8 +126,10 @@ Base: `http://localhost:8080/api`
+ | PUT | `/cultivos/{id}` | Actualiza un cultivo |
+ | DELETE | `/cultivos/{id}` | Elimina un cultivo (204) |
+ | GET · POST · PUT · DELETE | `/semillas`, `/semillas/{id}` | Igual que cultivos, para el banco de semillas |
++| GET · POST · PUT · DELETE | `/terrenos`, `/terrenos/{id}` | Igual que cultivos, para terrenos. Estados válidos: Disponible, En uso, En descanso |
++| GET · POST · PUT · DELETE | `/herramientas`, `/herramientas/{id}` | Igual que cultivos, para herramientas. Estados válidos: Disponible, En uso, Mantenimiento |
+ 
+-Los errores se devuelven como JSON: `{"error": "mensaje"}` (400 datos inválidos, 404 no encontrado).
++Los errores se devuelven como JSON: `{"fecha": "...", "estado": 404, "mensaje": "..."}` (400 datos inválidos, 404 no encontrado, 500 error de base de datos).
+ 
+ Ejemplos con `curl`:
+ 
+@@ -147,6 +149,14 @@ curl -X DELETE http://localhost:8080/api/cultivos/1
+ curl -X POST http://localhost:8080/api/semillas \
+   -H "Content-Type: application/json" \
+   -d '{"variedad":"Tomate cherry","stockDisponible":25,"proveedorOrigen":"AgroSur","fechaCaducidad":"2027-05-01"}'
++
++curl -X POST http://localhost:8080/api/terrenos \
++  -H "Content-Type: application/json" \
++  -d '{"nombre":"Parcela Este","ubicacion":"Veracruz, Ver.","superficieHa":1.5,"tipoSuelo":"Franco","estado":"Disponible"}'
++
++curl -X POST http://localhost:8080/api/herramientas \
++  -H "Content-Type: application/json" \
++  -d '{"nombre":"Azadón","tipo":"Manual","cantidad":6,"estado":"Disponible","fechaAdquisicion":"2026-02-01"}'
+ ```
+ 
+ 
+@@ -161,10 +171,8 @@ En un Ubuntu/WSL limpio basta con repetir, en orden, las secciones **2 → 3 →
+ |---------|----------|
+ | `Permission denied` al ejecutar `./mvnw` | `chmod +x mvnw` |
+ | `Communications link failure` / `Connection refused` | MySQL está apagado: `sudo service mysql start` |
+-| `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta raíz del proyecto) |
++| `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta `backend/`) |
+ | `Port 8080 was already in use` | Cierra el otro proceso (ver cuál es con `sudo ss -ltnp \| grep :8080`) |
+ | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
+ | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
+ | `./mvnw test` falla | Las pruebas arrancan Spring y se conectan a MySQL: debe estar encendido y con `init.sql` ejecutado |
+-=======
+-# desarrollo-web
+diff --git a/backend/.mvn/wrapper/maven-wrapper.properties b/backend/.mvn/wrapper/maven-wrapper.properties
+new file mode 100644
+index 0000000..bb58b3c
+--- /dev/null
++++ b/backend/.mvn/wrapper/maven-wrapper.properties
+@@ -0,0 +1,3 @@
++wrapperVersion=3.3.4
++distributionType=only-script
++distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.10.0/apache-maven-3.10.0-bin.zip
+diff --git a/backend/database/init.sql b/backend/database/init.sql
+new file mode 100644
+index 0000000..731ceab
+--- /dev/null
++++ b/backend/database/init.sql
+@@ -0,0 +1,120 @@
++-- =====================================================================
++-- Gestión de Cultivos - script de inicialización (cultivos, semillas, terrenos y herramientas)
++--
++-- Uso, parado en la carpeta backend/ (desde WSL):
++--     sudo mysql < database/init.sql
++--   o bien:
++--     mysql -u root -p < database/init.sql
++--
++-- Es seguro ejecutarlo más de una vez: no borra datos ni duplica filas.
++-- Usuario y contraseña coinciden con los valores por defecto de
++-- src/main/resources/application.yaml (DB_USER / DB_PASSWORD).
++-- =====================================================================
++
++SET NAMES utf8mb4;
++
++CREATE DATABASE IF NOT EXISTS gestion_cultivos
++    CHARACTER SET utf8mb4
++    COLLATE utf8mb4_unicode_ci;
++
++CREATE USER IF NOT EXISTS 'cultivos_user'@'localhost' IDENTIFIED BY 'cultivos-web';
++-- Si el usuario ya existia con otra contrasena, CREATE USER no la cambia:
++-- ALTER USER la deja igual a la del application.yaml.
++ALTER USER 'cultivos_user'@'localhost' IDENTIFIED BY 'cultivos-web';
++GRANT ALL PRIVILEGES ON gestion_cultivos.* TO 'cultivos_user'@'localhost';
++FLUSH PRIVILEGES;
++
++USE gestion_cultivos;
++
++-- ---------------------------------------------------------------------
++-- Cultivos  (model/Cultivo.java, repository/CultivoRepository.java)
++-- ---------------------------------------------------------------------
++CREATE TABLE IF NOT EXISTS cultivos (
++    id                BIGINT       NOT NULL AUTO_INCREMENT,
++    nombre            VARCHAR(100) NOT NULL,
++    tipo              VARCHAR(100),
++    etapa_fenologica  VARCHAR(100),
++    fecha_registro    DATE,
++    PRIMARY KEY (id)
++);
++
++-- ---------------------------------------------------------------------
++-- Banco de semillas  (model/Semilla.java, repository/SemillaRepository.java)
++-- ---------------------------------------------------------------------
++CREATE TABLE IF NOT EXISTS semillas (
++    id                BIGINT       NOT NULL AUTO_INCREMENT,
++    variedad          VARCHAR(100) NOT NULL,
++    stock_disponible  INT          NOT NULL DEFAULT 0,
++    proveedor_origen  VARCHAR(100),
++    fecha_caducidad   DATE,
++    PRIMARY KEY (id)
++);
++
++-- ---------------------------------------------------------------------
++-- Terrenos  (model/Terreno.java, repository/TerrenoRepository.java)
++-- ---------------------------------------------------------------------
++CREATE TABLE IF NOT EXISTS terrenos (
++    id             BIGINT        NOT NULL AUTO_INCREMENT,
++    nombre         VARCHAR(100)  NOT NULL,
++    ubicacion      VARCHAR(255),
++    superficie_ha  DECIMAL(10,2),
++    tipo_suelo     VARCHAR(100),
++    estado         VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
++    PRIMARY KEY (id)
++);
++
++-- ---------------------------------------------------------------------
++-- Herramientas  (model/Herramienta.java, repository/HerramientaRepository.java)
++-- ---------------------------------------------------------------------
++CREATE TABLE IF NOT EXISTS herramientas (
++    id                 BIGINT        NOT NULL AUTO_INCREMENT,
++    nombre             VARCHAR(100)  NOT NULL,
++    tipo               VARCHAR(100),
++    cantidad           INT           NOT NULL DEFAULT 1,
++    estado             VARCHAR(30)   NOT NULL DEFAULT 'Disponible',
++    fecha_adquisicion  DATE,
++    PRIMARY KEY (id)
++);
++
++-- ---------------------------------------------------------------------
++-- Datos de ejemplo (solo se insertan si la tabla está vacía)
++-- ---------------------------------------------------------------------
++INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
++SELECT * FROM (
++    SELECT 'Maíz criollo' AS nombre, 'Cereal'     AS tipo, 'Siembra'     AS etapa_fenologica, '2026-11-01' AS fecha_registro
++    UNION ALL
++    SELECT 'Frijol negro',           'Leguminosa',          'Germinación',                      '2026-11-03'
++    UNION ALL
++    SELECT 'Tomate saladette',       'Hortaliza',           'Floración',                        '2026-11-05'
++) AS datos
++WHERE NOT EXISTS (SELECT 1 FROM cultivos);
++
++INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
++SELECT * FROM (
++    SELECT 'Maíz blanco H-520' AS variedad, 120 AS stock_disponible, 'Agroinsumos del Golfo' AS proveedor_origen, '2027-06-30' AS fecha_caducidad
++    UNION ALL
++    SELECT 'Frijol Jamapa',                  80,                      'Semillas Veracruz',                         '2027-03-15'
++    UNION ALL
++    SELECT 'Tomate Río Grande',              45,                      'Agroinsumos del Golfo',                     '2026-12-31'
++) AS datos
++WHERE NOT EXISTS (SELECT 1 FROM semillas);
++
++INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
++SELECT * FROM (
++    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion, 2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo, 'Disponible' AS estado
++    UNION ALL
++    SELECT 'Parcela Sur',             'Veracruz, Ver.',              1.80,                     'Arenoso',                       'En uso'
++    UNION ALL
++    SELECT 'Invernadero 1',           'Boca del Río, Ver.',          0.30,                     'Sustrato',                      'En descanso'
++) AS datos
++WHERE NOT EXISTS (SELECT 1 FROM terrenos);
++
++INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
++SELECT * FROM (
++    SELECT 'Pala de punta' AS nombre, 'Manual' AS tipo, 10 AS cantidad, 'Disponible' AS estado, '2026-01-15' AS fecha_adquisicion
++    UNION ALL
++    SELECT 'Tractor agrícola',        'Maquinaria',      1,             'En uso',                '2025-08-20'
++    UNION ALL
++    SELECT 'Riego por goteo',         'Riego',           4,             'Mantenimiento',         '2026-03-10'
++) AS datos
++WHERE NOT EXISTS (SELECT 1 FROM herramientas);
+diff --git a/backend/mvnw b/backend/mvnw
+old mode 100644
+new mode 100755
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/CorsConfig.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/CorsConfig.java
+new file mode 100644
+index 0000000..b20d1b0
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/config/CorsConfig.java
+@@ -0,0 +1,21 @@
++package com.cultivos.gestioncultivos_backend.config;
++
++import org.springframework.context.annotation.Configuration;
++import org.springframework.web.servlet.config.annotation.CorsRegistry;
++import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
++
++/**
++ * CORS: permite que el frontend (servido en el puerto 5500) llame a la API (puerto 8080)
++ * con fetch desde el navegador.
++ */
++
++@Configuration
++public class CorsConfig implements WebMvcConfigurer {
++
++    @Override
++    public void addCorsMappings(CorsRegistry registry) {
++        registry.addMapping("/api/**")
++                .allowedOrigins("http://localhost:5500", "http://127.0.0.1:5500")
++                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CultivoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CultivoController.java
+new file mode 100644
+index 0000000..82c4838
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/CultivoController.java
+@@ -0,0 +1,61 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Cultivo;
++import com.cultivos.gestioncultivos_backend.service.CultivoService;
++
++/** API REST de cultivos: GET, POST, PUT y DELETE sobre /api/cultivos. 
++ *  GET /api/cultivos               -> todos
++ *  GET /api/cultivos?etapa=Siembra -> filtrados por Query String
++**/
++
++@RestController
++@RequestMapping("/api/cultivos")
++public class CultivoController {
++
++    private final CultivoService servicio;
++
++    public CultivoController(CultivoService servicio) {
++        this.servicio = servicio;
++    }
++    
++    @GetMapping
++    public List<Cultivo> listar(@RequestParam(name = "etapa", required = false) String etapa) {
++        return servicio.listar(etapa);
++    }
++
++    @GetMapping("/{id}")
++    public Cultivo obtener(@PathVariable("id") Long id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public Cultivo crear(@RequestBody Cultivo cultivo) {
++        return servicio.crear(cultivo);
++    }
++
++    @PutMapping("/{id}")
++    public Cultivo actualizar(@PathVariable("id") Long id, @RequestBody Cultivo cultivo) {
++        return servicio.actualizar(id, cultivo);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") Long id) {
++        servicio.eliminar(id);
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HerramientaController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HerramientaController.java
+new file mode 100644
+index 0000000..b2e4411
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HerramientaController.java
+@@ -0,0 +1,57 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Herramienta;
++import com.cultivos.gestioncultivos_backend.service.HerramientaService;
++
++/** API REST de herramientas: GET, POST, PUT y DELETE sobre /api/herramientas. */
++
++@RestController
++@RequestMapping("/api/herramientas")
++public class HerramientaController {
++
++    private final HerramientaService servicio;
++
++    public HerramientaController(HerramientaService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Herramienta> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Herramienta obtener(@PathVariable("id") Long id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public Herramienta crear(@RequestBody Herramienta herramienta) {
++        return servicio.crear(herramienta);
++    }
++
++    @PutMapping("/{id}")
++    public Herramienta actualizar(@PathVariable("id") Long id, @RequestBody Herramienta herramienta) {
++        return servicio.actualizar(id, herramienta);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") Long id) {
++        servicio.eliminar(id);
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HomeController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HomeController.java
+new file mode 100644
+index 0000000..e286b50
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/HomeController.java
+@@ -0,0 +1,40 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.stereotype.Controller;
++import org.springframework.ui.Model;
++import org.springframework.web.bind.annotation.GetMapping;
++
++/** Pagina de inicio del backend, renderizada con una plantilla Thymeleaf (templates/index.html). */
++
++@Controller
++public class HomeController {
++
++    @GetMapping("/")
++    public String inicio(Model model) {
++        model.addAttribute("titulo", "Gestión de Cultivos - API REST");
++        model.addAttribute("endpoints", List.of(
++                "GET /api/cultivos (opcional: ?etapa=Siembra)",
++                "GET /api/cultivos/{id}",
++                "POST /api/cultivos",
++                "PUT /api/cultivos/{id}",
++                "DELETE /api/cultivos/{id}",
++                "GET /api/semillas",
++                "GET /api/semillas/{id}",
++                "POST /api/semillas",
++                "PUT /api/semillas/{id}",
++                "DELETE /api/semillas/{id}",
++                "GET /api/terrenos",
++                "GET /api/terrenos/{id}",
++                "POST /api/terrenos",
++                "PUT /api/terrenos/{id}",
++                "DELETE /api/terrenos/{id}",
++                "GET /api/herramientas",
++                "GET /api/herramientas/{id}",
++                "POST /api/herramientas",
++                "PUT /api/herramientas/{id}",
++                "DELETE /api/herramientas/{id}"));
++        return "index";
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/SemillaController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/SemillaController.java
+new file mode 100644
+index 0000000..b2ada82
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/SemillaController.java
+@@ -0,0 +1,57 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Semilla;
++import com.cultivos.gestioncultivos_backend.service.SemillaService;
++
++/** API REST del banco de semillas: GET, POST, PUT y DELETE sobre /api/semillas. */
++
++@RestController
++@RequestMapping("/api/semillas")
++public class SemillaController {
++
++    private final SemillaService servicio;
++
++    public SemillaController(SemillaService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Semilla> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Semilla obtener(@PathVariable("id") Long id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public Semilla crear(@RequestBody Semilla semilla) {
++        return servicio.crear(semilla);
++    }
++
++    @PutMapping("/{id}")
++    public Semilla actualizar(@PathVariable("id") Long id, @RequestBody Semilla semilla) {
++        return servicio.actualizar(id, semilla);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") Long id) {
++        servicio.eliminar(id);
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+new file mode 100644
+index 0000000..3755256
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
+@@ -0,0 +1,57 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Terreno;
++import com.cultivos.gestioncultivos_backend.service.TerrenoService;
++
++/** API REST de terrenos: GET, POST, PUT y DELETE sobre /api/terrenos. */
++
++@RestController
++@RequestMapping("/api/terrenos")
++public class TerrenoController {
++
++    private final TerrenoService servicio;
++
++    public TerrenoController(TerrenoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Terreno> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Terreno obtener(@PathVariable("id") Long id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public Terreno crear(@RequestBody Terreno terreno) {
++        return servicio.crear(terreno);
++    }
++
++    @PutMapping("/{id}")
++    public Terreno actualizar(@PathVariable("id") Long id, @RequestBody Terreno terreno) {
++        return servicio.actualizar(id, terreno);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") Long id) {
++        servicio.eliminar(id);
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/exception/ApiExceptionHandler.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/exception/ApiExceptionHandler.java
+new file mode 100644
+index 0000000..f228f80
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/exception/ApiExceptionHandler.java
+@@ -0,0 +1,81 @@
++package com.cultivos.gestioncultivos_backend.exception;
++
++import java.time.LocalDateTime;
++import java.util.LinkedHashMap;
++import java.util.Map;
++import java.util.NoSuchElementException;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.dao.DataAccessException;
++import org.springframework.dao.DataIntegrityViolationException;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++import org.springframework.http.converter.HttpMessageNotReadableException;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.RestControllerAdvice;
++
++/**
++ * Manejo centralizado de errores de la API REST.
++ */
++
++@RestControllerAdvice
++public class ApiExceptionHandler {
++
++    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
++
++    /** 404: el id solicitado no existe. */
++    @ExceptionHandler(NoSuchElementException.class)
++    public ResponseEntity<Map<String, Object>> noEncontrado(NoSuchElementException ex) {
++        return respuesta(HttpStatus.NOT_FOUND, ex.getMessage());
++    }
++
++    /** 400: validaciones de los servicios (nombre vacio, stock negativo, etc.). */
++    @ExceptionHandler(IllegalArgumentException.class)
++    public ResponseEntity<Map<String, Object>> datoInvalido(IllegalArgumentException ex) {
++        return respuesta(HttpStatus.BAD_REQUEST, ex.getMessage());
++    }
++
++    /** 400: el JSON recibido esta mal formado o tiene un tipo/fecha incorrecto. */
++    @ExceptionHandler(HttpMessageNotReadableException.class)
++    public ResponseEntity<Map<String, Object>> jsonInvalido(HttpMessageNotReadableException ex) {
++        return respuesta(HttpStatus.BAD_REQUEST,
++                "El cuerpo de la peticion no es un JSON valido (las fechas usan el formato AAAA-MM-DD)");
++    }
++
++    /** 400: MySQL rechazo el dato (texto demasiado largo, nulo en columna obligatoria...). */
++    @ExceptionHandler(DataIntegrityViolationException.class)
++    public ResponseEntity<Map<String, Object>> integridad(DataIntegrityViolationException ex) {
++        log.warn("Dato rechazado por la base de datos: {}", ex.getMostSpecificCause().getMessage());
++        return respuesta(HttpStatus.BAD_REQUEST,
++                "La base de datos rechazo el dato (revisa longitudes y campos obligatorios)");
++    }
++
++    /** 500: falla de base de datos (MySQL apagado, tablas sin crear, credenciales...). */
++    @ExceptionHandler(DataAccessException.class)
++    public ResponseEntity<Map<String, Object>> baseDeDatos(DataAccessException ex) {
++        log.error("Error de acceso a la base de datos", ex);
++        // "detalle" muestra la causa real para diagnosticar en desarrollo.
++        // Quitar antes de entregar/publicar si no se quiere exponer.
++        String detalle = ex.getClass().getSimpleName() + ": " + ex.getMostSpecificCause().getMessage();
++        return respuesta(HttpStatus.INTERNAL_SERVER_ERROR,
++                "No se pudo acceder a la base de datos. Verifica que MySQL este encendido "
++                        + "y que se haya ejecutado database/init.sql",
++                detalle);
++    }
++
++    private ResponseEntity<Map<String, Object>> respuesta(HttpStatus estado, String mensaje) {
++        return respuesta(estado, mensaje, null);
++    }
++
++    private ResponseEntity<Map<String, Object>> respuesta(HttpStatus estado, String mensaje, String detalle) {
++        Map<String, Object> cuerpo = new LinkedHashMap<>();
++        cuerpo.put("fecha", LocalDateTime.now().toString());
++        cuerpo.put("estado", estado.value());
++        cuerpo.put("mensaje", mensaje);
++        if (detalle != null) {
++            cuerpo.put("detalle", detalle);
++        }
++        return ResponseEntity.status(estado).body(cuerpo);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cultivo.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cultivo.java
+new file mode 100644
+index 0000000..80bc983
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Cultivo.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Cultivo {
++
++    private Long id;
++    private String nombre;
++    private String tipo;
++    private String etapaFenologica;
++    private LocalDate fechaRegistro;
++
++    public Cultivo() {
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getTipo() {
++        return tipo;
++    }
++
++    public void setTipo(String tipo) {
++        this.tipo = tipo;
++    }
++
++    public String getEtapaFenologica() {
++        return etapaFenologica;
++    }
++
++    public void setEtapaFenologica(String etapaFenologica) {
++        this.etapaFenologica = etapaFenologica;
++    }
++
++    public LocalDate getFechaRegistro() {
++        return fechaRegistro;
++    }
++
++    public void setFechaRegistro(LocalDate fechaRegistro) {
++        this.fechaRegistro = fechaRegistro;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Herramienta.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Herramienta.java
+new file mode 100644
+index 0000000..1d97e8a
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Herramienta.java
+@@ -0,0 +1,64 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Herramienta {
++
++    private Long id;
++    private String nombre;
++    private String tipo;
++    private Integer cantidad;
++    private String estado;
++    private LocalDate fechaAdquisicion;
++
++    public Herramienta() {
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getTipo() {
++        return tipo;
++    }
++
++    public void setTipo(String tipo) {
++        this.tipo = tipo;
++    }
++
++    public Integer getCantidad() {
++        return cantidad;
++    }
++
++    public void setCantidad(Integer cantidad) {
++        this.cantidad = cantidad;
++    }
++
++    public String getEstado() {
++        return estado;
++    }
++
++    public void setEstado(String estado) {
++        this.estado = estado;
++    }
++
++    public LocalDate getFechaAdquisicion() {
++        return fechaAdquisicion;
++    }
++
++    public void setFechaAdquisicion(LocalDate fechaAdquisicion) {
++        this.fechaAdquisicion = fechaAdquisicion;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Semilla.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Semilla.java
+new file mode 100644
+index 0000000..113b684
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Semilla.java
+@@ -0,0 +1,55 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.time.LocalDate;
++
++public class Semilla {
++
++    private Long id;
++    private String variedad;
++    private Integer stockDisponible;
++    private String proveedorOrigen;
++    private LocalDate fechaCaducidad;
++
++    public Semilla() {
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getVariedad() {
++        return variedad;
++    }
++
++    public void setVariedad(String variedad) {
++        this.variedad = variedad;
++    }
++
++    public Integer getStockDisponible() {
++        return stockDisponible;
++    }
++
++    public void setStockDisponible(Integer stockDisponible) {
++        this.stockDisponible = stockDisponible;
++    }
++
++    public String getProveedorOrigen() {
++        return proveedorOrigen;
++    }
++
++    public void setProveedorOrigen(String proveedorOrigen) {
++        this.proveedorOrigen = proveedorOrigen;
++    }
++
++    public LocalDate getFechaCaducidad() {
++        return fechaCaducidad;
++    }
++
++    public void setFechaCaducidad(LocalDate fechaCaducidad) {
++        this.fechaCaducidad = fechaCaducidad;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+new file mode 100644
+index 0000000..2c91f1c
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
+@@ -0,0 +1,62 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++public class Terreno {
++
++    private Long id;
++    private String nombre;
++    private String ubicacion;
++    private Double superficieHa;
++    private String tipoSuelo;
++    private String estado;
++
++    public Terreno() {
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getNombre() {
++        return nombre;
++    }
++
++    public void setNombre(String nombre) {
++        this.nombre = nombre;
++    }
++
++    public String getUbicacion() {
++        return ubicacion;
++    }
++
++    public void setUbicacion(String ubicacion) {
++        this.ubicacion = ubicacion;
++    }
++
++    public Double getSuperficieHa() {
++        return superficieHa;
++    }
++
++    public void setSuperficieHa(Double superficieHa) {
++        this.superficieHa = superficieHa;
++    }
++
++    public String getTipoSuelo() {
++        return tipoSuelo;
++    }
++
++    public void setTipoSuelo(String tipoSuelo) {
++        this.tipoSuelo = tipoSuelo;
++    }
++
++    public String getEstado() {
++        return estado;
++    }
++
++    public void setEstado(String estado) {
++        this.estado = estado;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CultivoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CultivoRepository.java
+new file mode 100644
+index 0000000..c7a646c
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/CultivoRepository.java
+@@ -0,0 +1,80 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++import java.util.Optional;
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.jdbc.support.GeneratedKeyHolder;
++import org.springframework.jdbc.support.KeyHolder;
++import org.springframework.stereotype.Repository;
++import com.cultivos.gestioncultivos_backend.model.Cultivo;
++
++/** Capa de datos: SQL puro con JdbcClient (sin Hibernate). */
++
++@Repository
++public class CultivoRepository {
++
++    private final JdbcClient jdbc;
++
++    public CultivoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Cultivo> buscarTodos() {
++        return jdbc.sql("SELECT * FROM cultivos ORDER BY id")
++                .query(Cultivo.class)
++                .list();
++    }
++
++    public List<Cultivo> buscarPorEtapa(String etapa) {
++        return jdbc.sql("SELECT * FROM cultivos WHERE etapa_fenologica = :etapa ORDER BY id")
++                .param("etapa", etapa)
++                .query(Cultivo.class)
++                .list();
++    }
++
++    public Optional<Cultivo> buscarPorId(Long id) {
++        return jdbc.sql("SELECT * FROM cultivos WHERE id = :id")
++                .param("id", id)
++                .query(Cultivo.class)
++                .optional();
++    }
++
++    /** Inserta el cultivo y devuelve el id generado por MySQL. */
++    
++    public Long insertar(Cultivo c) {
++        KeyHolder llaves = new GeneratedKeyHolder();
++        jdbc.sql("""
++                INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
++                VALUES (:nombre, :tipo, :etapa, :fecha)
++                """)
++                .param("nombre", c.getNombre())
++                .param("tipo", c.getTipo())
++                .param("etapa", c.getEtapaFenologica())
++                .param("fecha", c.getFechaRegistro())
++                .update(llaves);
++        return llaves.getKey().longValue();
++    }
++
++    public boolean actualizar(Cultivo c) {
++        int filas = jdbc.sql("""
++                UPDATE cultivos
++                   SET nombre = :nombre, tipo = :tipo,
++                       etapa_fenologica = :etapa, fecha_registro = :fecha
++                 WHERE id = :id
++                """)
++                .param("nombre", c.getNombre())
++                .param("tipo", c.getTipo())
++                .param("etapa", c.getEtapaFenologica())
++                .param("fecha", c.getFechaRegistro())
++                .param("id", c.getId())
++                .update();
++        return filas > 0;
++    }
++
++    public boolean eliminar(Long id) {
++        int filas = jdbc.sql("DELETE FROM cultivos WHERE id = :id")
++                .param("id", id)
++                .update();
++        return filas > 0;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/HerramientaRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/HerramientaRepository.java
+new file mode 100644
+index 0000000..de15a46
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/HerramientaRepository.java
+@@ -0,0 +1,76 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++import java.util.Optional;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.jdbc.support.GeneratedKeyHolder;
++import org.springframework.jdbc.support.KeyHolder;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Herramienta;
++
++/** Capa de datos: SQL puro con JdbcClient. */
++
++@Repository
++public class HerramientaRepository {
++
++    private final JdbcClient jdbc;
++
++    public HerramientaRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Herramienta> buscarTodas() {
++        return jdbc.sql("SELECT * FROM herramientas ORDER BY id")
++                .query(Herramienta.class)
++                .list();
++    }
++
++    public Optional<Herramienta> buscarPorId(Long id) {
++        return jdbc.sql("SELECT * FROM herramientas WHERE id = :id")
++                .param("id", id)
++                .query(Herramienta.class)
++                .optional();
++    }
++
++    /** Inserta la herramienta y devuelve el id generado por MySQL. */
++    public Long insertar(Herramienta h) {
++        KeyHolder llaves = new GeneratedKeyHolder();
++        jdbc.sql("""
++                INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
++                VALUES (:nombre, :tipo, :cantidad, :estado, :fecha)
++                """)
++                .param("nombre", h.getNombre())
++                .param("tipo", h.getTipo())
++                .param("cantidad", h.getCantidad())
++                .param("estado", h.getEstado())
++                .param("fecha", h.getFechaAdquisicion())
++                .update(llaves);
++        return llaves.getKey().longValue();
++    }
++
++    public boolean actualizar(Herramienta h) {
++        int filas = jdbc.sql("""
++                UPDATE herramientas
++                   SET nombre = :nombre, tipo = :tipo, cantidad = :cantidad,
++                       estado = :estado, fecha_adquisicion = :fecha
++                 WHERE id = :id
++                """)
++                .param("nombre", h.getNombre())
++                .param("tipo", h.getTipo())
++                .param("cantidad", h.getCantidad())
++                .param("estado", h.getEstado())
++                .param("fecha", h.getFechaAdquisicion())
++                .param("id", h.getId())
++                .update();
++        return filas > 0;
++    }
++
++    public boolean eliminar(Long id) {
++        int filas = jdbc.sql("DELETE FROM herramientas WHERE id = :id")
++                .param("id", id)
++                .update();
++        return filas > 0;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/SemillaRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/SemillaRepository.java
+new file mode 100644
+index 0000000..d476964
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/SemillaRepository.java
+@@ -0,0 +1,74 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++import java.util.Optional;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.jdbc.support.GeneratedKeyHolder;
++import org.springframework.jdbc.support.KeyHolder;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Semilla;
++
++/** Capa de datos: SQL puro con JdbcClient. */
++
++@Repository
++public class SemillaRepository {
++
++    private final JdbcClient jdbc;
++
++    public SemillaRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Semilla> buscarTodas() {
++        return jdbc.sql("SELECT * FROM semillas ORDER BY id")
++                .query(Semilla.class)
++                .list();
++    }
++
++    public Optional<Semilla> buscarPorId(Long id) {
++        return jdbc.sql("SELECT * FROM semillas WHERE id = :id")
++                .param("id", id)
++                .query(Semilla.class)
++                .optional();
++    }
++
++    /** Inserta la semilla y devuelve el id generado por MySQL. */
++    public Long insertar(Semilla s) {
++        KeyHolder llaves = new GeneratedKeyHolder();
++        jdbc.sql("""
++                INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
++                VALUES (:variedad, :stock, :proveedor, :caducidad)
++                """)
++                .param("variedad", s.getVariedad())
++                .param("stock", s.getStockDisponible())
++                .param("proveedor", s.getProveedorOrigen())
++                .param("caducidad", s.getFechaCaducidad())
++                .update(llaves);
++        return llaves.getKey().longValue();
++    }
++
++    public boolean actualizar(Semilla s) {
++        int filas = jdbc.sql("""
++                UPDATE semillas
++                   SET variedad = :variedad, stock_disponible = :stock,
++                       proveedor_origen = :proveedor, fecha_caducidad = :caducidad
++                 WHERE id = :id
++                """)
++                .param("variedad", s.getVariedad())
++                .param("stock", s.getStockDisponible())
++                .param("proveedor", s.getProveedorOrigen())
++                .param("caducidad", s.getFechaCaducidad())
++                .param("id", s.getId())
++                .update();
++        return filas > 0;
++    }
++
++    public boolean eliminar(Long id) {
++        int filas = jdbc.sql("DELETE FROM semillas WHERE id = :id")
++                .param("id", id)
++                .update();
++        return filas > 0;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+new file mode 100644
+index 0000000..3a6d920
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
+@@ -0,0 +1,76 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++import java.util.Optional;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.jdbc.support.GeneratedKeyHolder;
++import org.springframework.jdbc.support.KeyHolder;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Terreno;
++
++/** Capa de datos: SQL puro con JdbcClient. */
++
++@Repository
++public class TerrenoRepository {
++
++    private final JdbcClient jdbc;
++
++    public TerrenoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Terreno> buscarTodos() {
++        return jdbc.sql("SELECT * FROM terrenos ORDER BY id")
++                .query(Terreno.class)
++                .list();
++    }
++
++    public Optional<Terreno> buscarPorId(Long id) {
++        return jdbc.sql("SELECT * FROM terrenos WHERE id = :id")
++                .param("id", id)
++                .query(Terreno.class)
++                .optional();
++    }
++
++    /** Inserta el terreno y devuelve el id generado por MySQL. */
++    public Long insertar(Terreno t) {
++        KeyHolder llaves = new GeneratedKeyHolder();
++        jdbc.sql("""
++                INSERT INTO terrenos (nombre, ubicacion, superficie_ha, tipo_suelo, estado)
++                VALUES (:nombre, :ubicacion, :superficie, :suelo, :estado)
++                """)
++                .param("nombre", t.getNombre())
++                .param("ubicacion", t.getUbicacion())
++                .param("superficie", t.getSuperficieHa())
++                .param("suelo", t.getTipoSuelo())
++                .param("estado", t.getEstado())
++                .update(llaves);
++        return llaves.getKey().longValue();
++    }
++
++    public boolean actualizar(Terreno t) {
++        int filas = jdbc.sql("""
++                UPDATE terrenos
++                   SET nombre = :nombre, ubicacion = :ubicacion, superficie_ha = :superficie,
++                       tipo_suelo = :suelo, estado = :estado
++                 WHERE id = :id
++                """)
++                .param("nombre", t.getNombre())
++                .param("ubicacion", t.getUbicacion())
++                .param("superficie", t.getSuperficieHa())
++                .param("suelo", t.getTipoSuelo())
++                .param("estado", t.getEstado())
++                .param("id", t.getId())
++                .update();
++        return filas > 0;
++    }
++
++    public boolean eliminar(Long id) {
++        int filas = jdbc.sql("DELETE FROM terrenos WHERE id = :id")
++                .param("id", id)
++                .update();
++        return filas > 0;
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java
+new file mode 100644
+index 0000000..39e5c33
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/CultivoService.java
+@@ -0,0 +1,70 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Cultivo;
++import com.cultivos.gestioncultivos_backend.repository.CultivoRepository;
++
++/** Capa de logica: validaciones y reglas de los cultivos. */
++
++@Service
++public class CultivoService {
++
++    private final CultivoRepository repositorio;
++
++    public CultivoService(CultivoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Cultivo> listar(String etapa) {
++        if (etapa == null || etapa.isBlank()) {
++            return repositorio.buscarTodos();
++        }
++        return repositorio.buscarPorEtapa(etapa.trim());
++    }
++
++    public Cultivo obtener(Long id) {
++        return repositorio.buscarPorId(id)
++                .orElseThrow(() -> new NoSuchElementException("No existe el cultivo con id: " + id));
++    }
++
++    public Cultivo crear(Cultivo cultivo) {
++        validar(cultivo);
++        if (cultivo.getFechaRegistro() == null) {
++            cultivo.setFechaRegistro(LocalDate.now());
++        }
++        cultivo.setId(repositorio.insertar(cultivo));
++        return cultivo;
++    }
++
++    public Cultivo actualizar(Long id, Cultivo cultivo) {
++        validar(cultivo);
++        Cultivo actual = obtener(id);
++        cultivo.setId(id);
++        if (cultivo.getFechaRegistro() == null) {
++            cultivo.setFechaRegistro(actual.getFechaRegistro());
++        }
++        repositorio.actualizar(cultivo);
++        return cultivo;
++    }
++
++    public void eliminar(Long id) {
++        if (!repositorio.eliminar(id)) {
++            throw new NoSuchElementException("No existe el cultivo con id: " + id);
++        }
++    }
++
++    private void validar(Cultivo cultivo) {
++        if (cultivo.getNombre() == null || cultivo.getNombre().isBlank()) {
++            throw new IllegalArgumentException("El nombre del cultivo es obligatorio");
++        }
++        cultivo.setNombre(cultivo.getNombre().trim());
++        if (cultivo.getNombre().length() > 100) {
++            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
++        }
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/HerramientaService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/HerramientaService.java
+new file mode 100644
+index 0000000..2e434e1
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/HerramientaService.java
+@@ -0,0 +1,73 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Herramienta;
++import com.cultivos.gestioncultivos_backend.repository.HerramientaRepository;
++
++/** Capa de logica de negocio: validaciones y reglas de las herramientas. */
++@Service
++public class HerramientaService {
++
++    private static final List<String> ESTADOS = List.of("Disponible", "En uso", "Mantenimiento");
++
++    private final HerramientaRepository repositorio;
++
++    public HerramientaService(HerramientaRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Herramienta> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public Herramienta obtener(Long id) {
++        return repositorio.buscarPorId(id)
++                .orElseThrow(() -> new NoSuchElementException("No existe la herramienta con id " + id));
++    }
++
++    public Herramienta crear(Herramienta herramienta) {
++        validar(herramienta);
++        herramienta.setId(repositorio.insertar(herramienta));
++        return herramienta;
++    }
++
++    public Herramienta actualizar(Long id, Herramienta herramienta) {
++        validar(herramienta);
++        obtener(id);
++        herramienta.setId(id);
++        repositorio.actualizar(herramienta);
++        return herramienta;
++    }
++
++    public void eliminar(Long id) {
++        if (!repositorio.eliminar(id)) {
++            throw new NoSuchElementException("No existe la herramienta con id " + id);
++        }
++    }
++
++    private void validar(Herramienta herramienta) {
++        if (herramienta.getNombre() == null || herramienta.getNombre().isBlank()) {
++            throw new IllegalArgumentException("El nombre de la herramienta es obligatorio");
++        }
++        herramienta.setNombre(herramienta.getNombre().trim());
++        if (herramienta.getNombre().length() > 100) {
++            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
++        }
++        if (herramienta.getCantidad() == null) {
++            herramienta.setCantidad(1);
++        }
++        if (herramienta.getCantidad() < 0) {
++            throw new IllegalArgumentException("La cantidad no puede ser negativa");
++        }
++        if (herramienta.getEstado() == null || herramienta.getEstado().isBlank()) {
++            herramienta.setEstado("Disponible");
++        }
++        if (!ESTADOS.contains(herramienta.getEstado())) {
++            throw new IllegalArgumentException("Estado inválido. Valores permitidos: " + String.join(", ", ESTADOS));
++        }
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/SemillaService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/SemillaService.java
+new file mode 100644
+index 0000000..1e7f926
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/SemillaService.java
+@@ -0,0 +1,66 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Semilla;
++import com.cultivos.gestioncultivos_backend.repository.SemillaRepository;
++
++/** Capa de logica: validaciones y reglas del banco de semillas. */
++
++@Service
++public class SemillaService {
++
++    private final SemillaRepository repositorio;
++
++    public SemillaService(SemillaRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Semilla> listar() {
++        return repositorio.buscarTodas();
++    }
++
++    public Semilla obtener(Long id) {
++        return repositorio.buscarPorId(id)
++                .orElseThrow(() -> new NoSuchElementException("No existe la semilla con id " + id));
++    }
++
++    public Semilla crear(Semilla semilla) {
++        validar(semilla);
++        semilla.setId(repositorio.insertar(semilla));
++        return semilla;
++    }
++
++    public Semilla actualizar(Long id, Semilla semilla) {
++        validar(semilla);
++        obtener(id);
++        semilla.setId(id);
++        repositorio.actualizar(semilla);
++        return semilla;
++    }
++
++    public void eliminar(Long id) {
++        if (!repositorio.eliminar(id)) {
++            throw new NoSuchElementException("No existe la semilla con id " + id);
++        }
++    }
++
++    private void validar(Semilla semilla) {
++        if (semilla.getVariedad() == null || semilla.getVariedad().isBlank()) {
++            throw new IllegalArgumentException("La variedad de la semilla es obligatoria");
++        }
++        semilla.setVariedad(semilla.getVariedad().trim());
++        if (semilla.getVariedad().length() > 100) {
++            throw new IllegalArgumentException("La variedad no puede pasar de 100 caracteres");
++        }
++        if (semilla.getStockDisponible() == null) {
++            semilla.setStockDisponible(0);
++        }
++        if (semilla.getStockDisponible() < 0) {
++            throw new IllegalArgumentException("El stock no puede ser negativo");
++        }
++    }
++}
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+new file mode 100644
+index 0000000..7609bc0
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
+@@ -0,0 +1,70 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Terreno;
++import com.cultivos.gestioncultivos_backend.repository.TerrenoRepository;
++
++/** Capa de logica de negocio: validaciones y reglas de los terrenos. */
++@Service
++public class TerrenoService {
++
++    private static final List<String> ESTADOS = List.of("Disponible", "En uso", "En descanso");
++
++    private final TerrenoRepository repositorio;
++
++    public TerrenoService(TerrenoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Terreno> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Terreno obtener(Long id) {
++        return repositorio.buscarPorId(id)
++                .orElseThrow(() -> new NoSuchElementException("No existe el terreno con id " + id));
++    }
++
++    public Terreno crear(Terreno terreno) {
++        validar(terreno);
++        terreno.setId(repositorio.insertar(terreno));
++        return terreno;
++    }
++
++    public Terreno actualizar(Long id, Terreno terreno) {
++        validar(terreno);
++        obtener(id);
++        terreno.setId(id);
++        repositorio.actualizar(terreno);
++        return terreno;
++    }
++
++    public void eliminar(Long id) {
++        if (!repositorio.eliminar(id)) {
++            throw new NoSuchElementException("No existe el terreno con id " + id);
++        }
++    }
++
++    private void validar(Terreno terreno) {
++        if (terreno.getNombre() == null || terreno.getNombre().isBlank()) {
++            throw new IllegalArgumentException("El nombre del terreno es obligatorio");
++        }
++        terreno.setNombre(terreno.getNombre().trim());
++        if (terreno.getNombre().length() > 100) {
++            throw new IllegalArgumentException("El nombre no puede pasar de 100 caracteres");
++        }
++        if (terreno.getSuperficieHa() != null && terreno.getSuperficieHa() < 0) {
++            throw new IllegalArgumentException("La superficie no puede ser negativa");
++        }
++        if (terreno.getEstado() == null || terreno.getEstado().isBlank()) {
++            terreno.setEstado("Disponible");
++        }
++        if (!ESTADOS.contains(terreno.getEstado())) {
++            throw new IllegalArgumentException("Estado inválido. Valores permitidos: " + String.join(", ", ESTADOS));
++        }
++    }
++}
+diff --git a/backend/src/main/resources/application.yaml b/backend/src/main/resources/application.yaml
+index dc783f4..0655cee 100644
+--- a/backend/src/main/resources/application.yaml
++++ b/backend/src/main/resources/application.yaml
+@@ -8,7 +8,7 @@ spring:
+     # La base y el usuario se crean con database/init.sql (ver README)
+     url: jdbc:mysql://localhost:3306/gestion_cultivos?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+     username: ${DB_USER:cultivos_user}
+-    password: ${DB_PASSWORD:Cultivos_2026!}
++    password: ${DB_PASSWORD:cultivos-web}
+     driver-class-name: com.mysql.cj.jdbc.Driver
+   sql:
+     init:
+diff --git a/backend/src/main/resources/templates/index.html b/backend/src/main/resources/templates/index.html
+new file mode 100644
+index 0000000..215406c
+--- /dev/null
++++ b/backend/src/main/resources/templates/index.html
+@@ -0,0 +1,45 @@
++<!DOCTYPE html>
++<html lang="es" xmlns:th="http://www.thymeleaf.org">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <title th:text="${titulo}">Gestión de Cultivos - API REST</title>
++    <style>
++        body {
++            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
++            max-width: 720px;
++            margin: 3rem auto;
++            padding: 0 1rem;
++            color: #1f2d1f;
++            background: #f4f8f1;
++        }
++        h1 { color: #2e6b2e; }
++        code {
++            background: #e4eedd;
++            padding: 0.15rem 0.4rem;
++            border-radius: 4px;
++        }
++        li { margin: 0.4rem 0; }
++        .estado { color: #2e6b2e; font-weight: 600; }
++    </style>
++</head>
++<body>
++    <h1 th:text="${titulo}">Gestión de Cultivos - API REST</h1>
++    <p class="estado">El backend está en línea.</p>
++
++    <h2>Endpoints disponibles</h2>
++    <ul>
++        <li th:each="endpoint : ${endpoints}">
++            <code th:text="${endpoint}">GET /api/cultivos</code>
++        </li>
++    </ul>
++
++    <p>
++        Prueba rápida:
++        <a href="/api/cultivos">/api/cultivos</a> ·
++        <a href="/api/semillas">/api/semillas</a> ·
++        <a href="/api/terrenos">/api/terrenos</a> ·
++        <a href="/api/herramientas">/api/herramientas</a>
++    </p>
++</body>
++</html>

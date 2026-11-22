@@ -1,0 +1,9 @@
+74	0	frontend/abonos.html
+76	60	frontend/cultivos.html
+74	0	frontend/fertilizantes.html
+26	0	frontend/js/api.js
+197	0	frontend/js/operaciones.js
+53	0	frontend/js/proveedores.js
+82	0	frontend/observaciones.html
+97	0	frontend/riegos.html
+97	0	frontend/terrenos.html

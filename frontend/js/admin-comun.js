@@ -46,10 +46,13 @@ function crearBoton(texto, clase, alClic) {
 
 // Botones de filtro (chips). Llama alElegir(valor) al cambiar.
 function iniciarFiltros(contenedor, alElegir) {
-    contenedor.addEventListener("click", e => {
-        const b = e.target.closest("button[data-valor]");
+    contenedor.addEventListener("click", function (evento) {
+        const b = evento.target.closest("button[data-valor]");
         if (!b) return;
-        contenedor.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+        const botones = contenedor.querySelectorAll("button");
+        for (let i = 0; i < botones.length; i++) {
+            botones[i].setAttribute("aria-pressed", String(botones[i] === b));
+        }
         alElegir(b.dataset.valor);
     });
 }

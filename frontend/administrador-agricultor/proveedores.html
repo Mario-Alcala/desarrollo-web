@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: proveedores.html
+  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
+    superior y la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
+  BACKEND: proveedores de /api/proveedores.
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin-vistas.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="proveedores"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar proveedor" data-local="true"></header>
+
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Proveedores</h1>
+                        <p>Consulta y administra los datos de contacto de tus proveedores.</p>
+                    </div>
+                    <button id="agregar-proveedor" class="boton" type="button">Agregar proveedor</button>
+                </div>
+
+                <p id="mensaje-prov" class="mensaje" role="status"></p>
+                <div class="tabla-admin-contenedor">
+                    <table class="tabla-admin">
+                        <thead><tr id="tabla-cabecera"></tr></thead>
+                        <tbody id="tabla-cuerpo"></tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="dialogo-proveedor" class="ancho" aria-labelledby="titulo-proveedor">
+        <h2 id="titulo-proveedor">Agregar proveedor</h2>
+        <form id="formulario-proveedor">
+            <label for="pv-empresa">Nombre de la empresa</label>
+            <input id="pv-empresa" type="text" maxlength="100" required>
+            <div class="campos-dos">
+                <div>
+                    <label for="pv-contacto">Contacto</label>
+                    <input id="pv-contacto" type="text" maxlength="100">
+                </div>
+                <div>
+                    <label for="pv-telefono">Teléfono</label>
+                    <input id="pv-telefono" type="tel" maxlength="15">
+                </div>
+            </div>
+            <label for="pv-email">Correo</label>
+            <input id="pv-email" type="email" maxlength="100">
+            <label for="pv-direccion">Dirección</label>
+            <input id="pv-direccion" type="text" maxlength="200">
+            <p id="mensaje-proveedor" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar proveedor</button>
+                <button id="cancelar-proveedor" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/admin-comun.js"></script>
+    <script src="../js/proveedores-admin.js"></script>
+</body>
+</html>

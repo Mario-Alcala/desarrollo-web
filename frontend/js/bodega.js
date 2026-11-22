@@ -14,7 +14,10 @@ let usuarios = [];
 
 function fmtFecha(fecha) {
     if (!fecha) return "—";
-    const [a, m, d] = String(fecha).slice(0, 10).split("-").map(Number);
+    const partes = String(fecha).slice(0, 10).split("-");
+    const a = Number(partes[0]);
+    const m = Number(partes[1]);
+    const d = Number(partes[2]);
     return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -27,20 +30,27 @@ async function pedir(ruta) {
 async function cargar() {
     mensaje.textContent = "Cargando lotes de cosecha…";
     try {
-        [cosechas, cultivos, usuarios] = await Promise.all([
-            pedir("/cosechas"), pedir("/cultivos"), pedir("/usuarios")
-        ]);
-        usuarios = usuarios.filter(u => u.rol !== "cliente");
-        selectorCultivo.replaceChildren(...cultivos.map(c => {
-            const o = crear("option", c.nombre);
-            o.value = String(c.id);
-            return o;
-        }));
-        selectorUsuario.replaceChildren(...usuarios.map(u => {
-            const o = crear("option", u.nombreUsuario);
-            o.value = String(u.idUsuario);
-            return o;
-        }));
+        cosechas = await pedir("/cosechas");
+        cultivos = await pedir("/cultivos");
+        const todosUsuarios = await pedir("/usuarios");
+        usuarios = [];
+        for (let i = 0; i < todosUsuarios.length; i++) {
+            if (todosUsuarios[i].rol !== "cliente") usuarios.push(todosUsuarios[i]);
+        }
+
+        selectorCultivo.replaceChildren();
+        for (let i = 0; i < cultivos.length; i++) {
+            const opcion = crear("option", cultivos[i].nombre);
+            opcion.value = String(cultivos[i].id);
+            selectorCultivo.append(opcion);
+        }
+
+        selectorUsuario.replaceChildren();
+        for (let i = 0; i < usuarios.length; i++) {
+            const opcion = crear("option", usuarios[i].nombreUsuario);
+            opcion.value = String(usuarios[i].idUsuario);
+            selectorUsuario.append(opcion);
+        }
         document.querySelector("#formulario-cosecha button[type=submit]").disabled = !cultivos.length || !usuarios.length;
         dibujar();
     } catch (error) {
@@ -53,35 +63,49 @@ async function cargar() {
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const madura = filtroMaduracion.value;
-    const visibles = cosechas.filter(l => {
-        const nombre = l.nombreCultivo || cultivos.find(c => c.id === l.idCultivo)?.nombre || "";
-        return (!q || `${nombre} ${l.ubicacionBodega || ""} ${l.estadoMaduracion || ""}`.toLowerCase().includes(q)) &&
-            (!madura || l.estadoMaduracion === madura);
-    });
-    cuerpo.replaceChildren(...visibles.map(l => {
-        const nombre = l.nombreCultivo || cultivos.find(c => c.id === l.idCultivo)?.nombre || "Cultivo";
+    const visibles = [];
+    for (let i = 0; i < cosechas.length; i++) {
+        const lote = cosechas[i];
+        const nombreCultivo = obtenerNombreCultivo(lote.idCultivo);
+        const nombre = lote.nombreCultivo || nombreCultivo;
+        const coincideTexto = !q || `${nombre} ${lote.ubicacionBodega || ""} ${lote.estadoMaduracion || ""}`.toLowerCase().includes(q);
+        const coincideMaduracion = !madura || lote.estadoMaduracion === madura;
+        if (coincideTexto && coincideMaduracion) visibles.push(lote);
+    }
+
+    cuerpo.replaceChildren();
+    for (let i = 0; i < visibles.length; i++) {
+        const lote = visibles[i];
+        const nombre = lote.nombreCultivo || obtenerNombreCultivo(lote.idCultivo) || "Cultivo";
         const fila = crear("tr");
         fila.append(
-            crear("td", `${nombre} · Lote #${l.idCosecha}`),
-            crear("td", fmtFecha(l.fechaCosecha)),
-            crear("td", `${fmtNum(l.cantidadCosechada)} kg`),
-            crear("td", `${fmtNum(l.cantidadDisponible || 0)} kg`),
-            crear("td", capitalizar(l.estadoMaduracion || "Sin clasificar"))
+            crear("td", `${nombre} · Lote #${lote.idCosecha}`),
+            crear("td", fmtFecha(lote.fechaCosecha)),
+            crear("td", `${fmtNum(lote.cantidadCosechada)} kg`),
+            crear("td", `${fmtNum(lote.cantidadDisponible || 0)} kg`),
+            crear("td", capitalizar(lote.estadoMaduracion || "Sin clasificar"))
         );
-        return fila;
-    }));
+        cuerpo.append(fila);
+    }
     if (visibles.length) mensaje.textContent = `${visibles.length} lotes empacados · disponible para asignar a pedidos`;
     else if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay lotes de cosecha para mostrar.";
 }
 
-document.getElementById("registrar-cosecha").addEventListener("click", () => {
+function obtenerNombreCultivo(idCultivo) {
+    for (let i = 0; i < cultivos.length; i++) {
+        if (cultivos[i].id === idCultivo) return cultivos[i].nombre;
+    }
+    return "";
+}
+
+document.getElementById("registrar-cosecha").addEventListener("click", function () {
     msgFormulario.textContent = "";
     formulario.reset();
     document.getElementById("co-fecha").value = new Date().toISOString().slice(0, 10);
     dialogo.showModal();
 });
 
-formulario.addEventListener("submit", async evento => {
+formulario.addEventListener("submit", async function (evento) {
     evento.preventDefault();
     msgFormulario.textContent = "";
     const kg = Number(document.getElementById("co-empacado").value);
@@ -102,8 +126,14 @@ formulario.addEventListener("submit", async evento => {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos)
         });
         if (!respuesta.ok) {
-            const error = await respuesta.json().catch(() => ({}));
-            throw new Error(error.mensaje || "No se pudo registrar el lote de cosecha.");
+            let mensajeError = "No se pudo registrar el lote de cosecha.";
+            try {
+                const error = await respuesta.json();
+                mensajeError = error.mensaje || mensajeError;
+            } catch (noEsJson) {
+                mensajeError = "No se pudo registrar el lote de cosecha.";
+            }
+            throw new Error(mensajeError);
         }
         dialogo.close();
         await cargar();
@@ -112,7 +142,7 @@ formulario.addEventListener("submit", async evento => {
     }
 });
 
-document.getElementById("cancelar-cosecha").addEventListener("click", () => dialogo.close());
+document.getElementById("cancelar-cosecha").addEventListener("click", function () { dialogo.close(); });
 buscador.addEventListener("input", dibujar);
 filtroMaduracion.addEventListener("change", dibujar);
 cargar();

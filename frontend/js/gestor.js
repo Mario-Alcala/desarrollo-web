@@ -15,7 +15,8 @@ function mostrarCultivos() {
             agregarCelda(vacia, 'No hay cultivos registrados.').colSpan = 4;
             lista.appendChild(vacia);
         }
-        datos.productos.forEach(function (producto) {
+        for (let i = 0; i < datos.productos.length; i++) {
+            let producto = datos.productos[i];
             var fila = document.createElement('tr');
             agregarCelda(fila, producto.nombre);
             agregarCelda(fila, dinero(producto.precio));
@@ -32,7 +33,7 @@ function mostrarCultivos() {
             acciones.appendChild(editar);
             acciones.appendChild(borrar);
             lista.appendChild(fila);
-        });
+        }
     } catch (error) {
         mensajeGestor.textContent = 'No se pudieron leer los datos guardados del navegador.';
     }
@@ -67,9 +68,13 @@ function borrarCultivo(id) {
     if (!confirm('¿Borrar este cultivo del catálogo?')) { return; }
     try {
         var datos = leerDatos();
-        datos.productos = datos.productos.filter(function (producto) {
-            return producto.id !== id;
-        });
+        var productosRestantes = [];
+        for (var i = 0; i < datos.productos.length; i++) {
+            if (datos.productos[i].id !== id) {
+                productosRestantes.push(datos.productos[i]);
+            }
+        }
+        datos.productos = productosRestantes;
         guardarDatos(datos);
         if (idEdicion === id) { cancelarEdicion(); }
         mostrarCultivos();

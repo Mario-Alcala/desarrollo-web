@@ -1,0 +1,313 @@
+diff --git a/frontend/css/pedidos.css b/frontend/css/pedidos.css
+new file mode 100644
+index 0000000..3eb8f70
+--- /dev/null
++++ b/frontend/css/pedidos.css
+@@ -0,0 +1,49 @@
++/*
++ * ARCHIVO: css/pedidos.css
++ * CAPA: FRONTEND (estilos, cascarón). Solo estilos de Pedidos: la tabla de la lista.
++ * USA: las variables de color de css/admin.css (--tarjeta, --borde, --texto, --texto-suave, --acento).
++ */
++
++.envoltura-tabla {
++    background: var(--tarjeta);
++    border: 1px solid var(--borde);
++    border-radius: 12px;
++    overflow-x: auto;
++}
++
++.tabla-pedidos {
++    width: 100%;
++    border-collapse: collapse;
++    min-width: 760px;
++}
++
++.tabla-pedidos th,
++.tabla-pedidos td {
++    padding: 12px 14px;
++    text-align: left;
++    border-bottom: 1px solid var(--borde);
++    white-space: nowrap;
++}
++
++.tabla-pedidos th {
++    color: var(--texto-suave);
++    font-size: 0.8rem;
++    font-weight: 600;
++    text-transform: uppercase;
++    letter-spacing: 0.04em;
++}
++
++.tabla-pedidos tbody tr:last-child td { border-bottom: none; }
++.tabla-pedidos tbody tr:hover { background: var(--tarjeta-2); }
++
++.celda-total { text-align: right; font-weight: 600; }
++.tabla-pedidos th.celda-total { text-align: right; }
++
++.enlace-pedido { color: var(--acento); text-decoration: none; font-weight: 600; }
++.enlace-pedido:hover { text-decoration: underline; }
++
++/* Texto solo para lectores de pantalla (encabezado de la columna de enlaces) */
++.solo-lectores {
++    position: absolute;
++    left: -9999px;
++}
+\ No newline at end of file
+diff --git a/frontend/js/admin-datos.js b/frontend/js/admin-datos.js
+index 39c98b5..ad10a53 100644
+--- a/frontend/js/admin-datos.js
++++ b/frontend/js/admin-datos.js
+@@ -83,4 +83,53 @@ const MOVIMIENTOS = [
+     { id: 2, idInventario: 1, usuario: "Trabajador de bodega", tipo: "salida", cantidad: 2.5, fecha: "2026-11-03T08:10" },
+     { id: 3, idInventario: 5, usuario: "Trabajador de bodega", tipo: "salida", cantidad: 50, fecha: "2026-11-12T07:45" },
+     { id: 4, idInventario: 4, usuario: "Administrador / Agricultor", tipo: "entrada", cantidad: 300, fecha: "2026-11-02T10:00" }
++];
++
++/* ---------- Pedidos (tablas pedidos, detalle_pedido y entregas) ----------
++ * El total NO se guarda: se calcula sumando kg × precio de cada renglón del detalle.
++ * La entrega vive dentro del pedido:
++ *   tipo "domicilio"   -> direccion y numeroRastreo (si ya salió)
++ *   tipo "recoleccion" -> idBodega y diaRecoleccion (horario fijo 7:00 a. m. a 6:00 p. m.)
++ */
++const PEDIDOS = [
++    {
++        id: 1001, cliente: "Restaurante La Hacienda", fecha: "2026-11-18", estado: "entregado",
++        detalle: [
++            { idProducto: 2, kg: 40, precioPorKg: 32 },
++            { idProducto: 3, kg: 15, precioPorKg: 28 }
++        ],
++        entrega: { tipo: "domicilio", direccion: "Av. Xalapa 120, Xalapa, Ver.", numeroRastreo: "GC-48213", estado: "entregada" }
++    },
++    {
++        id: 1002, cliente: "Mercado Los Sauces", fecha: "2026-11-19", estado: "enviado",
++        detalle: [
++            { idProducto: 1, kg: 25, precioPorKg: 48 },
++            { idProducto: 5, kg: 30, precioPorKg: 26 },
++            { idProducto: 6, kg: 10, precioPorKg: 85 }
++        ],
++        entrega: { tipo: "domicilio", direccion: "Calle Hidalgo 33, Coatepec, Ver.", numeroRastreo: "GC-48377", estado: "en camino" }
++    },
++    {
++        id: 1003, cliente: "María Fernanda Ortiz", fecha: "2026-11-19", estado: "pendiente",
++        detalle: [
++            { idProducto: 1, kg: 3, precioPorKg: 48 },
++            { idProducto: 4, kg: 6, precioPorKg: 18 }
++        ],
++        entrega: { tipo: "recoleccion", idBodega: 1, diaRecoleccion: "2026-11-22", estado: "por programar" }
++    },
++    {
++        id: 1004, cliente: "Cocina Económica Doña Lupe", fecha: "2026-11-20", estado: "en preparación",
++        detalle: [
++            { idProducto: 2, kg: 20, precioPorKg: 32 },
++            { idProducto: 3, kg: 12, precioPorKg: 28 }
++        ],
++        entrega: { tipo: "recoleccion", idBodega: 2, diaRecoleccion: "2026-11-23", estado: "por programar" }
++    },
++    {
++        id: 1005, cliente: "Tienda Naturista Verde Vida", fecha: "2026-11-14", estado: "cancelado",
++        detalle: [
++            { idProducto: 6, kg: 8, precioPorKg: 85 }
++        ],
++        entrega: { tipo: "domicilio", direccion: "Blvd. Díaz Mirón 410, Veracruz, Ver.", numeroRastreo: "", estado: "cancelada" }
++    }
+ ];
+\ No newline at end of file
+diff --git a/frontend/js/pedidos-comun.js b/frontend/js/pedidos-comun.js
+new file mode 100644
+index 0000000..963a069
+--- /dev/null
++++ b/frontend/js/pedidos-comun.js
+@@ -0,0 +1,40 @@
++/*
++ * ARCHIVO: js/pedidos-comun.js
++ * CAPA: FRONTEND (JavaScript de apoyo, solo para Pedidos). ¿ES CASCARÓN? NO: son cálculos y formatos.
++ * QUÉ HACE: calcula el total de un pedido, da formato a fechas y decide el color de cada estado.
++ *   Lo usan pedidos.js (lista) y pedido-detalle.js (detalle).
++ * REGLA DEL DOCUMENTO: el total de un pedido NO se guarda; se calcula sumando kg × precio por kilo
++ *   de cada renglón de su detalle.
++ * BACKEND: no lo usa.
++ * LE FALTA: nada por ahora.
++ * AÑADIDO POR BACKEND INCOMPLETO: nada.
++ */
++
++const HORARIO_RECOLECCION = "7:00 a. m. a 6:00 p. m.";
++
++function totalPedido(pedido) {
++    return pedido.detalle.reduce((suma, renglon) => suma + renglon.kg * renglon.precioPorKg, 0);
++}
++
++function kilosPedido(pedido) {
++    return pedido.detalle.reduce((suma, renglon) => suma + renglon.kg, 0);
++}
++
++// "2026-11-18" -> "18 nov 2026". Se arma con año, mes y día para evitar corrimientos de zona horaria.
++function fmtFecha(iso) {
++    if (!iso) return "—";
++    const [a, m, d] = String(iso).slice(0, 10).split("-").map(Number);
++    return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
++}
++
++// Tipo de etiqueta (ver etiqueta() en admin-comun.js) según el estado.
++function tipoEstado(estado) {
++    if (estado === "entregado" || estado === "entregada") return "ok";
++    if (estado === "enviado" || estado === "en camino" || estado === "en preparación") return "aviso";
++    if (estado === "cancelado" || estado === "cancelada") return "error";
++    return "";
++}
++
++function productoPorId(id) {
++    return PRODUCTOS.find(p => p.id === id);
++}
+\ No newline at end of file
+diff --git a/frontend/js/pedidos.js b/frontend/js/pedidos.js
+new file mode 100644
+index 0000000..b39b33e
+--- /dev/null
++++ b/frontend/js/pedidos.js
+@@ -0,0 +1,64 @@
++/*
++ * ARCHIVO: js/pedidos.js
++ * CAPA: FRONTEND (lógica). ¿ES CASCARÓN? NO: filtra la lista, busca y calcula totales.
++ * QUÉ USA DEL BACKEND: nada todavía; lee PEDIDOS de js/admin-datos.js.
++ * REGLA DEL DOCUMENTO: el total de cada pedido se calcula con su detalle (totalPedido).
++ * LE FALTA: leer los pedidos de la API; paginación; cambiar el estado desde la lista.
++ * AÑADIDO POR BACKEND INCOMPLETO: los datos de ejemplo de PEDIDOS.
++ */
++
++const contenedor = document.getElementById("lista-pedidos");
++const mensajePedidos = document.getElementById("mensaje-pedidos");
++const buscadorPedidos = document.querySelector("#topbar input");
++
++let estadoActivo = "todos";
++
++function filaPedido(p) {
++    const fila = crear("tr");
++    const entrega = p.entrega.tipo === "domicilio" ? "A domicilio" : "Recolección";
++
++    const celdaEnlace = crear("td");
++    const enlace = crear("a", "Ver detalle →", "enlace-pedido");
++    enlace.href = "pedido-detalle.html?id=" + p.id;
++    celdaEnlace.append(enlace);
++
++    const celdaEstado = crear("td");
++    celdaEstado.append(etiqueta(capitalizar(p.estado), tipoEstado(p.estado)));
++
++    fila.append(
++        crear("td", "#" + p.id),
++        crear("td", p.cliente),
++        crear("td", fmtFecha(p.fecha)),
++        crear("td", p.detalle.length + (p.detalle.length === 1 ? " producto" : " productos")),
++        crear("td", entrega),
++        celdaEstado,
++        crear("td", fmtMoneda(totalPedido(p)), "celda-total"),
++        celdaEnlace
++    );
++    return fila;
++}
++
++function dibujarPedidos() {
++    const q = buscadorPedidos.value.trim().toLowerCase();
++    const visibles = PEDIDOS.filter(p =>
++        (estadoActivo === "todos" || p.estado === estadoActivo) &&
++        (!q || p.cliente.toLowerCase().includes(q) || String(p.id).includes(q))
++    );
++
++    contenedor.replaceChildren(...visibles.map(filaPedido));
++
++    if (!visibles.length) {
++        mensajePedidos.textContent = "No hay pedidos para mostrar.";
++    } else {
++        const suma = visibles.reduce((s, p) => s + (p.estado === "cancelado" ? 0 : totalPedido(p)), 0);
++        mensajePedidos.textContent = `${visibles.length} ${visibles.length === 1 ? "pedido" : "pedidos"} · Total sin cancelados: ${fmtMoneda(suma)}`;
++    }
++}
++
++iniciarFiltros(document.getElementById("filtros-estado"), valorFiltro => {
++    estadoActivo = valorFiltro;
++    dibujarPedidos();
++});
++buscadorPedidos.addEventListener("input", dibujarPedidos);
++
++dibujarPedidos();
+\ No newline at end of file
+diff --git a/frontend/pedidos.html b/frontend/pedidos.html
+new file mode 100644
+index 0000000..c294b1b
+--- /dev/null
++++ b/frontend/pedidos.html
+@@ -0,0 +1,73 @@
++<!DOCTYPE html>
++<!--
++  ARCHIVO: pedidos.html
++  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
++    superior y las filas de la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
++  BACKEND: aún no existe la ruta de pedidos. Los datos salen de js/admin-datos.js (arreglo PEDIDOS).
++  LE FALTA: leer los pedidos de la API; crear un pedido; paginación.
++  AÑADIDO POR BACKEND INCOMPLETO: los pedidos de ejemplo en admin-datos.js.
++-->
++<html lang="es">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <title>Pedidos - Gestión de Cultivos</title>
++    <link rel="stylesheet" href="css/admin.css">
++    <link rel="stylesheet" href="css/admin-vistas.css">
++    <link rel="stylesheet" href="css/pedidos.css">
++</head>
++<body class="admin">
++    <div class="app-admin">
++        <aside id="sidebar" class="sidebar-admin" data-activo="pedidos"></aside>
++
++        <div class="contenido-admin">
++            <header id="topbar" class="topbar-admin" data-placeholder="Buscar por cliente o número de pedido" data-local="true"></header>
++
++            <main class="pagina">
++                <div class="encabezado-pagina">
++                    <div>
++                        <h1>Pedidos y entregas</h1>
++                        <p>Consulta los pedidos y abre uno para ver su detalle y su entrega. El total se calcula con los productos de cada pedido.</p>
++                    </div>
++                </div>
++
++                <div id="filtros-estado" class="barra-herramientas" role="group" aria-label="Filtrar por estado">
++                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
++                    <button class="filtro" type="button" data-valor="pendiente" aria-pressed="false">Pendientes</button>
++                    <button class="filtro" type="button" data-valor="en preparación" aria-pressed="false">En preparación</button>
++                    <button class="filtro" type="button" data-valor="enviado" aria-pressed="false">Enviados</button>
++                    <button class="filtro" type="button" data-valor="entregado" aria-pressed="false">Entregados</button>
++                    <button class="filtro" type="button" data-valor="cancelado" aria-pressed="false">Cancelados</button>
++                </div>
++
++                <p id="mensaje-pedidos" class="mensaje" role="status"></p>
++                <section aria-label="Lista de pedidos">
++                    <div class="envoltura-tabla">
++                        <table class="tabla-pedidos">
++                            <thead>
++                                <tr>
++                                    <th>Pedido</th>
++                                    <th>Cliente</th>
++                                    <th>Fecha</th>
++                                    <th>Productos</th>
++                                    <th>Entrega</th>
++                                    <th>Estado</th>
++                                    <th class="celda-total">Total</th>
++                                    <th><span class="solo-lectores">Detalle</span></th>
++                                </tr>
++                            </thead>
++                            <tbody id="lista-pedidos"></tbody>
++                        </table>
++                    </div>
++                </section>
++            </main>
++        </div>
++    </div>
++
++    <script src="js/sidebar.js"></script>
++    <script src="js/admin-datos.js"></script>
++    <script src="js/admin-comun.js"></script>
++    <script src="js/pedidos-comun.js"></script>
++    <script src="js/pedidos.js"></script>
++</body>
++</html>
+\ No newline at end of file

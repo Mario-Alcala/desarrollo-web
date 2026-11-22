@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recolección del pedido</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/cultivos.css">
+    <link rel="stylesheet" href="../css/pago.css">
+</head>
+<body>
+    <header class="barra">
+        <span class="marca">Gestión de Cultivos</span>
+        <a href="pago.html">Regresar al pago</a>
+    </header>
+    <main class="pagina pagina-recoleccion">
+        <h1>Fecha de recolección</h1>
+        <p>Selecciona un día dentro de los próximos siete días. Puedes recogerlo cualquier día de 6:00 a. m. a 6:00 p. m.</p>
+        <section class="panel">
+            <div class="mes-recoleccion">
+                <button id="mes-anterior" class="boton boton-secundario" type="button" aria-label="Mes anterior">←</button>
+                <h2 id="nombre-mes" aria-live="polite"></h2>
+                <button id="mes-siguiente" class="boton boton-secundario" type="button" aria-label="Mes siguiente">→</button>
+            </div>
+            <div class="semana-recoleccion" aria-hidden="true">
+                <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+            </div>
+            <div id="dias-recoleccion" class="dias-recoleccion"></div>
+            <p id="dia-seleccionado" aria-live="polite">Aún no seleccionas una fecha.</p>
+            <p class="nota">Horario fijo de atención: 6:00 a. m. a 6:00 p. m. todos los días. No necesitas elegir una hora.</p>
+            <div class="acciones-pago">
+                <a class="boton boton-secundario" href="pago.html">Cancelar</a>
+                <button id="guardar-fecha" class="boton" type="button" disabled>Confirmar fecha</button>
+            </div>
+        </section>
+        <p id="mensaje-recoleccion" class="mensaje" role="status"></p>
+    </main>
+    <script src="../js/pedido.js"></script>
+    <script src="../js/recoleccion.js"></script>
+</body>
+</html>

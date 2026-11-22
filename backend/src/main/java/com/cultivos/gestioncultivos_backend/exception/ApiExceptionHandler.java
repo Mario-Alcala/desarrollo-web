@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Manejo centralizado de errores de la API REST.
@@ -28,6 +29,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, Object>> noEncontrado(NoSuchElementException ex) {
         return respuesta(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> errorHttp(ResponseStatusException ex) {
+        HttpStatus estado = HttpStatus.valueOf(ex.getStatusCode().value());
+        return respuesta(estado, ex.getReason() == null ? "La solicitud no se pudo completar" : ex.getReason());
     }
 
     /** 400: validaciones de los servicios (nombre vacio, stock negativo, etc.). */

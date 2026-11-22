@@ -1,0 +1,1 @@
+El archivo 'frontend/recoleccion.html' no existía en el commit 'd2c9ce6'.

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="css/acceso.css">
+    </head>
+    <body>
+        <header class="barra">
+            <a class="boton boton-secundario" href="index.html">Regreso a inicio</a>
+        </header>
+        <main class="login">
+            <section class="cuadro-login" aria-labelledby="titulo-login">
+                
+                <h1 id="titulo-login">Gestión de Cultivos</h1>
+                <form id="formulario-login" novalidate>
+                    <label for="tipo-acceso">Acceso</label>
+                    <select id="tipo-acceso">
+                        <option value="cliente">Cliente</option>
+                        <option value="trabajador">Trabajador</option>
+                    </select>
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" autocomplete="name" required>
+                    <label for="correo">Correo</label>
+                    <input type="email" id="correo" name="correo" autocomplete="email" required>
+                    <label for="contrasena">Contraseña</label>
+                    <input type="password" id="contrasena" name="contrasena" autocomplete="current-password" required>
+                    <p id="mensaje-login" class="mensaje error" role="alert"></p>
+                    <button class="boton" type="submit">Ingresar</button>
+                </form>
+            </section>
+        </main>
+        <script src="js/ap.js"></script>
+    </body>
+</html>

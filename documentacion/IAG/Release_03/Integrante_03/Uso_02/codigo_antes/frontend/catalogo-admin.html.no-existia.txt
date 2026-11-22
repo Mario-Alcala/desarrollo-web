@@ -1,0 +1,1 @@
+El archivo 'frontend/catalogo-admin.html' no existía en el commit 'f46b1aa'.

@@ -13,13 +13,21 @@ function fechaLocal(fecha) {
     return fecha.getFullYear() + '-' + String(fecha.getMonth() + 1).padStart(2, '0') + '-' + String(fecha.getDate()).padStart(2, '0');
 }
 
+function inicioRecoleccion() {
+    var inicio = new Date();
+    if (inicio.getHours() >= 18) inicio.setDate(inicio.getDate() + 1);
+    return inicio;
+}
+
 function limiteRecoleccion() {
-    var limite = new Date();
-    limite.setDate(limite.getDate() + 13);
+    var limite = inicioRecoleccion();
+    limite.setDate(limite.getDate() + 6);
     return fechaLocal(limite);
 }
 
 function fechaPermitida(fecha) {
-    // Dos semanas contando el día de hoy, como en el sketch.
-    return /^\d{4}-\d{2}-\d{2}$/.test(fecha) && fecha >= fechaLocal(new Date()) && fecha <= limiteRecoleccion();
+    // Se permite elegir un día dentro de una ventana de siete días.
+    return /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+        && fecha >= fechaLocal(inicioRecoleccion())
+        && fecha <= limiteRecoleccion();
 }

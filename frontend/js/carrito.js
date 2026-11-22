@@ -26,7 +26,8 @@ function mostrarCatalogo() {
             lista.textContent = 'No hay productos disponibles por el momento.';
         }
 
-        datosCatalogo.productos.forEach(function (producto) {
+        for (let i = 0; i < datosCatalogo.productos.length; i++) {
+            let producto = datosCatalogo.productos[i];
             var tarjeta = document.createElement('article');
             tarjeta.className = 'producto';
 
@@ -74,7 +75,7 @@ function mostrarCatalogo() {
             tarjeta.appendChild(stock);
             tarjeta.appendChild(controles);
             lista.appendChild(tarjeta);
-        });
+        }
 
         mostrarResumen();
         guardarCarrito();
@@ -109,7 +110,8 @@ function mostrarResumen() {
     detalle.innerHTML = '';
     totalCentavos = 0;
 
-    datosCatalogo.productos.forEach(function (producto) {
+    for (var i = 0; i < datosCatalogo.productos.length; i++) {
+        var producto = datosCatalogo.productos[i];
         var kilos = carrito[producto.id] || 0;
         if (kilos > 0) {
             var subtotal = Math.round(producto.precio * 100) * kilos;
@@ -121,7 +123,7 @@ function mostrarResumen() {
             agregarCelda(fila, dinero(subtotal / 100));
             detalle.appendChild(fila);
         }
-    });
+    }
 
     if (totalCentavos === 0) {
         var fila = document.createElement('tr');

@@ -18,7 +18,10 @@ function etiquetaEstado(p) {
 
 function fechaPedido(valor) {
     if (!valor) return "—";
-    const [a, m, d] = valor.slice(0, 10).split("-").map(Number);
+    const partes = valor.slice(0, 10).split("-");
+    const a = Number(partes[0]);
+    const m = Number(partes[1]);
+    const d = Number(partes[2]);
     return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -28,25 +31,31 @@ function filaPedido(p) {
     const enlace = crear("a", "Ver pedido →", "enlace-pedido");
     enlace.href = `pedido-detalle.html?id=${encodeURIComponent(p.idPedido)}`;
     detalle.append(enlace);
-    fila.append(
-        crear("td", `#${p.idPedido}`),
-        crear("td", p.cliente || `Pedido ${p.idPedido}`),
-        crear("td", fechaPedido(p.fechaPedido)),
-        crear("td", `${p.cantidadLotes || 0} ${p.cantidadLotes === 1 ? "lote" : "lotes"}`),
-        crear("td", p.tipoEntrega === "domicilio" ? "Envío a domicilio" : "Recoger en bodega"),
-        (() => { const td = crear("td"); td.append(etiquetaEstado(p)); return td; })(),
-        detalle
-    );
+    fila.append(crear("td", `#${p.idPedido}`));
+    fila.append(crear("td", p.cliente || `Pedido ${p.idPedido}`));
+    fila.append(crear("td", fechaPedido(p.fechaPedido)));
+    fila.append(crear("td", `${p.cantidadLotes || 0} ${p.cantidadLotes === 1 ? "lote" : "lotes"}`));
+    fila.append(crear("td", p.tipoEntrega === "domicilio" ? "Envío a domicilio" : "Recoger en bodega"));
+    const celdaEstado = crear("td");
+    celdaEstado.append(etiquetaEstado(p));
+    fila.append(celdaEstado, detalle);
     return fila;
 }
 
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
-    const visibles = pedidos.filter(p =>
-        (estadoFiltro === "todos" || estadoDe(p) === estadoFiltro) &&
-        (!q || String(p.idPedido).includes(q) || String(p.cliente || "").toLowerCase().includes(q))
-    );
-    contenedor.replaceChildren(...visibles.map(filaPedido));
+    const visibles = [];
+    for (let i = 0; i < pedidos.length; i++) {
+        const pedido = pedidos[i];
+        const coincideEstado = estadoFiltro === "todos" || estadoDe(pedido) === estadoFiltro;
+        const coincideTexto = !q || String(pedido.idPedido).includes(q)
+            || String(pedido.cliente || "").toLowerCase().includes(q);
+        if (coincideEstado && coincideTexto) visibles.push(pedido);
+    }
+    contenedor.replaceChildren();
+    for (let i = 0; i < visibles.length; i++) {
+        contenedor.append(filaPedido(visibles[i]));
+    }
     if (visibles.length) mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "pedido" : "pedidos"}`;
     else if (!mensaje.textContent.startsWith("No se pudo")) mensaje.textContent = "No hay pedidos para mostrar.";
 }
@@ -65,11 +74,14 @@ async function cargarPedidos() {
     }
 }
 
-document.getElementById("filtros-estado").addEventListener("click", evento => {
+document.getElementById("filtros-estado").addEventListener("click", function (evento) {
     const boton = evento.target.closest("button[data-valor]");
     if (!boton) return;
     estadoFiltro = boton.dataset.valor;
-    document.querySelectorAll("#filtros-estado button").forEach(b => b.setAttribute("aria-pressed", String(b === boton)));
+    const botones = document.querySelectorAll("#filtros-estado button");
+    for (let i = 0; i < botones.length; i++) {
+        botones[i].setAttribute("aria-pressed", String(botones[i] === boton));
+    }
     dibujar();
 });
 buscador.addEventListener("input", dibujar);

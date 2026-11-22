@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: bodega.html
+  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
+    superior y las tablas las dibuja JavaScript: sin JS la página sale casi vacía.
+  BACKEND: cosechas de /api/cosechas y cultivos de /api/cultivos.
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bodega - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin-vistas.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="bodega"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar lote o cultivo" data-local="true"></header>
+
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Bodega</h1>
+                        <p>Registra las cosechas empacadas por kilo y consulta cuánto queda disponible para los pedidos.</p>
+                    </div>
+                    <button id="registrar-cosecha" class="boton" type="button">Registrar cosecha</button>
+                </div>
+
+                <div class="barra-herramientas">
+                    <label class="sr" for="filtro-maduracion">Maduración</label>
+                    <select id="filtro-maduracion">
+                        <option value="">Todas las maduraciones</option>
+                        <option value="verde">Verde</option>
+                        <option value="maduro">Maduro</option>
+                    </select>
+                </div>
+
+                <p id="mensaje-bodega" class="mensaje" role="status"></p>
+                <div class="tabla-admin-contenedor">
+                    <table class="tabla-admin">
+                        <thead><tr><th>Lote / cultivo</th><th>Fecha</th><th>Empacado</th><th>Disponible para pedidos</th><th>Maduración</th></tr></thead>
+                        <tbody id="tabla-cuerpo"></tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="dialogo-cosecha" class="ancho" aria-labelledby="titulo-cosecha">
+        <h2 id="titulo-cosecha">Registrar cosecha</h2>
+        <form id="formulario-cosecha">
+            <div class="campos-dos">
+                <div><label for="co-cultivo">Cultivo</label><select id="co-cultivo" required></select></div>
+                <div><label for="co-usuario">Registrado por</label><select id="co-usuario" required></select></div>
+                <div><label for="co-fecha">Fecha de cosecha</label><input id="co-fecha" type="date" required></div>
+                <div><label for="co-empacado">Kilos empacados</label><input id="co-empacado" type="number" min="0.01" step="0.01" required></div>
+                <div><label for="co-maduracion">Maduración del lote</label><select id="co-maduracion" required><option value="verde">Verde</option><option value="maduro">Maduro</option></select></div>
+            </div>
+            <p id="mensaje-cosecha" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar lote</button>
+                <button id="cancelar-cosecha" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/admin-comun.js"></script>
+    <script src="../js/bodega.js"></script>
+</body>
+</html>

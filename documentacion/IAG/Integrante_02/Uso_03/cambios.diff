@@ -1,0 +1,731 @@
+diff --git a/backend/database/init.sql b/backend/database/init.sql
+index ae5ed01..16b8a9b 100644
+--- a/backend/database/init.sql
++++ b/backend/database/init.sql
+@@ -185,6 +185,18 @@ CREATE TABLE IF NOT EXISTS usuarios (
+     contrasena VARCHAR(255) NOT NULL,
+     rol ENUM('administrador', 'empleado', 'cliente') NOT NULL
+ )
++
++CREATE TABLE IF NOT EXISTS(
++    id_riego INT PRIMARY KEY AUTO_INCREMENT,
++    id_cultivo INT NOT NULL,
++    fecha_riego DATE NOT NULL,
++    cantidad_agua DECIMAL(10,2) NOT NULL,
++    unidad_medida VARCHAR(20) NOT NULL,
++    metodo VARCHAR(50) NULL,
++    observaciones VARCHAR(255),
++    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id)
++    FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
++);
+ -- ---------------------------------------------------------------------
+ -- Datos de ejemplo (solo se insertan si la tabla está vacía)
+ -- ---------------------------------------------------------------------
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java
+new file mode 100644
+index 0000000..7f31133
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/InventarioController.java
+@@ -0,0 +1,64 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.service.InventarioService;
++
++@RestController
++@RequestMapping("/api/inventario")
++public class InventarioController {
++
++    private final InventarioService servicio;
++
++    public InventarioController(InventarioService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Inventario> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Inventario obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Inventario producto) {
++        servicio.crear(producto);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Inventario producto) {
++        servicio.actualizar(id, producto);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++
++    @GetMapping("/categoria/{categoria}")
++    public List<Inventario> buscarPorCategoria(
++            @PathVariable("categoria") String categoria) {
++        return servicio.buscarPorCategoria(categoria);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java
+new file mode 100644
+index 0000000..13ea2e3
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/RiegoController.java
+@@ -0,0 +1,58 @@
++package com.cultivos.gestioncultivos_backend.controller;
++
++import java.util.List;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++import com.cultivos.gestioncultivos_backend.service.RiegoService;
++
++@RestController
++@RequestMapping("/api/riegos")
++public class RiegoController {
++
++    private final RiegoService servicio;
++
++    public RiegoController(RiegoService servicio) {
++        this.servicio = servicio;
++    }
++
++    @GetMapping
++    public List<Riego> listar() {
++        return servicio.listar();
++    }
++
++    @GetMapping("/{id}")
++    public Riego obtener(@PathVariable("id") int id) {
++        return servicio.obtener(id);
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public void crear(@RequestBody Riego riego) {
++        servicio.crear(riego);
++    }
++
++    @PutMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void actualizar(
++            @PathVariable("id") int id,
++            @RequestBody Riego riego) {
++        servicio.actualizar(id, riego);
++    }
++
++    @DeleteMapping("/{id}")
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void eliminar(@PathVariable("id") int id) {
++        servicio.eliminar(id);
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java
+new file mode 100644
+index 0000000..188947c
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Inventario.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++public class Inventario {
++
++    private Integer idInventario;
++    private String nombreProducto;
++    private String categoria;
++    private BigDecimal cantidad;
++    private String unidadMedida;
++    private BigDecimal stockMinimo;
++    private LocalDate fechaCaducidad;
++    private Integer idProveedor;
++
++    public Inventario() {
++    }
++
++    public Integer getIdInventario() {
++        return idInventario;
++    }
++
++    public void setIdInventario(Integer idInventario) {
++        this.idInventario = idInventario;
++    }
++
++    public String getNombreProducto() {
++        return nombreProducto;
++    }
++
++    public void setNombreProducto(String nombreProducto) {
++        this.nombreProducto = nombreProducto;
++    }
++
++    public String getCategoria() {
++        return categoria;
++    }
++
++    public void setCategoria(String categoria) {
++        this.categoria = categoria;
++    }
++
++    public BigDecimal getCantidad() {
++        return cantidad;
++    }
++
++    public void setCantidad(BigDecimal cantidad) {
++        this.cantidad = cantidad;
++    }
++
++    public String getUnidadMedida() {
++        return unidadMedida;
++    }
++
++    public void setUnidadMedida(String unidadMedida) {
++        this.unidadMedida = unidadMedida;
++    }
++
++    public BigDecimal getStockMinimo() {
++        return stockMinimo;
++    }
++
++    public void setStockMinimo(BigDecimal stockMinimo) {
++        this.stockMinimo = stockMinimo;
++    }
++
++    public LocalDate getFechaCaducidad() {
++        return fechaCaducidad;
++    }
++
++    public void setFechaCaducidad(LocalDate fechaCaducidad) {
++        this.fechaCaducidad = fechaCaducidad;
++    }
++
++    public Integer getIdProveedor() {
++        return idProveedor;
++    }
++
++    public void setIdProveedor(Integer idProveedor) {
++        this.idProveedor = idProveedor;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java
+new file mode 100644
+index 0000000..05c5830
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Riego.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++
++public class Riego {
++
++    private Integer idRiego;
++    private Long idCultivo;
++    private Long idTerreno;
++    private LocalDate fechaRiego;
++    private BigDecimal cantidadAgua;
++    private String unidadMedida;
++    private String metodo;
++    private String observaciones;
++
++    public Riego() {
++    }
++
++    public Integer getIdRiego() {
++        return idRiego;
++    }
++
++    public void setIdRiego(Integer idRiego) {
++        this.idRiego = idRiego;
++    }
++
++    public Long getIdCultivo() {
++        return idCultivo;
++    }
++
++    public void setIdCultivo(Long idCultivo) {
++        this.idCultivo = idCultivo;
++    }
++
++    public Long getIdTerreno() {
++        return idTerreno;
++    }
++
++    public void setIdTerreno(Long idTerreno) {
++        this.idTerreno = idTerreno;
++    }
++
++    public LocalDate getFechaRiego() {
++        return fechaRiego;
++    }
++
++    public void setFechaRiego(LocalDate fechaRiego) {
++        this.fechaRiego = fechaRiego;
++    }
++
++    public BigDecimal getCantidadAgua() {
++        return cantidadAgua;
++    }
++
++    public void setCantidadAgua(BigDecimal cantidadAgua) {
++        this.cantidadAgua = cantidadAgua;
++    }
++
++    public String getUnidadMedida() {
++        return unidadMedida;
++    }
++
++    public void setUnidadMedida(String unidadMedida) {
++        this.unidadMedida = unidadMedida;
++    }
++
++    public String getMetodo() {
++        return metodo;
++    }
++
++    public void setMetodo(String metodo) {
++        this.metodo = metodo;
++    }
++
++    public String getObservaciones() {
++        return observaciones;
++    }
++
++    public void setObservaciones(String observaciones) {
++        this.observaciones = observaciones;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java
+new file mode 100644
+index 0000000..93936ea
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/InventarioRepository.java
+@@ -0,0 +1,97 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++
++@Repository
++public class InventarioRepository {
++
++    private final JdbcClient jdbc;
++
++    public InventarioRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Inventario> buscarTodos() {
++        return jdbc.sql("SELECT * FROM inventario ORDER BY id_inventario")
++                .query(Inventario.class)
++                .list();
++    }
++
++    public Inventario buscarPorId(int id) {
++        List<Inventario> resultado = jdbc.sql(
++                "SELECT * FROM inventario WHERE id_inventario = :id")
++                .param("id", id)
++                .query(Inventario.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Inventario producto) {
++        jdbc.sql("""
++                INSERT INTO inventario
++                (nombre_producto, categoria, cantidad, unidad_medida,
++                 stock_minimo, fecha_caducidad, id_proveedor)
++                VALUES
++                (:nombre, :categoria, :cantidad, :unidad,
++                 :minimo, :caducidad, :proveedor)
++                """)
++                .param("nombre", producto.getNombreProducto())
++                .param("categoria", producto.getCategoria())
++                .param("cantidad", producto.getCantidad())
++                .param("unidad", producto.getUnidadMedida())
++                .param("minimo", producto.getStockMinimo())
++                .param("caducidad", producto.getFechaCaducidad())
++                .param("proveedor", producto.getIdProveedor())
++                .update();
++    }
++
++    public void actualizar(Inventario producto) {
++        jdbc.sql("""
++                UPDATE inventario
++                SET nombre_producto = :nombre,
++                    categoria = :categoria,
++                    cantidad = :cantidad,
++                    unidad_medida = :unidad,
++                    stock_minimo = :minimo,
++                    fecha_caducidad = :caducidad,
++                    id_proveedor = :proveedor
++                WHERE id_inventario = :id
++                """)
++                .param("nombre", producto.getNombreProducto())
++                .param("categoria", producto.getCategoria())
++                .param("cantidad", producto.getCantidad())
++                .param("unidad", producto.getUnidadMedida())
++                .param("minimo", producto.getStockMinimo())
++                .param("caducidad", producto.getFechaCaducidad())
++                .param("proveedor", producto.getIdProveedor())
++                .param("id", producto.getIdInventario())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM inventario WHERE id_inventario = :id")
++                .param("id", id)
++                .update();
++    }
++
++    public List<Inventario> buscarPorCategoria(String categoria) {
++        return jdbc.sql("""
++                SELECT * FROM inventario
++                WHERE categoria = :categoria
++                ORDER BY id_inventario
++                """)
++                .param("categoria", categoria)
++                .query(Inventario.class)
++                .list();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java
+new file mode 100644
+index 0000000..ad92769
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/RiegoRepository.java
+@@ -0,0 +1,86 @@
++package com.cultivos.gestioncultivos_backend.repository;
++
++import java.util.List;
++
++import org.springframework.jdbc.core.simple.JdbcClient;
++import org.springframework.stereotype.Repository;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++
++@Repository
++public class RiegoRepository {
++
++    private final JdbcClient jdbc;
++
++    public RiegoRepository(JdbcClient jdbc) {
++        this.jdbc = jdbc;
++    }
++
++    public List<Riego> buscarTodos() {
++        return jdbc.sql("SELECT * FROM riegos ORDER BY id_riego")
++                .query(Riego.class)
++                .list();
++    }
++
++    public Riego buscarPorId(int id) {
++        List<Riego> resultado = jdbc.sql(
++                "SELECT * FROM riegos WHERE id_riego = :id")
++                .param("id", id)
++                .query(Riego.class)
++                .list();
++
++        if (resultado.isEmpty()) {
++            return null;
++        }
++
++        return resultado.get(0);
++    }
++
++    public void insertar(Riego riego) {
++        jdbc.sql("""
++                INSERT INTO riegos
++                (id_cultivo, id_terreno, fecha_riego, cantidad_agua,
++                 unidad_medida, metodo, observaciones)
++                VALUES
++                (:cultivo, :terreno, :fecha, :cantidad,
++                 :unidad, :metodo, :observaciones)
++                """)
++                .param("cultivo", riego.getIdCultivo())
++                .param("terreno", riego.getIdTerreno())
++                .param("fecha", riego.getFechaRiego())
++                .param("cantidad", riego.getCantidadAgua())
++                .param("unidad", riego.getUnidadMedida())
++                .param("metodo", riego.getMetodo())
++                .param("observaciones", riego.getObservaciones())
++                .update();
++    }
++
++    public void actualizar(Riego riego) {
++        jdbc.sql("""
++                UPDATE riegos
++                SET id_cultivo = :cultivo,
++                    id_terreno = :terreno,
++                    fecha_riego = :fecha,
++                    cantidad_agua = :cantidad,
++                    unidad_medida = :unidad,
++                    metodo = :metodo,
++                    observaciones = :observaciones
++                WHERE id_riego = :id
++                """)
++                .param("cultivo", riego.getIdCultivo())
++                .param("terreno", riego.getIdTerreno())
++                .param("fecha", riego.getFechaRiego())
++                .param("cantidad", riego.getCantidadAgua())
++                .param("unidad", riego.getUnidadMedida())
++                .param("metodo", riego.getMetodo())
++                .param("observaciones", riego.getObservaciones())
++                .param("id", riego.getIdRiego())
++                .update();
++    }
++
++    public void eliminar(int id) {
++        jdbc.sql("DELETE FROM riegos WHERE id_riego = :id")
++                .param("id", id)
++                .update();
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java
+new file mode 100644
+index 0000000..baf785d
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/InventarioService.java
+@@ -0,0 +1,98 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Inventario;
++import com.cultivos.gestioncultivos_backend.repository.InventarioRepository;
++
++@Service
++public class InventarioService {
++
++    private final InventarioRepository repositorio;
++
++    public InventarioService(InventarioRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Inventario> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Inventario obtener(int id) {
++        Inventario producto = repositorio.buscarPorId(id);
++
++        if (producto == null) {
++            throw new NoSuchElementException(
++                    "No existe un producto de inventario con id " + id);
++        }
++
++        return producto;
++    }
++
++    public void crear(Inventario producto) {
++        validar(producto);
++        repositorio.insertar(producto);
++    }
++
++    public void actualizar(int id, Inventario producto) {
++        obtener(id);
++        validar(producto);
++        producto.setIdInventario(id);
++        repositorio.actualizar(producto);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Inventario producto) {
++        if (producto == null) {
++            throw new IllegalArgumentException("El producto es obligatorio");
++        }
++
++        if (producto.getNombreProducto() == null
++                || producto.getNombreProducto().isBlank()) {
++            throw new IllegalArgumentException("El nombre es obligatorio");
++        }
++
++        if (producto.getCategoria() == null
++                || producto.getCategoria().isBlank()) {
++            throw new IllegalArgumentException("La categoría es obligatoria");
++        }
++
++        if (producto.getCantidad() == null
++                || producto.getCantidad().compareTo(BigDecimal.ZERO) < 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad debe ser cero o mayor");
++        }
++
++        if (producto.getUnidadMedida() == null
++                || producto.getUnidadMedida().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La unidad de medida es obligatoria");
++        }
++
++        if (producto.getStockMinimo() == null
++                || producto.getStockMinimo().compareTo(BigDecimal.ZERO) < 0) {
++            throw new IllegalArgumentException(
++                    "El stock mínimo debe ser cero o mayor");
++        }
++
++        if (producto.getIdProveedor() == null) {
++            throw new IllegalArgumentException("El proveedor es obligatorio");
++        }
++    }
++
++    public List<Inventario> buscarPorCategoria(String categoria) {
++        if (categoria == null || categoria.isBlank()) {
++            throw new IllegalArgumentException("La categoría es obligatoria");
++        }
++
++        return repositorio.buscarPorCategoria(categoria.trim());
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java
+new file mode 100644
+index 0000000..19ced44
+--- /dev/null
++++ b/backend/src/main/java/com/cultivos/gestioncultivos_backend/service/RiegoService.java
+@@ -0,0 +1,83 @@
++package com.cultivos.gestioncultivos_backend.service;
++
++import java.math.BigDecimal;
++import java.time.LocalDate;
++import java.util.List;
++import java.util.NoSuchElementException;
++
++import org.springframework.stereotype.Service;
++
++import com.cultivos.gestioncultivos_backend.model.Riego;
++import com.cultivos.gestioncultivos_backend.repository.RiegoRepository;
++
++@Service
++public class RiegoService {
++
++    private final RiegoRepository repositorio;
++
++    public RiegoService(RiegoRepository repositorio) {
++        this.repositorio = repositorio;
++    }
++
++    public List<Riego> listar() {
++        return repositorio.buscarTodos();
++    }
++
++    public Riego obtener(int id) {
++        Riego riego = repositorio.buscarPorId(id);
++
++        if (riego == null) {
++            throw new NoSuchElementException(
++                    "No existe el riego con id " + id);
++        }
++
++        return riego;
++    }
++
++    public void crear(Riego riego) {
++        validar(riego);
++        repositorio.insertar(riego);
++    }
++
++    public void actualizar(int id, Riego riego) {
++        obtener(id);
++        validar(riego);
++        riego.setIdRiego(id);
++        repositorio.actualizar(riego);
++    }
++
++    public void eliminar(int id) {
++        obtener(id);
++        repositorio.eliminar(id);
++    }
++
++    private void validar(Riego riego) {
++        if (riego == null) {
++            throw new IllegalArgumentException("El riego es obligatorio");
++        }
++
++        if (riego.getIdCultivo() == null) {
++            throw new IllegalArgumentException("El cultivo es obligatorio");
++        }
++
++        if (riego.getIdTerreno() == null) {
++            throw new IllegalArgumentException("El terreno es obligatorio");
++        }
++
++        if (riego.getFechaRiego() == null) {
++            riego.setFechaRiego(LocalDate.now());
++        }
++
++        if (riego.getCantidadAgua() == null
++                || riego.getCantidadAgua().compareTo(BigDecimal.ZERO) <= 0) {
++            throw new IllegalArgumentException(
++                    "La cantidad de agua debe ser mayor que cero");
++        }
++
++        if (riego.getUnidadMedida() == null
++                || riego.getUnidadMedida().isBlank()) {
++            throw new IllegalArgumentException(
++                    "La unidad de medida es obligatoria");
++        }
++    }
++}
+\ No newline at end of file

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cultivos.gestioncultivos_backend.model.Usuario;
+import com.cultivos.gestioncultivos_backend.model.SolicitudLogin;
 import com.cultivos.gestioncultivos_backend.service.UsuarioService;
 
 @RestController
@@ -24,6 +25,18 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService servicio) {
         this.servicio = servicio;
+    }
+
+    @PostMapping("/login")
+    public Usuario iniciarSesion(@RequestBody SolicitudLogin solicitud) {
+        return servicio.iniciarSesion(
+                solicitud.getCorreoElectronico(), solicitud.getContrasena());
+    }
+
+    @PostMapping("/registro")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void registrarCliente(@RequestBody Usuario usuario) {
+        servicio.registrarCliente(usuario);
     }
 
     @GetMapping

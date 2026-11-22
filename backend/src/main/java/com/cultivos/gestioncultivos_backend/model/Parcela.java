@@ -1,5 +1,7 @@
 package com.cultivos.gestioncultivos_backend.model;
 
+import java.time.LocalDate;
+
 public class Parcela {
     private Long idParcela;
     private Long idTerreno;
@@ -8,7 +10,10 @@ public class Parcela {
     private String estado;
     private Long idCultivo;
     private String cultivoNombre;
+    private String cultivoFamilia;
     private String etapaFenologica;
+    private LocalDate fechaSiembra;
+    private String estadoCultivo;
 
     public Long getIdParcela() { return idParcela; }
     public void setIdParcela(Long idParcela) { this.idParcela = idParcela; }
@@ -24,6 +29,12 @@ public class Parcela {
     public void setIdCultivo(Long idCultivo) { this.idCultivo = idCultivo; }
     public String getCultivoNombre() { return cultivoNombre; }
     public void setCultivoNombre(String cultivoNombre) { this.cultivoNombre = cultivoNombre; }
+    public String getCultivoFamilia() { return cultivoFamilia; }
+    public void setCultivoFamilia(String cultivoFamilia) { this.cultivoFamilia = cultivoFamilia; }
     public String getEtapaFenologica() { return etapaFenologica; }
     public void setEtapaFenologica(String etapaFenologica) { this.etapaFenologica = etapaFenologica; }
+    public LocalDate getFechaSiembra() { return fechaSiembra; }
+    public void setFechaSiembra(LocalDate fechaSiembra) { this.fechaSiembra = fechaSiembra; }
+    public String getEstadoCultivo() { return estadoCultivo; }
+    public void setEstadoCultivo(String estadoCultivo) { this.estadoCultivo = estadoCultivo; }
 }

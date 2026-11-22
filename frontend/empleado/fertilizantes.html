@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Fertilizantes - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <a href="../index.html">Inicio</a>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html" aria-current="page">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Fertilizantes</h1>
+            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Registrar o actualizar</h2>
+                <form id="formulario-operacion" data-ruta="/fertilizantes" data-id="idInsumo" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="nombre">Nombre</label>
+                            <input id="nombre" name="nombre" type="text" required maxlength="100">
+                        </div>
+                        <div>
+                            <label for="unidadMedida">Unidad de medida</label>
+                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="50">
+                        </div>
+                        <div>
+                            <label for="proveedorNombre">Proveedor</label>
+                            <input id="proveedorNombre" name="proveedorNombre" type="text" maxlength="100" placeholder="Nombre del proveedor" required>
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
+                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                    </div>
+                </form>
+            </section>
+            <section class="panel espacio">
+                <h2>Registros</h2>
+                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-campo="nombre">Nombre</th>
+                                <th data-campo="unidadMedida">Unidad de medida</th>
+                                <th data-campo="idProveedor">Proveedor</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-operacion"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/proveedores.js"></script>
+        <script src="../js/operaciones.js"></script>
+    </body>
+</html>

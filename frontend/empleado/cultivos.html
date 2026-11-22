@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cultivos activos - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
+    </head>
+    <body>
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <a href="../index.html">Inicio</a>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html" aria-current="page">Cultivos activos</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Cultivos de las parcelas</h1>
+            <p>La lista se carga desde el API y muestra el cultivo asignado a cada parcela.</p>
+            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <section class="panel espacio" aria-label="Clima del cultivo">
+                <h2>Clima del terreno</h2>
+                <p>Selecciona un cultivo para consultar el clima de las coordenadas de su terreno.</p>
+                <div class="campos-operacion">
+                    <div>
+                        <label for="cultivo-clima">Cultivo</label>
+                        <select id="cultivo-clima"><option value="">Cargando cultivos…</option></select>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="actualizar-clima-cultivo" class="boton boton-secundario" type="button">Consultar clima</button>
+                    </div>
+                </div>
+                <p id="mensaje-clima-cultivo" class="mensaje" role="status"></p>
+                <div id="datos-clima-cultivo" class="campos-operacion" hidden>
+                    <div><strong>Temperatura</strong><p id="clima-temperatura">—</p></div>
+                    <div><strong>Humedad relativa</strong><p id="clima-humedad">—</p></div>
+                    <div><strong>Precipitación actual</strong><p id="clima-precipitacion">—</p></div>
+                    <div><strong>Probabilidad de lluvia</strong><p id="clima-probabilidad">—</p></div>
+                    <div><strong>Lluvia esperada</strong><p id="clima-lluvia-esperada">—</p></div>
+                    <div><strong>Viento</strong><p id="clima-viento">—</p></div>
+                    <div><strong>Máxima pronosticada</strong><p id="clima-maxima">—</p></div>
+                </div>
+                <div id="sugerencias-clima-cultivo" class="nota"></div>
+            </section>
+            <section class="panel">
+                <h2>Registrar o actualizar</h2>
+                <form id="formulario-operacion" data-ruta="/cultivos" data-id="id" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="idParcela">ID de parcela</label>
+                            <input id="idParcela" name="idParcela" type="number" min="1" step="1" data-numero="true" required>
+                        </div>
+                        <div>
+                            <label for="nombre">Nombre</label>
+                            <input id="nombre" name="nombre" type="text" required maxlength="100">
+                        </div>
+                        <div>
+                            <label for="familia">Familia</label>
+                            <input id="familia" name="familia" type="text" maxlength="100">
+                        </div>
+                        <div>
+                            <label for="etapaFenologica">Etapa actual</label>
+                            <select id="etapaFenologica" name="etapaFenologica" required>
+                                <option>Germinación</option>
+                                <option>Siembra</option>
+                                <option>Vegetación/Riego</option>
+                                <option>Floración</option>
+                                <option>Cosecha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="fechaSiembra">Fecha de siembra</label>
+                            <input id="fechaSiembra" name="fechaSiembra" type="date">
+                        </div>
+                        <div>
+                            <label for="estado">Estado</label>
+                            <select id="estado" name="estado" required>
+                                <option value="activo">Activo</option>
+                                <option value="finalizado">Finalizado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
+                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                    </div>
+                </form>
+            </section>
+            <section class="panel espacio">
+                <h2>Registros</h2>
+                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-campo="idParcela">ID parcela</th>
+                                <th data-campo="nombre">Nombre</th>
+                                <th data-campo="familia">Familia</th>
+                                <th data-campo="etapaFenologica">Etapa actual</th>
+                                <th data-campo="fechaSiembra">Fecha de siembra</th>
+                                <th data-campo="estado">Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-operacion"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/operaciones.js"></script>
+        <script src="../js/cultivos-clima.js"></script>
+    </body>
+</html>
