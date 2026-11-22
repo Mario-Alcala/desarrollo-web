@@ -25,58 +25,41 @@
                 <a href="calendario.html">Calendario</a>
             </nav>
             <h1>Cultivos activos</h1>
+            <p>Consulta los cultivos sembrados y registra riegos y observaciones sobre ellos. Los cultivos los da de alta el administrador.</p>
+            <p>Sesión: <strong id="usuario-sesion"></strong></p>
             <p id="mensaje-operacion" class="mensaje" role="status"></p>
+
             <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/cultivos" data-id="id" novalidate>
-                    <div class="campos-operacion">
-                        <div>
-                            <label for="nombre">Nombre</label>
-                            <input id="nombre" name="nombre" type="text" required maxlength="100">
-                        </div>
-                        <div>
-                            <label for="tipo">Tipo</label>
-                            <input id="tipo" name="tipo" type="text" maxlength="100">
-                        </div>
-                        <div>
-                            <label for="etapaFenologica">Etapa actual</label>
-                            <select id="etapaFenologica" name="etapaFenologica" required>
-                                <option>Germinación</option>
-                                <option>Siembra</option>
-                                <option>Vegetación/Riego</option>
-                                <option>Floración</option>
-                                <option>Cosecha</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="fechaRegistro">Fecha de registro</label>
-                            <input id="fechaRegistro" name="fechaRegistro" type="date" required>
-                        </div>
+                <h2>Cultivos</h2>
+                <div class="campos-operacion">
+                    <div>
+                        <label for="filtro-estado">Mostrar</label>
+                        <select id="filtro-estado">
+                            <option value="activo">Solo activos</option>
+                            <option value="finalizado">Finalizados</option>
+                            <option value="">Todos</option>
+                        </select>
                     </div>
-                    <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
-                    </div>
-                </form>
-            </section>
-            <section class="panel espacio">
-                <h2>Registros</h2>
+                </div>
                 <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
                 <div class="tabla-contenedor espacio">
                     <table>
                         <thead>
                             <tr>
-                                <th data-campo="nombre">Nombre</th>
-                                <th data-campo="tipo">Tipo</th>
-                                <th data-campo="etapaFenologica">Etapa actual</th>
-                                <th data-campo="fechaRegistro">Fecha de registro</th>
-                                <th>Acciones</th>
+                                <th>Cultivo</th>
+                                <th>Familia</th>
+                                <th>Parcela</th>
+                                <th>Etapa</th>
+                                <th>Siembra</th>
+                                <th>Estado</th>
+                                <th>Actividades</th>
                             </tr>
                         </thead>
-                        <tbody id="registros-operacion"></tbody>
+                        <tbody id="registros-cultivos"></tbody>
                     </table>
                 </div>
             </section>
+
             <section class="panel espacio">
                 <h2>Registrar cosecha</h2>
                 <p id="quien-registra" class="mensaje" role="status"></p>
@@ -133,9 +116,48 @@
                 </div>
             </section>
         </main>
+
+        <dialog id="dialogo-observacion" aria-labelledby="titulo-observacion">
+            <h2 id="titulo-observacion">Registrar observación</h2>
+            <p id="cultivo-observacion"></p>
+            <form id="formulario-observacion" novalidate>
+                <label for="obs-fecha">Fecha</label>
+                <input id="obs-fecha" type="date" required>
+                <label for="obs-descripcion">Observación</label>
+                <textarea id="obs-descripcion" rows="4" required maxlength="2000"></textarea>
+                <p id="mensaje-obs" class="mensaje error" role="alert"></p>
+                <div class="acciones-operacion">
+                    <button id="guardar-obs" class="boton" type="submit">Guardar observación</button>
+                    <button id="cancelar-obs" class="boton boton-secundario" type="button">Cancelar</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog id="dialogo-riego" aria-labelledby="titulo-riego">
+            <h2 id="titulo-riego">Registrar riego</h2>
+            <p id="cultivo-riego"></p>
+            <form id="formulario-riego" novalidate>
+                <label for="riego-fecha">Fecha de riego</label>
+                <input id="riego-fecha" type="date" required>
+                <label for="riego-cantidad">Cantidad de agua</label>
+                <input id="riego-cantidad" type="number" required min="0.01" step="0.01">
+                <label for="riego-unidad">Unidad de medida</label>
+                <input id="riego-unidad" type="text" required maxlength="20" placeholder="Ejemplo: litros">
+                <label for="riego-metodo">Método</label>
+                <input id="riego-metodo" type="text" maxlength="50">
+                <label for="riego-notas">Observaciones</label>
+                <textarea id="riego-notas" rows="3" maxlength="255"></textarea>
+                <p id="mensaje-riego" class="mensaje error" role="alert"></p>
+                <div class="acciones-operacion">
+                    <button id="guardar-riego" class="boton" type="submit">Guardar riego</button>
+                    <button id="cancelar-riego" class="boton boton-secundario" type="button">Cancelar</button>
+                </div>
+            </form>
+        </dialog>
+
         <script src="js/api.js"></script>
         <script src="js/sesion.js"></script>
-        <script src="js/operaciones.js"></script>
+        <script src="js/cultivos-actividades.js"></script>
         <script src="js/cosecha-registro.js"></script>
     </body>
 </html>
