@@ -23,6 +23,7 @@ const MENU_ADMIN = [
     { id: "proveedores", texto: "Proveedores", href: "proveedores.html" },
     { id: "bodega",      texto: "Bodega",      href: "bodega.html" },
     { id: "inventario",  texto: "Inventario",  href: "inventario-admin.html" },
+    { id: "usuarios",    texto: "Usuarios",    href: "usuarios-admin.html" },
     { id: "pedidos",     texto: "Pedidos",     href: "pedidos.html" }
 ];
 
