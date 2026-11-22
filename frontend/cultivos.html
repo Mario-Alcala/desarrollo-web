@@ -77,8 +77,65 @@
                     </table>
                 </div>
             </section>
+            <section class="panel espacio">
+                <h2>Registrar cosecha</h2>
+                <p id="quien-registra" class="mensaje" role="status"></p>
+                <form id="formulario-cosecha" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="c-cultivo">Cultivo</label>
+                            <select id="c-cultivo" required>
+                                <option value="">Cargando cultivos…</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="c-fecha">Fecha de cosecha</label>
+                            <input id="c-fecha" type="date" required>
+                        </div>
+                        <div>
+                            <label for="c-kilos">Kilos cosechados</label>
+                            <input id="c-kilos" type="number" min="0.01" step="0.01" required>
+                        </div>
+                        <div>
+                            <label for="c-maduracion">Maduración del lote</label>
+                            <select id="c-maduracion" required>
+                                <option value="">Selecciona</option>
+                                <option value="verde">Verde</option>
+                                <option value="maduro">Maduro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="c-ubicacion">Ubicación en bodega</label>
+                            <input id="c-ubicacion" type="text" maxlength="100" required>
+                        </div>
+                    </div>
+                    <div class="acciones-operacion">
+                        <button id="guardar-cosecha" class="boton" type="submit">Registrar cosecha</button>
+                    </div>
+                </form>
+                <p id="mensaje-cosecha" class="mensaje" role="status"></p>
+                <h3>Mis últimos lotes</h3>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lote</th>
+                                <th>Cultivo</th>
+                                <th>Fecha</th>
+                                <th>Kilos cosechados</th>
+                                <th>Kilos disponibles</th>
+                                <th>Maduración</th>
+                                <th>Ubicación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lotes-cosecha"></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
         <script src="js/api.js"></script>
+        <script src="js/sesion.js"></script>
         <script src="js/operaciones.js"></script>
+        <script src="js/cosecha-registro.js"></script>
     </body>
 </html>
