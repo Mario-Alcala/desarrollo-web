@@ -58,7 +58,7 @@ function dibujarLotes(lotes) {
     }
 }
 
-function prepararEstado() {
+function prepararEstado(permisos) {
     const textoPendiente = pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación";
     let estados;
     if (pedido.tipoEntrega === "domicilio") {
@@ -75,6 +75,9 @@ function prepararEstado() {
         ];
     }
     selectorEstado.replaceChildren();
+    estados = estados.filter(function (estado) {
+        return permisos.estadosEntrega.indexOf(estado.valor) !== -1;
+    });
     for (let i = 0; i < estados.length; i++) {
         const opcion = crear("option", estados[i].texto);
         opcion.value = estados[i].valor;
@@ -86,11 +89,18 @@ function prepararEstado() {
     }
 }
 
+function aplicarPermisosPedido(permisos) {
+    formAsignacion.closest("section").hidden = !permisos.asignar;
+    document.getElementById("formulario-entrega").closest("section").hidden = !permisos.entrega;
+    document.getElementById("aviso-rol").textContent = permisos.aviso;
+}
+
 async function cargar() {
     mensaje.textContent = "Cargando pedido…";
     try {
         pedido = await pedir(`/pedidos/${encodeURIComponent(idPedido)}`);
         cosechas = await pedir("/cosechas");
+        const permisos = accionesPedido(rolDeSesion(), pedido.estadoEntrega || pedido.estado);
         document.getElementById("miga-pedido").textContent = `#${pedido.idPedido}`;
         document.getElementById("titulo-pedido").textContent = `Pedido #${pedido.idPedido}`;
         const datosEntrega = document.getElementById("datos-entrega-pedido");
@@ -106,6 +116,7 @@ async function cargar() {
             ? ` · ${pedido.tipoEntrega === "domicilio" ? "Entregado" : "Recogido"}: ${formatoFechaHora(pedido.fechaEntrega)}`
             : pedido.fechaSalida ? ` · Enviado: ${formatoFechaHora(pedido.fechaSalida)}` : "";
         document.getElementById("datos-pedido").textContent = `${pedido.cliente} · ${formatoFecha(pedido.fechaPedido)} · ${pedido.tipoEntrega === "domicilio" ? "Envío a domicilio" : "Recoger en bodega"}${trazaEntrega}`;
+        aplicarPermisosPedido(permisos);
         selectorLote.replaceChildren();
         for (let i = 0; i < cosechas.length; i++) {
             const c = cosechas[i];
@@ -115,7 +126,7 @@ async function cargar() {
             o.value = String(c.idCosecha);
             selectorLote.append(o);
         }
-        prepararEstado();
+        prepararEstado(permisos);
         await actualizarLotes();
         document.querySelector("#formulario-asignacion button[type=submit]").disabled = !selectorLote.options.length;
         mensaje.textContent = "";

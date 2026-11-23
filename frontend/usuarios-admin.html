@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: usuarios-admin.html
+  CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
+    superior y las filas de la tabla las dibuja JavaScript: sin JS la página sale casi vacía.
+  BACKEND: usa /api/usuarios (UsuarioController): GET, POST y PUT.
+  LE FALTA: eliminar usuarios; sesión y roles reales; confirmar que el backend cifre la contraseña.
+  AÑADIDO POR BACKEND INCOMPLETO: datos de ejemplo en js/usuarios-admin.js si la API falla.
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-vistas.css">
+    <link rel="stylesheet" href="css/usuarios.css">
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="usuarios"></aside>
+
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-placeholder="Buscar por nombre o correo" data-local="true"></header>
+
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div>
+                        <h1>Usuarios</h1>
+                        <p>Registra empleados y asígnales un rol. Los clientes se registran desde su propia pantalla.</p>
+                    </div>
+                    <button id="agregar-usuario" class="boton" type="button">Agregar usuario</button>
+                </div>
+
+                <div id="filtros-rol" class="barra-herramientas" role="group" aria-label="Filtrar por rol">
+                    <button class="filtro" type="button" data-valor="todos" aria-pressed="true">Todos</button>
+                    <button class="filtro" type="button" data-valor="administrador_agricultor" aria-pressed="false">Administradores</button>
+                    <button class="filtro" type="button" data-valor="trabajador" aria-pressed="false">Trabajadores</button>
+                    <button class="filtro" type="button" data-valor="cliente" aria-pressed="false">Clientes</button>
+                </div>
+
+                <p id="mensaje-usuarios" class="mensaje" role="status"></p>
+                <section aria-label="Lista de usuarios">
+                    <div class="envoltura-tabla-usuarios">
+                        <table class="tabla-usuarios">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Correo</th>
+                                    <th>Rol</th>
+                                    <th><span class="solo-lectores-usuarios">Acciones</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-usuarios"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="dialogo-usuario" aria-labelledby="titulo-dialogo-usuario">
+        <h2 id="titulo-dialogo-usuario">Agregar usuario</h2>
+        <form id="formulario-usuario">
+            <label for="u-nombre">Nombre</label>
+            <input id="u-nombre" type="text" maxlength="80" placeholder="Nombre completo" required>
+
+            <label for="u-correo">Correo electrónico</label>
+            <input id="u-correo" type="email" maxlength="120" placeholder="nombre@dominio.com" required>
+
+            <label for="u-contrasena">Contraseña</label>
+            <input id="u-contrasena" type="password" autocomplete="new-password" maxlength="100">
+            <p id="ayuda-contrasena" class="ayuda">Mínimo 8 caracteres. El backend la guarda cifrada.</p>
+
+            <label for="u-rol">Rol</label>
+            <select id="u-rol" required>
+                <option value="trabajador">Trabajador</option>
+                <option value="administrador_agricultor">Administrador / Agricultor</option>
+                <option value="cliente" hidden>Cliente</option>
+            </select>
+            <p class="ayuda">Los clientes se registran desde su propia pantalla.</p>
+
+            <p id="mensaje-formulario-usuario" class="mensaje error" role="alert"></p>
+            <div class="botones-pedido">
+                <button class="boton" type="submit">Guardar usuario</button>
+                <button id="cancelar-usuario" class="boton boton-secundario" type="button">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/admin-comun.js"></script>
+    <script src="js/usuarios-admin.js"></script>
+</body>
+</html>

@@ -24,19 +24,23 @@ const MENU_ADMIN = [
     { id: "bodega",      texto: "Bodega",      href: "bodega.html" },
     { id: "inventario",  texto: "Inventario",  href: "inventario-admin.html" },
     { id: "pedidos",     texto: "Pedidos",     href: "pedidos.html" },
-    { id: "usuarios",    texto: "Usuarios",    href: "usuarios.html" }
+    { id: "usuarios",    texto: "Usuarios",    href: "usuarios-admin.html" }
 ];
 
 // El empleado reutiliza las pantallas de pedidos del administrador, con su menú de trabajo.
 const MENU_EMPLEADO = [
     { id: "cultivos", texto: "Cultivos y cosecha", href: "../empleado/cultivos.html" },
     { id: "terrenos", texto: "Terrenos", href: "../empleado/terrenos.html" },
+    { id: "etapas", texto: "Etapas", href: "../empleado/etapas.html" },
     { id: "inventario", texto: "Inventario", href: "../empleado/inventario.html" },
     { id: "bitacora", texto: "Bitácora", href: "../empleado/observaciones.html" },
     { id: "riegos", texto: "Riegos", href: "../empleado/riegos.html" },
     { id: "abonos", texto: "Abono", href: "../empleado/abonos.html" },
     { id: "fertilizantes", texto: "Fertilizantes", href: "../empleado/fertilizantes.html" },
-    { id: "pedidos", texto: "Preparar pedidos", href: "pedidos.html" }
+    { id: "semillas", texto: "Semillas", href: "../empleado/semillas.html" },
+    { id: "distribucion", texto: "Distribución", href: "../empleado/distribucion.html" },
+    { id: "calendario", texto: "Calendario", href: "../empleado/calendario.html" },
+    { id: "pedidos", texto: "Preparar pedidos", href: "../administrador-agricultor/pedidos.html" }
 ];
 
 function dibujarSidebar() {
