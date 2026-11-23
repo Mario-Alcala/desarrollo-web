@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Parcelas - Gestión de Cultivos</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/parcelas.css">
+</head>
+
+<body>
+
+    <header class="barra">
+        <a class="boton boton-secundario" href="index.html">
+            Regresar
+        </a>
+    </header>
+
+    <main>
+        <h1>Administración de Parcelas</h1>
+
+        <p>
+            Registra y administra las parcelas
+            correspondientes a los terrenos existentes.
+        </p>
+
+        <!-- Formulario de parcelas -->
+        <section>
+            <h2>Registrar o actualizar parcela</h2>
+
+            <form id="formulario-parcela">
+
+                <div class="campos">
+
+                    <div class="campo">
+                        <label for="terreno-parcela">
+                            Terreno
+                        </label>
+
+                        <select id="terreno-parcela" required>
+                            <option value="">
+                                Selecciona un terreno
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="nombre-parcela">
+                            Nombre de parcela
+                        </label>
+
+                        <input
+                            id="nombre-parcela"
+                            type="text"
+                            maxlength="100"
+                            required
+                        >
+                    </div>
+
+                    <div class="campo">
+                        <label for="superficie-parcela">
+                            Superficie en m²
+                        </label>
+
+                        <input
+                            id="superficie-parcela"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="campo">
+                        <label for="estado-parcela">
+                            Estado
+                        </label>
+
+                        <select id="estado-parcela">
+                            <option value="disponible">
+                                Disponible
+                            </option>
+
+                            <option value="ocupada">
+                                Ocupada
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <p id="mensaje-parcela" role="alert"></p>
+
+                <div class="acciones">
+
+                    <button class="boton" type="submit">
+                        Guardar
+                    </button>
+
+                    <button
+                        class="boton boton-secundario"
+                        type="button"
+                        id="cancelar-parcela">
+                        Cancelar edición
+                    </button>
+
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Tabla de parcelas -->
+        <section>
+            <h2>Parcelas registradas</h2>
+
+            <button
+                class="boton boton-secundario"
+                id="actualizar-parcelas"
+                type="button">
+                Actualizar
+            </button>
+
+            <div class="tabla-contenedor">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Terreno</th>
+                            <th>Parcela</th>
+                            <th>Superficie (m²)</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="lista-parcelas">
+                    </tbody>
+                </table>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Conexión con la API -->
+    <script src="js/api.js"></script>
+    <script src="js/parcelas.js"></script>
+
+</body>
+</html>

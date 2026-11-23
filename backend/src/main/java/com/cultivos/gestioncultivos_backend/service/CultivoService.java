@@ -34,6 +34,9 @@ public class CultivoService {
 
     public Cultivo crear(Cultivo cultivo) {
         validar(cultivo);
+        if (cultivo.getIdParcela() == null || cultivo.getIdParcela() <= 0) {
+            throw new IllegalArgumentException("Selecciona una parcela válida para crear el cultivo.");
+        }
         if (cultivo.getFechaRegistro() == null) {
             cultivo.setFechaRegistro(LocalDate.now());
         }
@@ -45,6 +48,8 @@ public class CultivoService {
         validar(cultivo);
         Cultivo actual = obtener(id);
         cultivo.setId(id);
+        if (cultivo.getIdParcela() == null) { cultivo.setIdParcela(actual.getIdParcela()); }
+        if (cultivo.getIdVariedad() == null) { cultivo.setIdVariedad(actual.getIdVariedad()); }
         if (cultivo.getFechaRegistro() == null) {
             cultivo.setFechaRegistro(actual.getFechaRegistro());
         }

@@ -26,6 +26,22 @@ public class UsuarioController {
         this.servicio = servicio;
     }
 
+    @PostMapping("/login")
+    public Usuario login(@RequestBody Usuario datos, jakarta.servlet.http.HttpServletRequest request) {
+        jakarta.servlet.http.HttpSession anterior = request.getSession(false);
+        if (anterior != null) { anterior.invalidate(); }
+        Usuario usuario = servicio.autenticarCliente(datos.getCorreoElectronico(), datos.getContrasena());
+        request.getSession(true).setAttribute("clienteId", usuario.getIdUsuario());
+        return usuario;
+    }
+
+    @PostMapping("/salir")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void salir(jakarta.servlet.http.HttpServletRequest request) {
+        jakarta.servlet.http.HttpSession sesion = request.getSession(false);
+        if (sesion != null) { sesion.invalidate(); }
+    }
+
     @GetMapping
     public List<Usuario> listar() {
         return servicio.listar();

@@ -88,3 +88,11 @@
     margin-bottom: 20px;
     font: inherit;
 }
+
+#tipo-entrega, #direccion {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    font: inherit;
+    box-sizing: border-box;
+}

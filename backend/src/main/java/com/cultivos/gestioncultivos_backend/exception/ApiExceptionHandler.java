@@ -24,6 +24,11 @@ public class ApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> estadoHttp(org.springframework.web.server.ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("mensaje", ex.getReason()));
+    }
+
     /** 404: el id solicitado no existe. */
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, Object>> noEncontrado(NoSuchElementException ex) {

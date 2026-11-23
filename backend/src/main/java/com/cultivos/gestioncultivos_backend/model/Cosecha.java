@@ -9,6 +9,19 @@ public class Cosecha {
     private Long idCultivo;
     private LocalDate fechaCosecha;
     private BigDecimal cantidadCosechada;
+    private BigDecimal cantidadDisponible;
+    private String estadoMaduracion;
+    private Integer idUsuario;
+    private String ubicacionBodega;
+
+    public BigDecimal getCantidadDisponible() { return cantidadDisponible; }
+    public void setCantidadDisponible(BigDecimal valor) { cantidadDisponible = valor; }
+    public String getEstadoMaduracion() { return estadoMaduracion; }
+    public void setEstadoMaduracion(String valor) { estadoMaduracion = valor; }
+    public Integer getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Integer valor) { idUsuario = valor; }
+    public String getUbicacionBodega() { return ubicacionBodega; }
+    public void setUbicacionBodega(String valor) { ubicacionBodega = valor; }
 
     public Cosecha() {
     }

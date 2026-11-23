@@ -9,7 +9,7 @@ function mostrarCatalogo() {
             mensaje.textContent = 'No hay productos disponibles por el momento.';
         }
 
-        // Mostrar la información; las cantidades se eligen en el carrito.
+        // Mostrar la información para q se puedan elegir las cantidades desde el carrito
         datos.productos.forEach(function (producto) {
             var tarjeta = document.createElement('article');
             tarjeta.className = 'producto';

@@ -1,0 +1,252 @@
+
+/* ADMINISTRACIÓN DE PARCELAS */
+
+body {
+    margin: 0;
+    background-color: #f4f8f1;
+    font-family: Arial, sans-serif;
+    color: #35533a;
+}
+
+/* BARRA SUPERIOR */
+
+.barra {
+    background-color: #ffffff;
+    border-bottom: 1px solid #d7e2d2;
+    padding: 18px 35px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.marca {
+    font-size: 20px;
+    font-weight: bold;
+    color: #286a32;
+}
+
+/* CONTENIDO PRINCIPAL */
+
+.pagina-parcelas {
+    max-width: 1200px;
+    margin: 35px auto;
+    padding: 0 24px;
+}
+
+.encabezado-parcelas {
+    margin-bottom: 30px;
+}
+
+.encabezado-parcelas h1 {
+    font-size: 38px;
+    color: #286a32;
+    margin: 0 0 12px;
+}
+
+.encabezado-parcelas p {
+    font-size: 16px;
+    color: #617363;
+    line-height: 1.6;
+}
+
+/* PANELES */
+
+.panel-parcelas {
+    background-color: white;
+    border: 1px solid #d6e2d0;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 12px rgba(34, 75, 40, 0.05);
+}
+
+.panel-parcelas h2 {
+    font-size: 24px;
+    color: #355c3c;
+    margin: 0 0 26px;
+}
+
+/* FORMULARIO */
+
+.campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 25px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.campo label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #385b3c;
+}
+
+.campo input,
+.campo select {
+    width: 100%;
+    height: 50px;
+    padding: 12px 14px;
+    border: 1px solid #b9cbb4;
+    border-radius: 7px;
+    background-color: white;
+    color: #304b33;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.campo input:focus,
+.campo select:focus {
+    outline: none;
+    border-color: #347a40;
+    box-shadow: 0 0 0 3px rgba(52, 122, 64, 0.13);
+}
+
+/* BOTONES */
+
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.acciones .boton,
+#actualizar-parcelas {
+    width: auto;
+    min-width: 155px;
+    min-height: 46px;
+    padding: 11px 20px;
+    margin: 0;
+    border-radius: 7px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.acciones .boton:not(.boton-secundario) {
+    background-color: #286a32;
+    border: 1px solid #286a32;
+    color: white;
+}
+
+.acciones .boton:not(.boton-secundario):hover {
+    background-color: #205728;
+}
+
+.acciones .boton-secundario,
+#actualizar-parcelas {
+    background-color: white;
+    color: #286a32;
+    border: 1px solid #286a32;
+}
+
+/* MENSAJES */
+
+#mensaje-parcela {
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#mensaje-parcela:empty {
+    display: none;
+}
+
+/* REGISTROS */
+
+.encabezado-registros {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.encabezado-registros h2 {
+    margin: 0;
+}
+
+/* TABLA */
+
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-contenedor table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+}
+
+.tabla-contenedor th {
+    background-color: #e5eedf;
+    color: #355a39;
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.tabla-contenedor td {
+    padding: 15px 16px;
+    border-bottom: 1px solid #e0e8dc;
+}
+
+.tabla-contenedor tbody tr:hover {
+    background-color: #f5f9f2;
+}
+
+.tabla-contenedor td button {
+    width: auto;
+    min-width: 75px;
+    padding: 8px 12px;
+    margin-right: 8px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+    .barra {
+        padding: 15px;
+    }
+
+    .pagina-parcelas {
+        margin: 22px auto;
+        padding: 0 15px;
+    }
+
+    .encabezado-parcelas h1 {
+        font-size: 30px;
+    }
+
+    .panel-parcelas {
+        padding: 20px;
+    }
+
+    .campos {
+        grid-template-columns: 1fr;
+    }
+
+    .acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .acciones .boton {
+        width: 100%;
+    }
+
+    .encabezado-registros {
+        align-items: flex-start;
+    }
+}

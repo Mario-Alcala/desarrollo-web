@@ -20,20 +20,20 @@ public class CultivoRepository {
     }
 
     public List<Cultivo> buscarTodos() {
-        return jdbc.sql("SELECT * FROM cultivos ORDER BY id")
+        return jdbc.sql("SELECT id, id_parcela, id_variedad, nombre, familia AS tipo, etapa_fenologica, fecha_siembra AS fecha_registro FROM cultivos ORDER BY id")
                 .query(Cultivo.class)
                 .list();
     }
 
     public List<Cultivo> buscarPorEtapa(String etapa) {
-        return jdbc.sql("SELECT * FROM cultivos WHERE etapa_fenologica = :etapa ORDER BY id")
+        return jdbc.sql("SELECT id, id_parcela, id_variedad, nombre, familia AS tipo, etapa_fenologica, fecha_siembra AS fecha_registro FROM cultivos WHERE etapa_fenologica = :etapa ORDER BY id")
                 .param("etapa", etapa)
                 .query(Cultivo.class)
                 .list();
     }
 
     public Optional<Cultivo> buscarPorId(Long id) {
-        return jdbc.sql("SELECT * FROM cultivos WHERE id = :id")
+        return jdbc.sql("SELECT id, id_parcela, id_variedad, nombre, familia AS tipo, etapa_fenologica, fecha_siembra AS fecha_registro FROM cultivos WHERE id = :id")
                 .param("id", id)
                 .query(Cultivo.class)
                 .optional();
@@ -44,9 +44,11 @@ public class CultivoRepository {
     public Long insertar(Cultivo c) {
         KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
-                VALUES (:nombre, :tipo, :etapa, :fecha)
+                INSERT INTO cultivos (id_parcela, id_variedad, nombre, familia, etapa_fenologica, fecha_siembra)
+                VALUES (:parcela, :variedad, :nombre, :tipo, :etapa, :fecha)
                 """)
+                .param("parcela", c.getIdParcela())
+                .param("variedad", c.getIdVariedad())
                 .param("nombre", c.getNombre())
                 .param("tipo", c.getTipo())
                 .param("etapa", c.getEtapaFenologica())
@@ -58,10 +60,12 @@ public class CultivoRepository {
     public boolean actualizar(Cultivo c) {
         int filas = jdbc.sql("""
                 UPDATE cultivos
-                   SET nombre = :nombre, tipo = :tipo,
-                       etapa_fenologica = :etapa, fecha_registro = :fecha
+                   SET id_parcela = :parcela, id_variedad = :variedad, nombre = :nombre, familia = :tipo,
+                       etapa_fenologica = :etapa, fecha_siembra = :fecha
                  WHERE id = :id
                 """)
+                .param("parcela", c.getIdParcela())
+                .param("variedad", c.getIdVariedad())
                 .param("nombre", c.getNombre())
                 .param("tipo", c.getTipo())
                 .param("etapa", c.getEtapaFenologica())

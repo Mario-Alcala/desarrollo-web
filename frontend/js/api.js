@@ -1,7 +1,8 @@
-var urlApi = 'http://localhost:8080/api';
+var hostApi = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
+var urlApi = 'http://' + hostApi + ':8081/api';
 
 function pedirApi(ruta, metodo, datos) {
-    var opciones = { method: metodo || 'GET' };
+    var opciones = { method: metodo || 'GET', credentials: 'include' };
     if (datos) {
         opciones.headers = { 'Content-Type': 'application/json' };
         opciones.body = JSON.stringify(datos);
@@ -11,7 +12,9 @@ function pedirApi(ruta, metodo, datos) {
             var contenido = null;
             try { contenido = texto ? JSON.parse(texto) : null; } catch (error) { contenido = null; }
             if (!respuesta.ok) {
-                throw new Error(contenido && contenido.mensaje ? contenido.mensaje : 'No se pudo completar la solicitud (' + respuesta.status + ').');
+                var error = new Error(contenido && contenido.mensaje ? contenido.mensaje : 'No se pudo completar la solicitud (' + respuesta.status + ').');
+                error.estado = respuesta.status;
+                throw error;
             }
             return contenido;
         });

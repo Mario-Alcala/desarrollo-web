@@ -39,13 +39,17 @@ public class CosechaRepository {
     public void insertar(Cosecha cosecha) {
         jdbc.sql("""
                 INSERT INTO cosechas
-                (id_cultivo, fecha_cosecha, cantidad_cosechada)
+                (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada, cantidad_disponible, estado_maduracion, ubicacion_bodega)
                 VALUES
-                (:idCultivo, :fecha, :cantidad)
+                (:idCultivo, :usuario, :fecha, :cantidad, :disponible, :maduracion, :ubicacion)
                 """)
                 .param("idCultivo", cosecha.getIdCultivo())
                 .param("fecha", cosecha.getFechaCosecha())
                 .param("cantidad", cosecha.getCantidadCosechada())
+                .param("usuario", cosecha.getIdUsuario())
+                .param("disponible", cosecha.getCantidadDisponible())
+                .param("maduracion", cosecha.getEstadoMaduracion())
+                .param("ubicacion", cosecha.getUbicacionBodega())
                 .update();
     }
 
@@ -54,12 +58,18 @@ public class CosechaRepository {
                 UPDATE cosechas
                 SET id_cultivo = :idCultivo,
                     fecha_cosecha = :fecha,
-                    cantidad_cosechada = :cantidad
+                    cantidad_cosechada = :cantidad,
+                    id_usuario = :usuario, cantidad_disponible = :disponible,
+                    estado_maduracion = :maduracion, ubicacion_bodega = :ubicacion
                 WHERE id_cosecha = :id
                 """)
                 .param("idCultivo", cosecha.getIdCultivo())
                 .param("fecha", cosecha.getFechaCosecha())
                 .param("cantidad", cosecha.getCantidadCosechada())
+                .param("usuario", cosecha.getIdUsuario())
+                .param("disponible", cosecha.getCantidadDisponible())
+                .param("maduracion", cosecha.getEstadoMaduracion())
+                .param("ubicacion", cosecha.getUbicacionBodega())
                 .param("id", cosecha.getIdCosecha())
                 .update();
     }

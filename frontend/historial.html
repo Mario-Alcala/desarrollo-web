@@ -11,6 +11,7 @@
     <header class="barra">
         <span class="marca">Gestión de Cultivos</span>
         <a href="catalogo.html">Regresar al catálogo</a>
+        <a href="login.html">Ingresar</a>
     </header>
     <main class="pagina">
         <h1>Historial de pedidos</h1>
@@ -23,6 +24,9 @@
                             <th>Cantidad</th>
                             <th>Fecha</th>
                             <th>Tipo de entrega</th>
+                            <th>Precio/kg</th>
+                            <th>Subtotal</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="historial-pedidos"></tbody>
@@ -31,7 +35,8 @@
             <p id="mensaje-historial" class="mensaje" role="status"></p>
         </section>
     </main>
-    <script src="js/datos.js"></script>
-    <script src="js/historial.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/pedido.js"></script>
+        <script src="js/historial.js"></script>
 </body>
 </html>

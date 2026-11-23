@@ -35,12 +35,19 @@ public class CosechaService {
     }
 
     public void crear(Cosecha cosecha) {
+        if (cosecha != null && cosecha.getCantidadDisponible() == null) {
+            cosecha.setCantidadDisponible(cosecha.getCantidadCosechada());
+        }
         validar(cosecha);
         repositorio.insertar(cosecha);
     }
 
     public void actualizar(int id, Cosecha cosecha) {
-        obtener(id);
+        Cosecha actual = obtener(id);
+        if (cosecha != null) {
+            if (cosecha.getCantidadDisponible() == null) { cosecha.setCantidadDisponible(actual.getCantidadDisponible()); }
+            if (cosecha.getIdUsuario() == null) { cosecha.setIdUsuario(actual.getIdUsuario()); }
+        }
         validar(cosecha);
         cosecha.setIdCosecha(id);
         repositorio.actualizar(cosecha);
@@ -56,6 +63,15 @@ public class CosechaService {
             throw new IllegalArgumentException("La cosecha es obligatoria");
         }
 
+        if (cosecha.getIdUsuario() == null || cosecha.getIdUsuario() <= 0) {
+            throw new IllegalArgumentException("Selecciona el usuario responsable de la cosecha.");
+        }
+        if (cosecha.getCantidadDisponible() == null || cosecha.getCantidadDisponible().signum() < 0
+                || cosecha.getCantidadDisponible().stripTrailingZeros().scale() > 2
+                || cosecha.getCantidadCosechada() == null
+                || cosecha.getCantidadDisponible().compareTo(cosecha.getCantidadCosechada()) > 0) {
+            throw new IllegalArgumentException("Los kilos disponibles deben estar entre cero y la cantidad cosechada, con máximo dos decimales.");
+        }
         if (cosecha.getIdCultivo() == null) {
             throw new IllegalArgumentException("El cultivo es obligatorio");
         }

@@ -5,6 +5,12 @@ import java.time.LocalDate;
 public class Cultivo {
 
     private Long id;
+    private Long idParcela;
+    private Integer idVariedad;
+    public Long getIdParcela() { return idParcela; }
+    public void setIdParcela(Long valor) { idParcela = valor; }
+    public Integer getIdVariedad() { return idVariedad; }
+    public void setIdVariedad(Integer valor) { idVariedad = valor; }
     private String nombre;
     private String tipo;
     private String etapaFenologica;

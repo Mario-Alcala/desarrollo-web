@@ -43,6 +43,11 @@ public class UsuarioRepository {
         return resultado.get(0);
     }
 
+    public Usuario buscarParaLogin(String correo) {
+        return jdbc.sql("SELECT * FROM usuarios WHERE correo_electronico = :correo")
+                .param("correo", correo).query(Usuario.class).optional().orElse(null);
+    }
+
     public void insertar(Usuario usuario) {
         jdbc.sql("""
                 INSERT INTO usuarios

@@ -6,7 +6,7 @@ function leerDatos() {
         return JSON.parse(guardados);
     }
 
-    // Nombres de backend/database/init.sql; precios y stock de ejemplo.
+    // valores de ejemplos tal y como lo pidio mario 
     var datos = {
         productos: [
             { id: 1, nombre: 'Maíz criollo', precio: 18, stock: 50 },

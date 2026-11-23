@@ -37,6 +37,19 @@ public class UsuarioService {
         return usuario;
     }
 
+    public Usuario autenticarCliente(String correo, String contrasena) {
+        if (correo == null || contrasena == null) {
+            throw new IllegalArgumentException("Completa correo y contraseña.");
+        }
+        Usuario usuario = repositorio.buscarParaLogin(correo.trim());
+        if (usuario == null || !"cliente".equals(usuario.getRol())
+                || !codificador.matches(contrasena, usuario.getContrasena())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos.");
+        }
+        return usuario;
+    }
+
     public void crear(Usuario usuario) {
         validar(usuario);
 

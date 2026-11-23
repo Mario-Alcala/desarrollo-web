@@ -6,7 +6,8 @@
 --   o bien:
 --     mysql -u root -p < database/init.sql
 --
--- Es seguro ejecutarlo más de una vez: no borra datos ni duplica filas.
+-- Crea las tablas e incorpora la relación cultivo-variedad si aún no existe.
+-- Respaldar la base antes de ejecutarlo. No migra otras diferencias de esquemas antiguos.
 -- Usuario y contraseña coinciden con los valores por defecto de
 -- src/main/resources/application.yaml (DB_USER / DB_PASSWORD).
 -- =====================================================================
@@ -26,6 +27,14 @@ FLUSH PRIVILEGES;
 
 USE gestion_cultivos;
 
+CREATE TABLE IF NOT EXISTS usuarios (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_usuario VARCHAR(100) NOT NULL,
+    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    rol ENUM('administrador_agricultor', 'trabajador', 'cliente') NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS terrenos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
@@ -43,16 +52,50 @@ CREATE TABLE IF NOT EXISTS parcelas (
     FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
 );
 
+-- Catálogo del cliente: datos de la variedad y precio por kilo.
+CREATE TABLE IF NOT EXISTS variedades (
+    id_variedad INT PRIMARY KEY AUTO_INCREMENT,
+    familia VARCHAR(100) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(1000),
+    imagen VARCHAR(500),
+    precio_kilo DECIMAL(10,2) NOT NULL,
+    CONSTRAINT chk_variedad_precio CHECK (precio_kilo > 0)
+);
+
 CREATE TABLE IF NOT EXISTS cultivos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     id_parcela BIGINT NOT NULL,
+    id_variedad INT,
     nombre VARCHAR(100) NOT NULL,
     familia VARCHAR(100),
     etapa_fenologica VARCHAR(100),
     fecha_siembra DATE,
     estado ENUM('activo', 'finalizado') NOT NULL DEFAULT 'activo',
-    FOREIGN KEY (id_parcela) REFERENCES parcelas(id_parcela)
+    FOREIGN KEY (id_parcela) REFERENCES parcelas(id_parcela),
+    CONSTRAINT fk_cultivos_variedad FOREIGN KEY (id_variedad) REFERENCES variedades(id_variedad)
 );
+
+-- Actualización para bases existentes: agrega id_variedad y su llave foránea
+-- solo cuando faltan. No borra cultivos ni les asigna una variedad automáticamente.
+-- En bases nuevas, ambos ya se crearon arriba y este bloque no los duplica.
+SET @existe_columna = (SELECT COUNT(*) FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'cultivos' AND column_name = 'id_variedad');
+SET @sql = IF(@existe_columna = 0,
+    'ALTER TABLE cultivos ADD COLUMN id_variedad INT NULL', 'SELECT 1');
+PREPARE cambio FROM @sql;
+EXECUTE cambio;
+DEALLOCATE PREPARE cambio;
+
+SET @existe_fk = (SELECT COUNT(*) FROM information_schema.key_column_usage
+    WHERE table_schema = DATABASE() AND table_name = 'cultivos'
+      AND column_name = 'id_variedad' AND referenced_table_name = 'variedades');
+SET @sql = IF(@existe_fk = 0,
+    'ALTER TABLE cultivos ADD CONSTRAINT fk_cultivos_variedad FOREIGN KEY (id_variedad) REFERENCES variedades(id_variedad)',
+    'SELECT 1');
+PREPARE cambio FROM @sql;
+EXECUTE cambio;
+DEALLOCATE PREPARE cambio;
 
 CREATE TABLE IF NOT EXISTS proveedores (
     id_proveedor INT PRIMARY KEY AUTO_INCREMENT,
@@ -102,6 +145,7 @@ CREATE TABLE IF NOT EXISTS herramientas (
     fecha_adquisicion DATE
 );
 
+-- Cada cosecha es un lote: aquí pertenecen la maduración y los kilos disponibles.
 CREATE TABLE IF NOT EXISTS cosechas (
     id_cosecha INT PRIMARY KEY AUTO_INCREMENT,
     id_cultivo BIGINT NOT NULL,
@@ -115,13 +159,6 @@ CREATE TABLE IF NOT EXISTS cosechas (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
-CREATE TABLE IF NOT EXISTS usuarios (
-    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
-    nombre_usuario VARCHAR(100) NOT NULL,
-    correo_electronico VARCHAR(100) NOT NULL UNIQUE,
-    contrasena VARCHAR(255) NOT NULL,
-    rol ENUM('administrador_agricultor', 'trabajador', 'cliente') NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS observaciones_cultivos (
     id_observacion INT PRIMARY KEY AUTO_INCREMENT,
@@ -169,6 +206,7 @@ CREATE TABLE IF NOT EXISTS riegos (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+-- Pedidos del cliente: método de pago, tipo de entrega y total; sin datos de tarjeta.
 CREATE TABLE IF NOT EXISTS pedidos (
     id_pedido INT PRIMARY KEY AUTO_INCREMENT,
     id_usuario INT NOT NULL,
@@ -180,6 +218,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
+-- cantidad son kilos; precio_unitario conserva el precio por kilo al comprar.
 CREATE TABLE IF NOT EXISTS detalle_pedido (
     id_detalle INT PRIMARY KEY AUTO_INCREMENT,
     id_pedido INT NOT NULL,
@@ -190,6 +229,7 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     FOREIGN KEY (id_cosecha) REFERENCES cosechas(id_cosecha)
 );
 
+-- Una entrega por pedido (UNIQUE): dirección/rastreo o fecha de recolección.
 CREATE TABLE IF NOT EXISTS distribuciones (
     id_distribucion INT PRIMARY KEY AUTO_INCREMENT,
     id_pedido INT NOT NULL UNIQUE,
@@ -204,46 +244,8 @@ CREATE TABLE IF NOT EXISTS distribuciones (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
--- ---------------------------------------------------------------------
--- Datos de ejemplo (solo se insertan si la tabla está vacía)
--- ---------------------------------------------------------------------
-INSERT INTO cultivos (nombre, tipo, etapa_fenologica, fecha_registro)
-SELECT * FROM (
-    SELECT 'Maíz criollo' AS nombre, 'Cereal' AS tipo,
-           'Siembra' AS etapa_fenologica, '2026-11-01' AS fecha_registro
-    UNION ALL
-    SELECT 'Frijol negro', 'Leguminosa', 'Germinación', '2026-11-03'
-    UNION ALL
-    SELECT 'Tomate saladette', 'Hortaliza', 'Floración', '2026-11-05'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM cultivos);
-
-INSERT INTO semillas (variedad, stock_disponible, proveedor_origen, fecha_caducidad)
-SELECT * FROM (
-    SELECT 'Maíz blanco H-520' AS variedad, 120 AS stock_disponible,
-           'Agroinsumos del Golfo' AS proveedor_origen,
-           '2027-06-30' AS fecha_caducidad
-    UNION ALL
-    SELECT 'Frijol Jamapa', 80, 'Semillas Veracruz', '2027-03-15'
-    UNION ALL
-    SELECT 'Tomate Río Grande', 45, 'Agroinsumos del Golfo', '2026-12-31'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM semillas);
-
-INSERT INTO terrenos
-(nombre, ubicacion, superficie_ha, tipo_suelo, estado)
-SELECT * FROM (
-    SELECT 'Parcela Norte' AS nombre, 'Veracruz, Ver.' AS ubicacion,
-           2.50 AS superficie_ha, 'Franco-arcilloso' AS tipo_suelo,
-           'Disponible' AS estado
-    UNION ALL
-    SELECT 'Parcela Sur', 'Veracruz, Ver.', 1.80,
-           'Arenoso', 'En uso'
-    UNION ALL
-    SELECT 'Invernadero 1', 'Boca del Río, Ver.', 0.30,
-           'Sustrato', 'En descanso'
-) AS datos
-WHERE NOT EXISTS (SELECT 1 FROM terrenos);
+-- Cultivos, variedades y semillas se cargan con los datos reales del equipo.
+-- No asignar variedades por parecido de nombre: revisar cada cultivo antes.
 
 INSERT INTO herramientas (nombre, tipo, cantidad, estado, fecha_adquisicion)
 SELECT * FROM (
@@ -258,3 +260,8 @@ SELECT * FROM (
            'Mantenimiento', '2026-03-10'
 ) AS datos
 WHERE NOT EXISTS (SELECT 1 FROM herramientas);
+
+
+SHOW TABLES LIKE 'variedades';
+SHOW CREATE TABLE cultivos;
+SHOW CREATE TABLE cosechas;

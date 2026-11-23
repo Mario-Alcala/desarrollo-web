@@ -1,34 +1,83 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear cuenta - Gestión de Cultivos</title>
+
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/cuenta.css">
 </head>
 <body>
+
     <header class="barra">
-        <a class="boton boton-secundario" href="index.html">Regreso a inicio</a>
+        <a class="boton boton-secundario" href="index.html">
+            Regreso a inicio
+        </a>
     </header>
+
     <main class="login">
         <section class="cuadro-login" aria-labelledby="titulo-cuenta">
-            <div class="logo" role="img" aria-label="lojo"></div>
+
+            <div class="logo" role="img" aria-label=""></div>
+
             <h1 id="titulo-cuenta">Gestión de Cultivos</h1>
             <h2 class="titulo-cuenta">Crear cuenta</h2>
-            <div class="campos-cuenta">
+
+            <form id="formulario-cuenta" class="campos-cuenta">
+
                 <label for="nombre-cuenta">Nombre</label>
-                <input id="nombre-cuenta" type="text" autocomplete="name">
+                <input
+                    id="nombre-cuenta"
+                    name="nombre"
+                    type="text"
+                    autocomplete="name"
+                    required
+                >
 
                 <label for="correo-cuenta">Correo</label>
-                <input id="correo-cuenta" type="email" autocomplete="email">
+                <input
+                    id="correo-cuenta"
+                    name="correo"
+                    type="email"
+                    autocomplete="email"
+                    required
+                >
 
                 <label for="contrasena-cuenta">Contraseña</label>
-                <input id="contrasena-cuenta" type="password" autocomplete="new-password">
+                <input
+                    id="contrasena-cuenta"
+                    name="contrasena"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
 
-                <button class="boton" type="button">Crear cuenta</button>
-            </div>
+                <p id="mensaje-cuenta"
+                   class="mensaje"
+                   role="alert"></p>
+
+                <button
+                    class="boton"
+                    type="submit"
+                    id="boton-crear-cuenta">
+                    Crear cuenta
+                </button>
+
+                <a href="login.html"
+                   class="boton boton-secundario">
+                    Ya tengo una cuenta
+                </a>
+
+            </form>
+
         </section>
     </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/crear-cuenta.js"></script>
+
 </body>
 </html>

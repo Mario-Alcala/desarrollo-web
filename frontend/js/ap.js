@@ -51,7 +51,16 @@ if (formulario) {
             }
             window.location.href = 'cultivos.html';
         } else {
-            window.location.href = 'catalogo.html';
+            var boton = formulario.querySelector('button[type="submit"]');
+            boton.disabled = true;
+            pedirApi('/usuarios/login', 'POST', {
+                correoElectronico: correo.value.trim(), contrasena: contrasena.value
+            }).then(function () {
+                sessionStorage.removeItem('gestion-cultivos-pedido-api');
+                window.location.href = 'catalogo.html';
+            }).catch(function (error) {
+                mensaje.textContent = error instanceof TypeError ? 'No se pudo iniciar sesión. Intenta nuevamente.' : error.message;
+            }).finally(function () { boton.disabled = false; });
         }
     });
 }
