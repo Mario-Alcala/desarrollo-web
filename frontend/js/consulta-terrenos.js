@@ -1,252 +1,133 @@
 /*
- * ARCHIVO: js/cultivos-actividades.js
- * CAPA: FRONTEND (lógica). Pantalla de cultivos del trabajador: consulta y registro de actividades.
- * QUÉ USA DEL BACKEND (con pedirApi() de js/api.js):
- *   GET /cultivos, GET /terrenos y GET /parcelas/terreno/{id} (para mostrar el nombre de la parcela y
- *   deducir el terreno), POST /observaciones-cultivos y POST /riegos.
- *   NO hace POST a /cultivos: los cultivos los da de alta el administrador. No pide el ID de parcela.
- * SESIÓN: el usuario de la observación sale de usuarioActual() (js/sesion.js); no hay selector de usuario.
- * CONVIVENCIA: va dentro de una función para no chocar con los nombres de js/cosecha-registro.js,
- *   que se carga en la misma página.
- * LIMITACIÓN DEL BACKEND: Riego.java no tiene idUsuario, así que el riego no guarda quién lo hizo;
- *   además pide idTerreno, que aquí se deduce de la parcela del cultivo.
- * NO CONFIRMADO: qué campos exige el servidor al guardar un riego (no se vio RiegoService).
+ * ARCHIVO: js/consulta-terrenos.js
+ * CAPA: FRONTEND (lógica). Pantalla de SOLO CONSULTA de terrenos y parcelas del trabajador.
+ * QUÉ USA DEL BACKEND: GET /terrenos y GET /parcelas/terreno/{id}, con pedirApi() de js/api.js.
+ *   No hace POST, PUT ni DELETE: los terrenos los da de alta el administrador.
+ * SUPERFICIE: Terreno.java sigue guardando hectáreas (superficieHa) y Parcela.java ya usa m2
+ *   (superficieM2). Aquí se convierte a m2 (hectáreas x 10,000) para mostrar lo mismo que el administrador.
+ *   El arreglo de fondo es del backend.
+ * ESTADO DE LA PARCELA: se calcula (ocupada si tiene cultivo, disponible si no), como pide el documento; no se usa el valor guardado, que no se actualiza.
  */
 
-(function () {
-    var mensajeCultivos = document.getElementById('mensaje-operacion');
-    var cuerpoCultivos = document.getElementById('registros-cultivos');
-    var filtroEstado = document.getElementById('filtro-estado');
-    var textoUsuario = document.getElementById('usuario-sesion');
+var mensajeTerrenos = document.getElementById('mensaje-operacion');
+var cuerpoTerrenos = document.getElementById('registros-terrenos');
+var cuerpoParcelas = document.getElementById('registros-parcelas');
+var tituloParcelas = document.getElementById('titulo-parcelas');
 
-    var dlgObservacion = document.getElementById('dialogo-observacion');
-    var formObservacion = document.getElementById('formulario-observacion');
-    var textoCultivoObs = document.getElementById('cultivo-observacion');
-    var campoObsFecha = document.getElementById('obs-fecha');
-    var campoObsDescripcion = document.getElementById('obs-descripcion');
-    var mensajeObs = document.getElementById('mensaje-obs');
-    var botonGuardarObs = document.getElementById('guardar-obs');
-
-    var dlgRiego = document.getElementById('dialogo-riego');
-    var formRiego = document.getElementById('formulario-riego');
-    var textoCultivoRiego = document.getElementById('cultivo-riego');
-    var campoRiegoFecha = document.getElementById('riego-fecha');
-    var campoRiegoCantidad = document.getElementById('riego-cantidad');
-    var campoRiegoUnidad = document.getElementById('riego-unidad');
-    var campoRiegoMetodo = document.getElementById('riego-metodo');
-    var campoRiegoNotas = document.getElementById('riego-notas');
-    var mensajeRiego = document.getElementById('mensaje-riego');
-    var botonGuardarRiego = document.getElementById('guardar-riego');
-
-    var cultivos = [];
-    var parcelas = {};
-    var cultivoElegido = null;
-    var usuario = usuarioActual();
-
-    function textoError(error) {
-        if (error instanceof TypeError) {
-            return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
-        }
-        return error.message || 'No se pudo completar la operación.';
+function textoError(error) {
+    if (error instanceof TypeError) {
+        return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
     }
+    return error.message || 'No se pudo cargar la información.';
+}
 
-    function hoyLocal() {
-        var ahora = new Date();
-        var local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
-        return local.toISOString().slice(0, 10);
+function m2DesdeHectareas(ha) {
+    if (ha === null || ha === undefined || ha === '') {
+        return '—';
     }
+    return Math.round(Number(ha) * 10000).toLocaleString('es-MX') + ' m²';
+}
 
-    function agregarCelda(fila, texto) {
-        var celda = document.createElement('td');
-        celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
-        fila.appendChild(celda);
-        return celda;
+function m2Parcela(valor) {
+    if (valor === null || valor === undefined || valor === '') {
+        return '—';
     }
+    return Number(valor).toLocaleString('es-MX', { maximumFractionDigits: 2 }) + ' m²';
+}
 
-    function textoParcela(cultivo) {
-        var parcela = parcelas[cultivo.idParcela];
-        return parcela ? parcela.nombre + ' · ' + parcela.terreno : '—';
-    }
+function agregarCelda(fila, texto) {
+    var celda = document.createElement('td');
+    celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
+    fila.appendChild(celda);
+}
 
-    function crearBotonAccion(texto, alClic) {
+function filaMensaje(cuerpo, columnas, texto) {
+    var fila = document.createElement('tr');
+    var celda = document.createElement('td');
+    celda.colSpan = columnas;
+    celda.textContent = texto;
+    fila.appendChild(celda);
+    cuerpo.appendChild(fila);
+}
+
+function dibujarTerrenos(terrenos) {
+    cuerpoTerrenos.innerHTML = '';
+
+    terrenos.forEach(function (terreno) {
+        var fila = document.createElement('tr');
+        agregarCelda(fila, terreno.nombre);
+        agregarCelda(fila, terreno.ubicacion);
+        agregarCelda(fila, m2DesdeHectareas(terreno.superficieHa));
+        agregarCelda(fila, terreno.estado);
+
+        var celdaBoton = document.createElement('td');
         var boton = document.createElement('button');
         boton.type = 'button';
         boton.className = 'boton boton-secundario';
-        boton.textContent = texto;
-        boton.onclick = alClic;
-        return boton;
-    }
+        boton.textContent = 'Ver parcelas';
+        boton.onclick = function () {
+            verParcelas(terreno, boton);
+        };
+        celdaBoton.appendChild(boton);
+        fila.appendChild(celdaBoton);
 
-    function dibujarCultivos() {
-        var estado = filtroEstado.value;
-        var visibles = cultivos.filter(function (cultivo) {
-            return !estado || cultivo.estado === estado;
-        });
-
-        cuerpoCultivos.innerHTML = '';
-        visibles.forEach(function (cultivo) {
-            var fila = document.createElement('tr');
-            agregarCelda(fila, cultivo.nombre);
-            agregarCelda(fila, cultivo.familia);
-            agregarCelda(fila, textoParcela(cultivo));
-            agregarCelda(fila, cultivo.etapaFenologica);
-            agregarCelda(fila, cultivo.fechaSiembra);
-            agregarCelda(fila, cultivo.estado);
-
-            var acciones = document.createElement('td');
-            if (cultivo.estado === 'activo') {
-                acciones.appendChild(crearBotonAccion('Registrar riego', function () {
-                    abrirRiego(cultivo);
-                }));
-                acciones.appendChild(crearBotonAccion('Registrar observación', function () {
-                    abrirObservacion(cultivo);
-                }));
-            } else {
-                acciones.textContent = '—';
-            }
-            fila.appendChild(acciones);
-            cuerpoCultivos.appendChild(fila);
-        });
-
-        if (!visibles.length) {
-            var filaVacia = document.createElement('tr');
-            var celdaVacia = document.createElement('td');
-            celdaVacia.colSpan = 7;
-            celdaVacia.textContent = 'No hay cultivos para mostrar. Los da de alta el administrador.';
-            filaVacia.appendChild(celdaVacia);
-            cuerpoCultivos.appendChild(filaVacia);
-        }
-    }
-
-    function cargarParcelas() {
-        parcelas = {};
-        return pedirApi('/terrenos').then(function (terrenos) {
-            return Promise.all((terrenos || []).map(function (terreno) {
-                return pedirApi('/parcelas/terreno/' + terreno.id).then(function (lista) {
-                    (lista || []).forEach(function (parcela) {
-                        parcelas[parcela.idParcela] = {
-                            nombre: parcela.nombre,
-                            idTerreno: terreno.id,
-                            terreno: terreno.nombre
-                        };
-                    });
-                });
-            }));
-        });
-    }
-
-    function cargarTodo() {
-        mensajeCultivos.textContent = 'Cargando...';
-        return Promise.all([pedirApi('/cultivos'), cargarParcelas()])
-            .then(function (resultados) {
-                cultivos = resultados[0] || [];
-                dibujarCultivos();
-                mensajeCultivos.textContent = '';
-            })
-            .catch(function (error) {
-                mensajeCultivos.textContent = textoError(error);
-            });
-    }
-
-    function enviarActividad(ruta, datos, dialogo, mensajeError, boton, textoOk) {
-        boton.disabled = true;
-        pedirApi(ruta, 'POST', datos)
-            .then(function () {
-                dialogo.close();
-                mensajeCultivos.textContent = textoOk;
-            })
-            .catch(function (error) {
-                mensajeError.textContent = textoError(error);
-            })
-            .finally(function () {
-                boton.disabled = false;
-            });
-    }
-
-    /* ---------- Observación ---------- */
-    function abrirObservacion(cultivo) {
-        cultivoElegido = cultivo;
-        formObservacion.reset();
-        mensajeObs.textContent = '';
-        textoCultivoObs.textContent = 'Cultivo: ' + cultivo.nombre + ' (' + textoParcela(cultivo) + ')';
-        campoObsFecha.value = hoyLocal();
-        dlgObservacion.showModal();
-    }
-
-    formObservacion.addEventListener('submit', function (evento) {
-        evento.preventDefault();
-        mensajeObs.textContent = '';
-
-        if (!usuario) {
-            mensajeObs.textContent = 'No hay sesión iniciada. Inicia sesión para registrar observaciones.';
-            return;
-        }
-        if (!formObservacion.reportValidity()) {
-            return;
-        }
-        var descripcion = campoObsDescripcion.value.trim();
-        if (!descripcion) {
-            mensajeObs.textContent = 'Escribe la observación.';
-            return;
-        }
-
-        enviarActividad('/observaciones-cultivos', {
-            idCultivo: cultivoElegido.id,
-            idUsuario: usuario.idUsuario,
-            fechaObservacion: campoObsFecha.value,
-            descripcion: descripcion
-        }, dlgObservacion, mensajeObs, botonGuardarObs, 'Observación registrada en el servidor.');
+        cuerpoTerrenos.appendChild(fila);
     });
 
-    /* ---------- Riego ---------- */
-    function abrirRiego(cultivo) {
-        cultivoElegido = cultivo;
-        formRiego.reset();
-        mensajeRiego.textContent = '';
-        textoCultivoRiego.textContent = 'Cultivo: ' + cultivo.nombre + ' (' + textoParcela(cultivo) + ')';
-        campoRiegoFecha.value = hoyLocal();
-        dlgRiego.showModal();
+    if (!terrenos.length) {
+        filaMensaje(cuerpoTerrenos, 5, 'No hay terrenos registrados. Los da de alta el administrador.');
     }
+}
 
-    formRiego.addEventListener('submit', function (evento) {
-        evento.preventDefault();
-        mensajeRiego.textContent = '';
+function dibujarParcelas(terreno, parcelas) {
+    tituloParcelas.textContent = 'Parcelas de ' + terreno.nombre;
+    cuerpoParcelas.innerHTML = '';
 
-        if (!formRiego.reportValidity()) {
-            return;
-        }
-        var cantidad = Number(campoRiegoCantidad.value);
-        if (!(cantidad > 0)) {
-            mensajeRiego.textContent = 'La cantidad de agua debe ser mayor que cero.';
-            return;
-        }
-        var parcela = parcelas[cultivoElegido.idParcela];
-        if (!parcela) {
-            mensajeRiego.textContent = 'No se encontró el terreno de este cultivo.';
-            return;
-        }
-
-        enviarActividad('/riegos', {
-            idCultivo: cultivoElegido.id,
-            idTerreno: parcela.idTerreno,
-            fechaRiego: campoRiegoFecha.value,
-            cantidadAgua: cantidad,
-            unidadMedida: campoRiegoUnidad.value.trim(),
-            metodo: campoRiegoMetodo.value.trim() || null,
-            observaciones: campoRiegoNotas.value.trim() || null
-        }, dlgRiego, mensajeRiego, botonGuardarRiego, 'Riego registrado en el servidor.');
+    parcelas.forEach(function (parcela) {
+        var fila = document.createElement('tr');
+        agregarCelda(fila, parcela.nombre);
+        agregarCelda(fila, m2Parcela(parcela.superficieM2));
+        agregarCelda(fila, parcela.idCultivo ? 'ocupada' : 'disponible');
+        agregarCelda(fila, parcela.cultivoNombre);
+        agregarCelda(fila, parcela.etapaFenologica);
+        cuerpoParcelas.appendChild(fila);
     });
 
-    /* ---------- Eventos generales ---------- */
-    document.getElementById('cancelar-obs').onclick = function () { dlgObservacion.close(); };
-    document.getElementById('cancelar-riego').onclick = function () { dlgRiego.close(); };
-    document.getElementById('actualizar-operacion').onclick = cargarTodo;
-    filtroEstado.onchange = dibujarCultivos;
-
-    if (usuario) {
-        textoUsuario.textContent = usuario.nombre || 'Usuario #' + usuario.idUsuario;
-    } else {
-        textoUsuario.textContent = 'Sin sesión (para registrar observaciones hay que iniciar sesión)';
+    if (!parcelas.length) {
+        filaMensaje(cuerpoParcelas, 5, 'Este terreno no tiene parcelas registradas.');
     }
-    cargarTodo();
-})();
+}
+
+function verParcelas(terreno, boton) {
+    boton.disabled = true;
+    mensajeTerrenos.textContent = '';
+    pedirApi('/parcelas/terreno/' + terreno.id)
+        .then(function (parcelas) {
+            dibujarParcelas(terreno, parcelas || []);
+        })
+        .catch(function (error) {
+            mensajeTerrenos.textContent = textoError(error);
+        })
+        .finally(function () {
+            boton.disabled = false;
+        });
+}
+
+function cargarTerrenos() {
+    mensajeTerrenos.textContent = 'Cargando...';
+    tituloParcelas.textContent = 'Parcelas';
+    cuerpoParcelas.innerHTML = '';
+    filaMensaje(cuerpoParcelas, 5, 'Elige un terreno para ver sus parcelas.');
+
+    return pedirApi('/terrenos')
+        .then(function (terrenos) {
+            dibujarTerrenos(terrenos || []);
+            mensajeTerrenos.textContent = '';
+        })
+        .catch(function (error) {
+            mensajeTerrenos.textContent = textoError(error);
+        });
+}
+
+document.getElementById('actualizar-operacion').onclick = cargarTerrenos;
+cargarTerrenos();

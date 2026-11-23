@@ -5,7 +5,8 @@
  *   HTML y CSS, ese menú y esa barra deben escribirse como HTML estático en cada página.
  * BACKEND: no lo usa.
  * LE FALTA: páginas destino para Resumen y Cultivos (sus enlaces son "#");
- *   sesión y roles reales (el rol "Administrador / Agricultor" está escrito fijo);
+ *   sesión y roles reales (el rol se lee de sessionStorage "usuarioSesion"; js/ap.js todavía no la guarda,
+ *   y sin sesión se muestra el menú del administrador);
  *   la opción Usuarios del documento del proyecto.
  * AÑADIDO POR BACKEND INCOMPLETO: nada.
  *
@@ -27,6 +28,31 @@ const MENU_ADMIN = [
     { id: "pedidos",     texto: "Pedidos",     href: "pedidos.html" }
 ];
 
+// Menú del trabajador: sus pantallas, más Pedidos (que reutiliza las pantallas del administrador).
+const MENU_TRABAJADOR = [
+    { id: "cultivos",      texto: "Cultivos activos", href: "cultivos.html" },
+    { id: "inventario",    texto: "Inventario",       href: "inventario.html" },
+    { id: "observaciones", texto: "Observaciones",    href: "observaciones.html" },
+    { id: "riegos",        texto: "Riego",            href: "riegos.html" },
+    { id: "fertilizantes", texto: "Fertilizantes",    href: "fertilizantes.html" },
+    { id: "abonos",        texto: "Abono",            href: "abonos.html" },
+    { id: "terrenos",      texto: "Terreno",          href: "terrenos.html" },
+    { id: "calendario",    texto: "Calendario",       href: "calendario.html" },
+    { id: "pedidos",       texto: "Pedidos",          href: "pedidos.html" }
+];
+
+// Rol guardado en la sesión (misma clave que js/sesion.js); null si no hay sesión.
+function rolDeSidebar() {
+    try {
+        const usuario = JSON.parse(sessionStorage.getItem("usuarioSesion"));
+        return usuario && typeof usuario.rol === "string" ? usuario.rol : null;
+    } catch {
+        return null;
+    }
+}
+const SIDEBAR_ES_TRABAJADOR = rolDeSidebar() === "trabajador";
+const SIDEBAR_ROL_TEXTO = SIDEBAR_ES_TRABAJADOR ? "Trabajador" : "Administrador / Agricultor";
+
 (function dibujarSidebar() {
     const aside = document.getElementById("sidebar");
     if (!aside) return;
@@ -44,12 +70,12 @@ const MENU_ADMIN = [
 
     const seccion = document.createElement("div");
     seccion.className = "sidebar-seccion";
-    seccion.textContent = "ADMINISTRACIÓN";
+    seccion.textContent = SIDEBAR_ES_TRABAJADOR ? "TRABAJADOR" : "ADMINISTRACIÓN";
 
     const nav = document.createElement("nav");
     nav.className = "sidebar-menu";
-    nav.setAttribute("aria-label", "Navegación del administrador");
-    MENU_ADMIN.forEach(op => {
+    nav.setAttribute("aria-label", SIDEBAR_ES_TRABAJADOR ? "Navegación del trabajador" : "Navegación del administrador");
+    (SIDEBAR_ES_TRABAJADOR ? MENU_TRABAJADOR : MENU_ADMIN).forEach(op => {
         const a = document.createElement("a");
         a.href = op.href;
         a.textContent = op.texto;
@@ -59,7 +85,7 @@ const MENU_ADMIN = [
 
     const usuario = document.createElement("div");
     usuario.className = "sidebar-usuario";
-    usuario.textContent = "Administrador / Agricultor";
+    usuario.textContent = SIDEBAR_ROL_TEXTO;
 
     aside.replaceChildren(marca, seccion, nav, usuario);
 })();
@@ -85,7 +111,7 @@ const MENU_ADMIN = [
 
     const rol = document.createElement("span");
     rol.className = "topbar-rol";
-    rol.textContent = "Administrador / Agricultor";
+    rol.textContent = SIDEBAR_ROL_TEXTO;
 
     barra.replaceChildren(buscador, rol);
 })();

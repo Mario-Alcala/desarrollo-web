@@ -48,17 +48,24 @@ function dibujarLotes(lotes) {
     filas.replaceChildren(...filasLotes);
 }
 
-function prepararEstado() {
+function prepararEstado(permisos) {
     const estados = pedido.tipoEntrega === "domicilio"
         ? [["pendiente", pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación"], ["en_transito", "Enviado"], ["entregado", "Entregado"]]
         : [["pendiente", pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación"], ["listo_recoleccion", "Listo para recoger"], ["entregado", "Recogido"]];
-    selectorEstado.replaceChildren(...estados.map(([valor, texto]) => {
+    selectorEstado.replaceChildren(...estados.filter(([valor]) => permisos.estadosEntrega.includes(valor)).map(([valor, texto]) => {
         const opcion = crear("option", texto);
         opcion.value = valor;
         return opcion;
     }));
     const actual = pedido.estadoEntrega || pedido.estado;
     if (actual && estados.some(([valor]) => valor === actual)) selectorEstado.value = actual;
+}
+
+// Muestra u oculta las secciones de preparación según el rol (reglas en js/permisos-pedidos.js).
+function aplicarPermisos(permisos) {
+    formAsignacion.closest("section").style.display = permisos.asignar ? "" : "none";
+    document.getElementById("formulario-entrega").closest("section").style.display = permisos.entrega ? "" : "none";
+    document.getElementById("aviso-rol").textContent = permisos.aviso;
 }
 
 async function cargar() {
@@ -77,7 +84,9 @@ async function cargar() {
             o.value = String(c.idCosecha);
             return o;
         }));
-        prepararEstado();
+        const permisos = accionesPedido(rolDeSesion(), pedido.estadoEntrega || pedido.estado);
+        prepararEstado(permisos);
+        aplicarPermisos(permisos);
         await actualizarLotes();
         document.querySelector("#formulario-asignacion button[type=submit]").disabled = !selectorLote.options.length;
         mensaje.textContent = "";

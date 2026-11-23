@@ -25,7 +25,7 @@ function fechaPedido(valor) {
 function filaPedido(p) {
     const fila = crear("tr");
     const detalle = crear("td");
-    const enlace = crear("a", "Ver pedido →", "enlace-pedido");
+    const enlace = crear("a", textoAccionPedido(rolDeSesion()), "enlace-pedido");
     enlace.href = `pedido-detalle.html?id=${encodeURIComponent(p.idPedido)}`;
     detalle.append(enlace);
     fila.append(

@@ -49,9 +49,36 @@ if (formulario) {
                 mensaje.textContent = 'Correo o contraseña del trabajador incorrectos.';
                 return;
             }
-            window.location.href = 'cultivos.html';
+            // El id y el rol salen del backend (GET /api/usuarios) para que las pantallas del trabajador
+            // sepan quién registra cosechas y movimientos. La contraseña sigue validándose localmente.
+            pedirApi('/usuarios').then(function (usuarios) {
+                var sesion = sesionDeTrabajador(usuarios, correo.value);
+                if (!sesion) {
+                    mensaje.textContent = 'Ese correo no está registrado como trabajador. Pide al administrador que lo registre en Usuarios.';
+                    return;
+                }
+                sessionStorage.setItem('usuarioSesion', JSON.stringify(sesion));
+                window.location.href = 'cultivos.html';
+            }).catch(function () {
+                mensaje.textContent = 'No se pudo conectar con el backend (¿está encendido en el puerto 8081?).';
+            });
         } else {
+            sessionStorage.removeItem('usuarioSesion');
             window.location.href = 'catalogo.html';
         }
     });
+}
+
+// Busca en la lista de usuarios del backend al trabajador que inicia sesión.
+// Devuelve { idUsuario, nombre, rol } (el formato que lee js/sesion.js) o null si no existe o no es trabajador.
+function sesionDeTrabajador(usuarios, correo) {
+    var buscado = String(correo || '').trim().toLowerCase();
+    var lista = usuarios || [];
+    for (var i = 0; i < lista.length; i++) {
+        var u = lista[i];
+        if (String(u.correoElectronico || '').trim().toLowerCase() === buscado && u.rol === 'trabajador') {
+            return { idUsuario: u.idUsuario, nombre: u.nombreUsuario, rol: u.rol };
+        }
+    }
+    return null;
 }
