@@ -158,3 +158,21 @@ dialog::backdrop {
         padding: 16px;
     }
 }
+
+.imagen-producto {
+    width: 100%;
+    max-height: 160px;
+    object-fit: contain;
+}
+
+.lote-producto {
+    border-top: 1px solid #d5dfcf;
+    padding-top: 10px;
+    margin-top: 12px;
+}
+
+.cantidad input {
+    width: 100px;
+    min-width: 0;
+    text-align: center;
+}

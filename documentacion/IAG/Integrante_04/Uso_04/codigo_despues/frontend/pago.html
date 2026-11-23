@@ -12,6 +12,7 @@
     <header class="barra">
         <span class="marca">Gestión de Cultivos</span>
         <a href="catalogo.html">Regresar al catálogo</a>
+        <a href="login.html">Ingresar</a>
     </header>
     <main class="pagina">
         <h1>Método de pago</h1>
@@ -25,9 +26,19 @@
                     </table>
                 </div>
                 <p class="total">Total: <span id="total-pago">$0.00</span></p>
-                <h2>Recoger el pedido</h2>
-                <button id="recoleccion" class="boton boton-secundario" type="button">Recolección</button>
-                <p id="fecha-elegida">Selecciona el día de recolección.</p>
+                <label for="tipo-entrega">Tipo de entrega</label>
+                <select id="tipo-entrega" form="formulario-pago">
+                    <option value="recoleccion">Recolección</option>
+                    <option value="domicilio">Domicilio</option>
+                </select>
+                <div id="datos-domicilio" hidden>
+                    <label for="direccion">Dirección de entrega</label>
+                    <textarea id="direccion" form="formulario-pago" maxlength="255" rows="3"></textarea>
+                </div>
+                <div id="datos-recoleccion">
+                    <button id="recoleccion" class="boton boton-secundario" type="button">Recolección</button>
+                    <p id="fecha-elegida">Selecciona el día de recolección.</p>
+                </div>
             </section>
             <section class="panel">
                 <h2>Forma de pago</h2>
@@ -35,28 +46,13 @@
                 <form id="formulario-pago" novalidate>
                     <label for="metodo-pago">Método de pago</label>
                     <select id="metodo-pago">
-                        <option value="Tarjeta">Tarjeta de crédito o débito</option>
-                        <option value="Transferencia">Transferencia</option>
+                        <option value="tarjeta">Tarjeta de crédito o débito</option>
+                        <option value="transferencia">Transferencia</option>
                     </select>
                     <div id="datos-transferencia" hidden>
                         <p>Los datos de la cuenta para transferencia están pendientes.</p>
                     </div>
-                    <div id="datos-tarjeta">
-                    <label for="titular">Nombre del titular</label>
-                    <input id="titular" type="text" maxlength="80" autocomplete="off" required>
-                    <label for="tarjeta">Número de tarjeta (16 dígitos)</label>
-                    <input id="tarjeta" type="text" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" autocomplete="off" required>
-                    <div class="campos-tarjeta">
-                        <div>
-                            <label for="codigo">Código de seguridad</label>
-                            <input id="codigo" type="password" inputmode="numeric" pattern="[0-9]{3,4}" maxlength="4" autocomplete="off" required>
-                        </div>
-                        <div>
-                            <label for="vencimiento">Vencimiento</label>
-                            <input id="vencimiento" type="month" required>
-                        </div>
-                    </div>
-                    </div>
+                    <p>Registrar el pedido no realiza el cobro. El pago queda pendiente de confirmación.</p>
                     <div class="acciones-pago">
                         <a class="boton boton-secundario" href="catalogo.html">Cancelar</a>
                         <button id="confirmar-pago" class="boton" type="submit">Confirmar pedido</button>
@@ -79,7 +75,7 @@
             <a class="boton boton-secundario" href="catalogo.html">Regresar al catálogo</a>
         </section>
     </main>
-    <script src="js/datos.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/pedido.js"></script>
     <script src="js/pago.js"></script>
 </body>
