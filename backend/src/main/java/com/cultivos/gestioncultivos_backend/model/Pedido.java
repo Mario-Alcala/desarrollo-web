@@ -17,6 +17,8 @@ public class Pedido {
     private LocalDateTime fechaSalida;
     private LocalDateTime fechaEntrega;
     private String numeroRastreo;
+    private Integer idResponsable;
+    private String responsable;
     private String direccionEntrega;
     private java.time.LocalDate fechaRecoleccion;
 
@@ -46,6 +48,10 @@ public class Pedido {
     public void setFechaEntrega(LocalDateTime fechaEntrega) { this.fechaEntrega = fechaEntrega; }
     public String getNumeroRastreo() { return numeroRastreo; }
     public void setNumeroRastreo(String numeroRastreo) { this.numeroRastreo = numeroRastreo; }
+    public Integer getIdResponsable() { return idResponsable; }
+    public void setIdResponsable(Integer idResponsable) { this.idResponsable = idResponsable; }
+    public String getResponsable() { return responsable; }
+    public void setResponsable(String responsable) { this.responsable = responsable; }
     public String getDireccionEntrega() { return direccionEntrega; }
     public void setDireccionEntrega(String direccionEntrega) { this.direccionEntrega = direccionEntrega; }
     public java.time.LocalDate getFechaRecoleccion() { return fechaRecoleccion; }

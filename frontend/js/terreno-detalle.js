@@ -320,7 +320,7 @@ formularioBitacora.addEventListener("submit", async function (evento) {
         ruta = "riegos";
         datos = {
             idCultivo: registro.idCultivo,
-            idTerreno: registro.idTerreno,
+            idUsuario: registro.idUsuario,
             fechaRiego: fecha,
             cantidadAgua: Number(document.getElementById("b-cantidad-agua").value),
             unidadMedida: document.getElementById("b-unidad-agua").value.trim(),

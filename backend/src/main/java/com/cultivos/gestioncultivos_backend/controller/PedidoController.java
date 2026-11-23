@@ -55,6 +55,15 @@ public class PedidoController {
     @PutMapping("/{id}/entrega")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void actualizarEntrega(@PathVariable("id") int id, @RequestBody Map<String, String> solicitud) {
-        servicio.actualizarEntrega(id, solicitud.get("estado"), solicitud.get("numeroRastreo"));
+        Integer responsable = null;
+        String idUsuario = solicitud.get("idUsuario");
+        if (idUsuario != null && !idUsuario.isBlank()) {
+            try {
+                responsable = Integer.valueOf(idUsuario.trim());
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("El id del trabajador no es válido");
+            }
+        }
+        servicio.actualizarEntrega(id, solicitud.get("estado"), solicitud.get("numeroRastreo"), responsable);
     }
 }

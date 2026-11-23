@@ -9,6 +9,10 @@ if (botonCrearCuenta) {
     });
 }
 
+if (formularioLogin && new URLSearchParams(window.location.search).get('motivo') === 'sesion') {
+    document.getElementById('mensaje-login').textContent = 'Inicia sesión con una cuenta que tenga acceso a esa pantalla.';
+}
+
 if (formularioLogin) {
     formularioLogin.addEventListener('submit', async function (evento) {
         evento.preventDefault();
@@ -44,6 +48,13 @@ if (formularioLogin) {
                 throw new Error(usuario.message || usuario.mensaje || 'Correo o contraseña incorrectos.');
             }
 
+            // Sesión que leen las pantallas (js/sesion.js): id, nombre y rol del usuario.
+            sessionStorage.setItem('usuarioSesion', JSON.stringify({
+                idUsuario: usuario.idUsuario,
+                nombre: usuario.nombreUsuario,
+                correo: usuario.correoElectronico,
+                rol: usuario.rol
+            }));
             sessionStorage.setItem('usuarioNombre', usuario.nombreUsuario);
             sessionStorage.setItem('usuarioRol', usuario.rol);
             sessionStorage.setItem('usuarioId', usuario.idUsuario);

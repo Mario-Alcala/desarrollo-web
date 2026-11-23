@@ -154,7 +154,8 @@ document.getElementById("formulario-entrega").addEventListener("submit", async f
             method: "PUT", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 estado: selectorEstado.value,
-                numeroRastreo: document.getElementById("numero-rastreo").value.trim()
+                numeroRastreo: document.getElementById("numero-rastreo").value.trim(),
+                idUsuario: sessionStorage.getItem("usuarioId")
             })
         });
         await cargar();

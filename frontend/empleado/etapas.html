@@ -1,42 +1,70 @@
 <!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/etapas.html · Programación de germinación, siembra, vegetación/riego, floración y cosecha.
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/etapas.js (+ js/calendario-logica.js)
+-->
 <html lang="es">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Calendario de cultivos</title>
+        <title>Programar etapas - Gestión de Cultivos</title>
         <link rel="stylesheet" href="../css/styles.css">
         <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
         <link rel="stylesheet" href="../css/calendario.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
     </head>
-    <body>
+    <body data-roles="trabajador,administrador_agricultor">
         <header class="barra">
             <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <nav aria-label="Navegación del trabajador">
-                <a href="../index.html">Inicio</a>
-                <a href="cultivos.html">Cultivos activos</a>
-            </nav>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
         </header>
         <main class="pagina calendario">
-<h1>Programar etapa</h1>
-<a href="calendario.html">Regresar al calendario</a>
-<div class="filtros-calendario">
-                <div>
-                    <label for="filtro-cultivo">Cultivo</label>
-                    <select id="filtro-cultivo">
-                        <option value="">Todos los cultivos</option>
-                    </select>
-                </div>
-            </div>
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html">Banco de semillas</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html">Distribución</a>
+                <a href="calendario.html" aria-current="page">Calendario</a>
+            </nav>
+            <a class="boton boton-secundario" href="calendario.html">Regresar al calendario</a>
+            <h1>Programar etapas</h1>
             <p id="mensaje-etapa" class="mensaje" role="status"></p>
-<section class="panel espacio">
-                <h2>Programar una etapa o tarea</h2>
-                <p>Las fechas y tareas se guardan en este navegador.</p>
+            <section class="panel espacio">
+                <h2>Cultivo</h2>
+                <label for="cultivo">Cultivo activo</label>
+                <select id="cultivo" required><option value="">Cargando cultivos…</option></select>
+                <p id="etapa-actual" class="ayuda"></p>
+                <h3>Etapas ya programadas</h3>
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Etapa</th>
+                                <th>Fecha programada</th>
+                                <th>Estado</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="etapas-programadas"></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="panel espacio">
+                <h2>Programar una etapa</h2>
+                <p class="ayuda">Las fechas deben respetar el orden: germinación, siembra, vegetación/riego, floración y cosecha. Después de la siembra ninguna etapa puede quedar antes de la fecha de siembra.</p>
                 <form id="formulario-etapa" novalidate>
                     <div class="campos-operacion">
-                        <div>
-                            <label for="cultivo">Cultivo</label>
-                            <select id="cultivo" required></select>
-                        </div>
                         <div>
                             <label for="etapa">Etapa</label>
                             <select id="etapa" required>
@@ -49,17 +77,65 @@
                             </select>
                         </div>
                         <div>
-                            <label for="fecha-inicio">Inicio de etapa / siembra</label>
+                            <label for="fecha-inicio">Fecha programada</label>
                             <input id="fecha-inicio" type="date" min="1900-01-01" max="9999-12-31" required>
                         </div>
                     </div>
-                    <label for="notas">Notas de tarea</label>
+                    <label for="notas">Notas de la tarea</label>
                     <textarea id="notas" rows="3" maxlength="500" placeholder="Riego, fertilizante o cuidados de la planta"></textarea>
+                    <p id="mensaje-formulario-etapa" class="mensaje error" role="alert"></p>
                     <button id="guardar-etapa" class="boton espacio" type="submit">Guardar etapa</button>
                 </form>
             </section>
-</main>
-<script src="../js/datos.js"></script>
-        <script src="../js/calendario.js"></script>
+            <section class="panel espacio">
+                <h2>Calendario sugerido</h2>
+                <p class="ayuda">Programa de una vez las etapas que falten. Si el cultivo ya tiene fecha de siembra, la fecha base se ajusta para que la siembra caiga ese día. Cambia los días según el cultivo.</p>
+                <div class="campos-operacion">
+                    <div>
+                        <label for="fecha-base">Fecha base (inicio de germinación)</label>
+                        <input id="fecha-base" type="date">
+                    </div>
+                    <div>
+                        <label for="dias-0">Germinación (días desde la base)</label>
+                        <input id="dias-0" type="number" min="0" step="1">
+                    </div>
+                    <div>
+                        <label for="dias-1">Siembra (días)</label>
+                        <input id="dias-1" type="number" min="0" step="1">
+                    </div>
+                    <div>
+                        <label for="dias-2">Vegetación/Riego (días)</label>
+                        <input id="dias-2" type="number" min="0" step="1">
+                    </div>
+                    <div>
+                        <label for="dias-3">Floración (días)</label>
+                        <input id="dias-3" type="number" min="0" step="1">
+                    </div>
+                    <div>
+                        <label for="dias-4">Cosecha (días)</label>
+                        <input id="dias-4" type="number" min="0" step="1">
+                    </div>
+                </div>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Etapa que se programará</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vista-sugerida"></tbody>
+                    </table>
+                </div>
+                <p id="mensaje-sugerido" class="mensaje error" role="alert"></p>
+                <button id="programar-sugerido" class="boton" type="button">Programar etapas sugeridas</button>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/calendario-logica.js"></script>
+        <script src="../js/etapas.js"></script>
     </body>
 </html>

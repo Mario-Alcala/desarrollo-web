@@ -45,10 +45,10 @@ public class IncidenciaCultivoRepository {
         jdbc.sql("""
                 INSERT INTO incidencias_cultivo
                 (id_cultivo, id_usuario, fecha_incidencia,
-                 tipo_incidencia, descripcion, nivel_gravedad)
+                 tipo_incidencia, descripcion, nivel_gravedad, estado)
                 VALUES
                 (:cultivo, :usuario, :fecha,
-                 :tipo, :descripcion, :gravedad)
+                 :tipo, :descripcion, :gravedad, :estado)
                 """)
                 .param("cultivo", incidencia.getIdCultivo())
                 .param("usuario", incidencia.getIdUsuario())
@@ -56,6 +56,7 @@ public class IncidenciaCultivoRepository {
                 .param("tipo", incidencia.getTipoIncidencia())
                 .param("descripcion", incidencia.getDescripcion())
                 .param("gravedad", incidencia.getNivelGravedad())
+                .param("estado", incidencia.getEstado())
                 .update();
     }
 
@@ -67,7 +68,8 @@ public class IncidenciaCultivoRepository {
                     fecha_incidencia = :fecha,
                     tipo_incidencia = :tipo,
                     descripcion = :descripcion,
-                    nivel_gravedad = :gravedad
+                    nivel_gravedad = :gravedad,
+                    estado = :estado
                 WHERE id_incidencia = :id
                 """)
                 .param("cultivo", incidencia.getIdCultivo())
@@ -76,7 +78,15 @@ public class IncidenciaCultivoRepository {
                 .param("tipo", incidencia.getTipoIncidencia())
                 .param("descripcion", incidencia.getDescripcion())
                 .param("gravedad", incidencia.getNivelGravedad())
+                .param("estado", incidencia.getEstado())
                 .param("id", incidencia.getIdIncidencia())
+                .update();
+    }
+
+    public void cambiarEstado(int id, String estado) {
+        jdbc.sql("UPDATE incidencias_cultivo SET estado = :estado WHERE id_incidencia = :id")
+                .param("estado", estado)
+                .param("id", id)
                 .update();
     }
 

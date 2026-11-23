@@ -27,17 +27,19 @@ public class PedidoRepository {
                        d.estado AS estado_entrega, d.fecha_salida, d.fecha_entrega,
                        d.numero_rastreo1 AS numero_rastreo, d.direccion_entrega AS direccion_entrega,
                        d.fecha_recoleccion AS fecha_recoleccion,
+                       d.id_usuario AS id_responsable, r.nombre_usuario AS responsable,
                        COUNT(dp.id_detalle) AS cantidad_lotes,
                        CASE WHEN SUM(CASE WHEN dp.precio_unitario > 0 THEN 1 ELSE 0 END) > 0
                             THEN TRUE ELSE FALSE END AS compra_catalogo
                 FROM pedidos p
                 JOIN usuarios u ON u.id_usuario = p.id_usuario
                 LEFT JOIN distribuciones d ON d.id_pedido = p.id_pedido
+                LEFT JOIN usuarios r ON r.id_usuario = d.id_usuario
                 LEFT JOIN detalle_pedido dp ON dp.id_pedido = p.id_pedido
                 GROUP BY p.id_pedido, p.id_usuario, u.nombre_usuario,
                          p.fecha_pedido, p.tipo_entrega, p.estado, p.total,
                          d.estado, d.fecha_salida, d.fecha_entrega, d.numero_rastreo1,
-                         d.direccion_entrega, d.fecha_recoleccion
+                         d.direccion_entrega, d.fecha_recoleccion, d.id_usuario, r.nombre_usuario
                 ORDER BY p.fecha_pedido DESC, p.id_pedido DESC
                 """)
                 .query(Pedido.class).list();
@@ -172,11 +174,12 @@ public class PedidoRepository {
                 .param("pedido", idPedido).param("cosecha", idCosecha).param("kilos", kilos).update();
     }
 
-    public int cambiarEntrega(int idPedido, String estadoEntrega, String estadoPedido, String numeroRastreo) {
+    public int cambiarEntrega(int idPedido, String estadoEntrega, String estadoPedido, String numeroRastreo, Integer idResponsable) {
         jdbc.sql("""
-                INSERT INTO distribuciones (id_pedido, fecha_salida, fecha_entrega, numero_rastreo1, estado)
+                INSERT INTO distribuciones (id_pedido, id_usuario, fecha_salida, fecha_entrega, numero_rastreo1, estado)
                 VALUES (
                     :pedido,
+                    :responsable,
                     CASE WHEN :estado = 'en_transito' THEN CURRENT_TIMESTAMP ELSE NULL END,
                     CASE WHEN :estado = 'entregado' THEN CURRENT_TIMESTAMP ELSE NULL END,
                     NULLIF(:rastreo, ''),
@@ -186,10 +189,12 @@ public class PedidoRepository {
                     fecha_salida = CASE WHEN :estado = 'en_transito' THEN COALESCE(fecha_salida, CURRENT_TIMESTAMP) ELSE fecha_salida END,
                     fecha_entrega = CASE WHEN :estado = 'entregado' THEN CURRENT_TIMESTAMP ELSE fecha_entrega END,
                     numero_rastreo1 = COALESCE(NULLIF(:rastreo, ''), numero_rastreo1),
-                    estado = :estado
+                    estado = :estado,
+                    id_usuario = COALESCE(:responsable, id_usuario)
                 """)
                 .param("pedido", idPedido).param("estado", estadoEntrega)
-                .param("rastreo", numeroRastreo == null ? "" : numeroRastreo).update();
+                .param("rastreo", numeroRastreo == null ? "" : numeroRastreo)
+                .param("responsable", idResponsable).update();
         return jdbc.sql("UPDATE pedidos SET estado = :estado WHERE id_pedido = :pedido")
                 .param("estado", estadoPedido).param("pedido", idPedido).update();
     }

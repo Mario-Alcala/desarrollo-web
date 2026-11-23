@@ -124,6 +124,11 @@ public class PedidoService {
 
     @Transactional
     public void actualizarEntrega(int idPedido, String estado, String numeroRastreo) {
+        actualizarEntrega(idPedido, estado, numeroRastreo, null);
+    }
+
+    @Transactional
+    public void actualizarEntrega(int idPedido, String estado, String numeroRastreo, Integer idResponsable) {
         Pedido pedido = obtener(idPedido);
         if (pedido.getCantidadLotes() == null || pedido.getCantidadLotes() == 0) throw new IllegalArgumentException("Asigna los kilos disponibles al pedido antes de registrar la entrega");
         String normalizado = estado == null ? "" : estado.trim().toLowerCase();
@@ -136,6 +141,7 @@ public class PedidoService {
         if ("recoleccion".equals(pedido.getTipoEntrega()) && "en_transito".equals(normalizado)) throw new IllegalArgumentException("Este pedido se recoge en bodega");
         if (numeroRastreo != null && numeroRastreo.length() > 100) throw new IllegalArgumentException("El número de rastreo no debe exceder 100 caracteres");
         if (numeroRastreo != null && !numeroRastreo.isBlank() && !"domicilio".equals(pedido.getTipoEntrega())) throw new IllegalArgumentException("El rastreo solo aplica a entregas a domicilio");
-        repositorio.cambiarEntrega(idPedido, normalizado, ESTADOS_PEDIDO.get(normalizado), numeroRastreo == null ? null : numeroRastreo.trim());
+        repositorio.cambiarEntrega(idPedido, normalizado, ESTADOS_PEDIDO.get(normalizado),
+                numeroRastreo == null ? null : numeroRastreo.trim(), idResponsable);
     }
 }

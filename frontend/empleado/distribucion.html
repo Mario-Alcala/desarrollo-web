@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/distribucion.html · Preparación y entrega de pedidos (empacador, cargador, chofer).
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/distribucion.js
+-->
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Distribución - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
+    </head>
+    <body data-roles="trabajador,administrador_agricultor">
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html">Banco de semillas</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html" aria-current="page">Distribución</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Distribución</h1>
+            <p>Empacadores preparan cada pedido con kilos de los lotes de cosecha; cargadores registran la salida o dejan el pedido listo para recoger; choferes confirman la entrega. Cada paso queda registrado con tu usuario. Horario de recolección en bodega: 7:00 a. m. a 6:00 p. m.</p>
+            <p id="mensaje" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Mi tarea</h2>
+                <div id="pestanas-tarea" class="pestanas" role="group" aria-label="Tarea de distribución">
+                    <button type="button" data-tarea="todos" aria-pressed="true">Todos los pedidos</button>
+                    <button type="button" data-tarea="empacador" aria-pressed="false">Empacador</button>
+                    <button type="button" data-tarea="cargador" aria-pressed="false">Cargador</button>
+                    <button type="button" data-tarea="chofer" aria-pressed="false">Chofer</button>
+                </div>
+                <div class="filtros-linea">
+                    <div>
+                        <label><input id="mostrar-entregados" type="checkbox"> Mostrar pedidos entregados</label>
+                    </div>
+                    <button id="actualizar" class="boton boton-secundario" type="button">Actualizar</button>
+                </div>
+            </section>
+            <section class="espacio" aria-live="polite">
+                <div id="lista-pedidos" class="tarjetas"></div>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/distribucion.js"></script>
+    </body>
+</html>
