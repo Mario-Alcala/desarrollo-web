@@ -3,6 +3,8 @@ package com.cultivos.gestioncultivos_backend.repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,12 +48,12 @@ public class PedidoRepository {
     }
 
     public List<Map<String, Object>> catalogoCliente() {
-        return jdbc.sql("""
-                SELECT v.id_variedad AS idVariedad, f.nombre AS familia, v.nombre AS variedad,
-                       v.descripcion AS descripcion, v.imagen_url AS imagenUrl,
-                       v.precio_por_kg AS precioPorKg, c.id_cosecha AS idCosecha,
+        List<Map<String, Object>> filas = jdbc.sql("""
+                SELECT v.id_variedad AS `idVariedad`, f.nombre AS familia, v.nombre AS variedad,
+                       v.descripcion AS descripcion, v.imagen_url AS `imagenUrl`,
+                       v.precio_por_kg AS `precioPorKg`, c.id_cosecha AS `idCosecha`,
                        c.estado_maduracion AS maduracion, c.cantidad_disponible AS kilos,
-                       c.ubicacion_bodega AS ubicacionBodega
+                       c.ubicacion_bodega AS `ubicacionBodega`
                 FROM variedades_producto v
                 JOIN familias_producto f ON f.id_familia = v.id_familia
                 JOIN cultivos cu ON cu.id_variedad = v.id_variedad
@@ -60,6 +62,7 @@ public class PedidoRepository {
                 WHERE c.cantidad_disponible > 0 AND v.precio_por_kg > 0
                 ORDER BY f.nombre, v.nombre, c.fecha_cosecha, c.id_cosecha
                 """).query().listOfRows();
+        return normalizarClaves(filas);
     }
 
     public boolean esCliente(int idUsuario) {
@@ -69,7 +72,7 @@ public class PedidoRepository {
 
     public Map<String, Object> bloquearLoteParaVenta(int idCosecha) {
         List<Map<String, Object>> filas = jdbc.sql("""
-                SELECT c.cantidad_disponible AS kilos, v.precio_por_kg AS precioPorKg
+                SELECT c.cantidad_disponible AS kilos, v.precio_por_kg AS `precioPorKg`
                 FROM cosechas c
                 JOIN cultivos cu ON cu.id = c.id_cultivo
                 JOIN variedades_producto v ON v.id_variedad = cu.id_variedad OR cu.id_variedad IS NULL
@@ -78,7 +81,7 @@ public class PedidoRepository {
                   AND (cu.id_variedad IS NOT NULL OR LOWER(cu.nombre) = LOWER(CONCAT(f.nombre, ' ', v.nombre)))
                 FOR UPDATE
                 """).param("id", idCosecha).query().listOfRows();
-        return filas.isEmpty() ? null : filas.get(0);
+        return filas.isEmpty() ? null : normalizarClaves(filas).get(0);
     }
 
     public int insertarCompra(int idUsuario, String metodoPago, String tipoEntrega, BigDecimal total) {
@@ -88,7 +91,7 @@ public class PedidoRepository {
                 VALUES (:usuario, :metodo, :entrega, 'pendiente', :total)
                 """)
                 .param("usuario", idUsuario).param("metodo", metodoPago)
-                .param("entrega", tipoEntrega).param("total", total).update(llave);
+                .param("entrega", tipoEntrega).param("total", total).update(llave, "id_pedido");
         return llave.getKey().intValue();
     }
 
@@ -117,16 +120,16 @@ public class PedidoRepository {
     }
 
     public List<Map<String, Object>> historialCliente(int idUsuario) {
-        return jdbc.sql("""
-                SELECT p.id_pedido AS idPedido, p.fecha_pedido AS fechaPedido,
-                       p.metodo_pago AS metodoPago, p.tipo_entrega AS tipoEntrega,
-                       p.estado AS estadoPedido, p.total AS total,
-                       dp.id_cosecha AS idCosecha, dp.cantidad AS kilos,
-                       dp.precio_unitario AS precioPorKg,
+        List<Map<String, Object>> filas = jdbc.sql("""
+                SELECT p.id_pedido AS `idPedido`, p.fecha_pedido AS `fechaPedido`,
+                       p.metodo_pago AS `metodoPago`, p.tipo_entrega AS `tipoEntrega`,
+                       p.estado AS `estadoPedido`, p.total AS total,
+                       dp.id_cosecha AS `idCosecha`, dp.cantidad AS kilos,
+                       dp.precio_unitario AS `precioPorKg`,
                        COALESCE(v.nombre, cu.nombre) AS variedad,
                        f.nombre AS familia, c.estado_maduracion AS maduracion,
-                       d.direccion_entrega AS direccion, d.fecha_recoleccion AS fechaRecoleccion,
-                       d.numero_rastreo1 AS numeroRastreo, d.estado AS estadoEntrega
+                       d.direccion_entrega AS direccion, d.fecha_recoleccion AS `fechaRecoleccion`,
+                       d.numero_rastreo1 AS `numeroRastreo`, d.estado AS `estadoEntrega`
                 FROM pedidos p
                 JOIN detalle_pedido dp ON dp.id_pedido = p.id_pedido
                 JOIN cosechas c ON c.id_cosecha = dp.id_cosecha
@@ -138,6 +141,34 @@ public class PedidoRepository {
                 ORDER BY p.fecha_pedido DESC, p.id_pedido DESC, dp.id_detalle
                 """)
                 .param("usuario", idUsuario).query().listOfRows();
+        return normalizarClaves(filas);
+    }
+
+    private List<Map<String, Object>> normalizarClaves(List<Map<String, Object>> filas) {
+        return filas.stream().map(fila -> {
+            Map<String, Object> normalizada = new LinkedHashMap<>();
+            fila.forEach((clave, valor) -> normalizada.put(claveApi(clave), valor));
+            return normalizada;
+        }).toList();
+    }
+
+    private String claveApi(String clave) {
+        return switch (clave.toLowerCase(Locale.ROOT)) {
+            case "idvariedad" -> "idVariedad";
+            case "imagenurl" -> "imagenUrl";
+            case "precioporkg" -> "precioPorKg";
+            case "idcosecha" -> "idCosecha";
+            case "ubicacionbodega" -> "ubicacionBodega";
+            case "idpedido" -> "idPedido";
+            case "fechapedido" -> "fechaPedido";
+            case "metodopago" -> "metodoPago";
+            case "tipoentrega" -> "tipoEntrega";
+            case "estadopedido" -> "estadoPedido";
+            case "fecharecoleccion" -> "fechaRecoleccion";
+            case "numerorastreo" -> "numeroRastreo";
+            case "estadoentrega" -> "estadoEntrega";
+            default -> clave;
+        };
     }
 
     public Optional<Pedido> buscar(int id) {

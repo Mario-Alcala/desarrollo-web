@@ -23,14 +23,20 @@ CREATE TABLE IF NOT EXISTS parcelas (
     FOREIGN KEY (id_terreno) REFERENCES terrenos(id)
 );
 
-CREATE TABLE IF NOT EXISTS variedades (
+CREATE TABLE IF NOT EXISTS familias_producto (
+    id_familia INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS variedades_producto (
     id_variedad INT PRIMARY KEY AUTO_INCREMENT,
-    familia VARCHAR(100) NOT NULL,
+    id_familia INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
-    descripcion VARCHAR(1000),
-    imagen VARCHAR(500),
-    precio_kilo DECIMAL(10,2) NOT NULL,
-    CONSTRAINT chk_variedad_precio CHECK (precio_kilo > 0)
+    descripcion VARCHAR(500),
+    imagen_url VARCHAR(500),
+    precio_por_kg DECIMAL(10,2) NOT NULL,
+    UNIQUE (id_familia, nombre),
+    FOREIGN KEY (id_familia) REFERENCES familias_producto(id_familia)
 );
 
 CREATE TABLE IF NOT EXISTS cultivos (
@@ -43,7 +49,7 @@ CREATE TABLE IF NOT EXISTS cultivos (
     fecha_siembra DATE,
     estado ENUM('activo', 'finalizado') NOT NULL DEFAULT 'activo',
     FOREIGN KEY (id_parcela) REFERENCES parcelas(id_parcela),
-    CONSTRAINT fk_cultivos_variedad FOREIGN KEY (id_variedad) REFERENCES variedades(id_variedad)
+    CONSTRAINT fk_cultivos_variedad FOREIGN KEY (id_variedad) REFERENCES variedades_producto(id_variedad)
 );
 
 CREATE TABLE IF NOT EXISTS proveedores (

@@ -28,14 +28,15 @@ class PedidoApiTests {
 
     @BeforeEach
     void preparar() throws Exception {
-        for (String tabla : new String[]{"distribuciones", "detalle_pedido", "pedidos", "cosechas", "cultivos", "variedades", "parcelas", "terrenos", "usuarios"}) {
+        for (String tabla : new String[]{"distribuciones", "detalle_pedido", "pedidos", "cosechas", "cultivos", "variedades_producto", "familias_producto", "parcelas", "terrenos", "usuarios"}) {
             jdbc.sql("DELETE FROM " + tabla).update();
         }
         jdbc.sql("INSERT INTO usuarios VALUES (1, 'Cliente uno', 'uno@prueba.test', :clave, 'cliente'), (2, 'Cliente dos', 'dos@prueba.test', :clave, 'cliente')")
                 .param("clave", encoder.encode("clave-prueba")).update();
         jdbc.sql("INSERT INTO terrenos VALUES (1, 'Terreno prueba', 'Prueba', 100, 'ocupado')").update();
         jdbc.sql("INSERT INTO parcelas VALUES (1, 1, 'Parcela prueba', 100, 'ocupada')").update();
-        jdbc.sql("INSERT INTO variedades VALUES (1, 'Hortaliza', 'Tomate', 'Descripción', '/tomate.png', 20.50)").update();
+        jdbc.sql("INSERT INTO familias_producto VALUES (1, 'Hortaliza')").update();
+        jdbc.sql("INSERT INTO variedades_producto VALUES (1, 1, 'Tomate', 'Descripción', '/tomate.png', 20.50)").update();
         jdbc.sql("INSERT INTO cultivos (id, id_parcela, id_variedad, nombre, estado) VALUES (1, 1, 1, 'Tomate cultivo', 'activo')").update();
         jdbc.sql("INSERT INTO cosechas (id_cosecha,id_cultivo,id_usuario,fecha_cosecha,cantidad_cosechada,cantidad_disponible,estado_maduracion) VALUES (1,1,1,CURRENT_DATE,10,10,'Maduro'), (2,1,1,CURRENT_DATE,2,2,'Verde')").update();
         cliente = login("uno@prueba.test");
@@ -77,7 +78,7 @@ class PedidoApiTests {
         var catalogo = enviar(cliente, "/catalogo", null);
         assertEquals(200, catalogo.statusCode());
         assertTrue(catalogo.body().contains("maduracion"));
-        assertTrue(catalogo.body().contains("precioKilo"));
+        assertTrue(catalogo.body().contains("precioPorKg"), catalogo.body());
         assertTrue(catalogo.body().contains("Tomate"));
         var resultado = enviar(cliente, "/pedidos", pedido("1.25"));
         assertEquals(201, resultado.statusCode(), resultado.body());
@@ -95,8 +96,9 @@ class PedidoApiTests {
         assertEquals(1, jdbc.sql("SELECT id_usuario FROM pedidos").query(Integer.class).single());
         assertEquals("Calle prueba 10",jdbc.sql("SELECT direccion_entrega FROM distribuciones").query(String.class).single());
         assertEquals(0, jdbc.sql("SELECT COUNT(*) FROM distribuciones WHERE fecha_recoleccion IS NOT NULL OR numero_rastreo1 IS NOT NULL").query(Integer.class).single());
-        assertTrue(enviar(cliente,"/pedidos",null).body().contains("Tomate"));
-        assertEquals("[]",enviar(login("dos@prueba.test"),"/pedidos",null).body());
+        assertTrue(enviar(cliente,"/pedidos/cliente/1",null).body().contains("Tomate"));
+        assertEquals("[]",enviar(login("dos@prueba.test"),"/pedidos/cliente/2",null).body());
+        assertEquals(403,enviar(cliente,"/pedidos/cliente/2",null).statusCode());
         assertEquals(401,enviar(HttpClient.newHttpClient(),"/pedidos",null).statusCode());
         assertEquals(401,enviar(HttpClient.newHttpClient(),"/pedidos",pedido("1")).statusCode());
     }

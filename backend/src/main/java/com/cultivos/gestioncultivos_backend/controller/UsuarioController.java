@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 
 import com.cultivos.gestioncultivos_backend.model.Usuario;
 import com.cultivos.gestioncultivos_backend.model.SolicitudLogin;
@@ -28,9 +29,18 @@ public class UsuarioController {
     }
 
     @PostMapping("/login")
-    public Usuario iniciarSesion(@RequestBody SolicitudLogin solicitud) {
-        return servicio.iniciarSesion(
+    public Usuario iniciarSesion(@RequestBody SolicitudLogin solicitud, HttpSession sesion) {
+        Usuario usuario = servicio.iniciarSesion(
                 solicitud.getCorreoElectronico(), solicitud.getContrasena());
+        sesion.setAttribute("idUsuario", usuario.getIdUsuario());
+        sesion.setAttribute("rol", usuario.getRol());
+        return usuario;
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cerrarSesion(HttpSession sesion) {
+        sesion.invalidate();
     }
 
     @PostMapping("/registro")
