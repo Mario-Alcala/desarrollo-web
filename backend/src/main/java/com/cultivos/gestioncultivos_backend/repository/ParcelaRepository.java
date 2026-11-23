@@ -18,7 +18,7 @@ public class ParcelaRepository {
     public List<Parcela> buscarPorTerreno(Long idTerreno) {
         return jdbc.sql("""
                 SELECT p.id_parcela, p.id_terreno, p.nombre, p.superficie_m2, p.estado,
-                       c.id AS id_cultivo, c.nombre AS cultivo_nombre,
+                       c.id AS id_cultivo, c.id_variedad, c.nombre AS cultivo_nombre,
                        c.familia AS cultivo_familia, c.etapa_fenologica,
                        c.fecha_siembra, c.estado AS estado_cultivo
                 FROM parcelas p

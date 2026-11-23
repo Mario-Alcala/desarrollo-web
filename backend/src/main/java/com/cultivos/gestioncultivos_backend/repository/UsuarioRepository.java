@@ -43,6 +43,14 @@ public class UsuarioRepository {
         return resultado.get(0);
     }
 
+    public String buscarContrasena(int id) {
+        return jdbc.sql("SELECT contrasena FROM usuarios WHERE id_usuario = :id")
+                .param("id", id)
+                .query(String.class)
+                .optional()
+                .orElse(null);
+    }
+
     public Usuario buscarPorCorreo(String correo) {
         List<Usuario> resultado = jdbc.sql("""
                 SELECT id_usuario, nombre_usuario, correo_electronico, contrasena, rol
@@ -58,6 +66,16 @@ public class UsuarioRepository {
         }
 
         return resultado.get(0);
+    }
+
+    public boolean correoExiste(String correo, Integer excluirId) {
+        var consulta = excluirId == null
+                ? jdbc.sql("SELECT COUNT(*) FROM usuarios WHERE LOWER(correo_electronico) = LOWER(:correo)")
+                    .param("correo", correo)
+                : jdbc.sql("SELECT COUNT(*) FROM usuarios WHERE LOWER(correo_electronico) = LOWER(:correo) AND id_usuario <> :id")
+                    .param("correo", correo).param("id", excluirId);
+        Integer cantidad = consulta.query(Integer.class).single();
+        return cantidad > 0;
     }
 
     public void insertar(Usuario usuario) {

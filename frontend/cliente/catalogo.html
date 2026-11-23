@@ -16,7 +16,8 @@
         </header>
         <main class="pagina">
             <h1>Catálogo de productos</h1>
-            <p>Elige tus productos y la cantidad que necesitas.</p>
+            <p>Elige un lote disponible. La maduración y la cantidad pertenecen a cada cosecha.</p>
+            <div class="campos-operacion"><div><label for="buscar-producto-cliente">Buscar producto</label><input id="buscar-producto-cliente" type="search" placeholder="Familia o variedad"></div><div><label for="filtro-maduracion-cliente">Maduración</label><select id="filtro-maduracion-cliente"><option value="">Todas</option><option value="verde">Verde</option><option value="maduro">Maduro</option></select></div></div>
             <p id="mensaje-catalogo" class="mensaje" role="status"></p>
             <div class="vista-cliente">
                 <section aria-label="Productos disponibles">
@@ -25,14 +26,7 @@
                 <aside class="panel resumen">
                     <h2>Resumen del pedido</h2>
                     <div class="tabla-contenedor">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
+                        <table><thead><tr><th>Producto / lote</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
                             <tbody id="detalle-pedido"></tbody>
                         </table>
                     </div>
@@ -41,15 +35,12 @@
                         <span id="total">$0.00</span>
                     </p>
                     <div class="botones-pedido">
-                        <a class="boton boton-secundario" href="historial.html">Historial de pedidos</a>
-                        <button id="rastrear" class="boton boton-secundario" type="button">Rastrear pedidos</button>
+                        <a class="boton boton-secundario" href="historial.html">Historial y rastreo de pedidos</a>
                         <button id="finalizar" class="boton" type="button" disabled>Finalizar pedido</button>
                     </div>
                 </aside>
             </div>
         </main>
-        <script src="../js/datos.js"></script>
-        <script src="../js/pedido.js"></script>
-        <script src="../js/carrito.js"></script>
+        <script src="../js/catalogo-cliente.js"></script>
     </body>
 </html>

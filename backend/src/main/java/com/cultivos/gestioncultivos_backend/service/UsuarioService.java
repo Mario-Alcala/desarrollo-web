@@ -40,11 +40,21 @@ public class UsuarioService {
     }
 
     public void crear(Usuario usuario) {
-        validar(usuario);
+        validar(usuario, null);
 
         usuario.setContrasena(
                 codificador.encode(usuario.getContrasena()));
 
+        repositorio.insertar(usuario);
+    }
+
+    public void crearPersonal(Usuario usuario) {
+        validar(usuario, null);
+        if (!"administrador_agricultor".equals(usuario.getRol())
+                && !"trabajador".equals(usuario.getRol())) {
+            throw new IllegalArgumentException("Desde administración solo se pueden registrar administradores o trabajadores");
+        }
+        usuario.setContrasena(codificador.encode(usuario.getContrasena()));
         repositorio.insertar(usuario);
     }
 
@@ -70,13 +80,22 @@ public class UsuarioService {
     }
 
     public void actualizar(int id, Usuario usuario) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("El usuario es obligatorio");
+        }
         obtener(id);
-        validar(usuario);
+        if (usuario.getContrasena() == null || usuario.getContrasena().isBlank()) {
+            usuario.setContrasena(repositorio.buscarContrasena(id));
+        } else {
+            usuario.setContrasena(codificador.encode(usuario.getContrasena()));
+        }
+        validar(usuario, id);
+        if (!"administrador_agricultor".equals(usuario.getRol())
+                && !"trabajador".equals(usuario.getRol())) {
+            throw new IllegalArgumentException("Desde administración solo se pueden asignar roles de administrador o trabajador");
+        }
 
         usuario.setIdUsuario(id);
-        usuario.setContrasena(
-                codificador.encode(usuario.getContrasena()));
-
         repositorio.actualizar(usuario);
     }
 
@@ -85,7 +104,7 @@ public class UsuarioService {
         repositorio.eliminar(id);
     }
 
-    private void validar(Usuario usuario) {
+    private void validar(Usuario usuario, Integer excluirId) {
         if (usuario == null) {
             throw new IllegalArgumentException("El usuario es obligatorio");
         }
@@ -123,5 +142,8 @@ public class UsuarioService {
         usuario.setRol(usuario.getRol().equalsIgnoreCase("agricultor")
                 ? "administrador_agricultor"
                 : usuario.getRol().toLowerCase());
+        if (repositorio.correoExiste(usuario.getCorreoElectronico(), excluirId)) {
+            throw new IllegalArgumentException("Ya existe una cuenta con ese correo electrónico");
+        }
     }
 }

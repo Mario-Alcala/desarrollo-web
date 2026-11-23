@@ -3,7 +3,7 @@
   ARCHIVO: bodega.html
   CAPA: FRONTEND (estructura). ¿ES CASCARÓN? SÍ en lo visual (HTML + CSS), pero el sidebar, la barra
     superior y las tablas las dibuja JavaScript: sin JS la página sale casi vacía.
-  BACKEND: cosechas de /api/cosechas y cultivos de /api/cultivos.
+  BACKEND: consulta lotes ya creados al registrar una cosecha desde la pantalla del empleado.
 -->
 <html lang="es">
 <head>
@@ -24,9 +24,8 @@
                 <div class="encabezado-pagina">
                     <div>
                         <h1>Bodega</h1>
-                        <p>Registra las cosechas empacadas por kilo y consulta cuánto queda disponible para los pedidos.</p>
+                        <p>Consulta las cosechas registradas desde los cultivos y los kilos disponibles para pedidos.</p>
                     </div>
-                    <button id="registrar-cosecha" class="boton" type="button">Registrar cosecha</button>
                 </div>
 
                 <div class="barra-herramientas">
@@ -41,31 +40,13 @@
                 <p id="mensaje-bodega" class="mensaje" role="status"></p>
                 <div class="tabla-admin-contenedor">
                     <table class="tabla-admin">
-                        <thead><tr><th>Lote / cultivo</th><th>Fecha</th><th>Empacado</th><th>Disponible para pedidos</th><th>Maduración</th></tr></thead>
+                        <thead><tr><th>Lote / cultivo</th><th>Fecha</th><th>Empacado</th><th>Disponible para pedidos</th><th>Maduración</th><th>Ubicación en bodega</th></tr></thead>
                         <tbody id="tabla-cuerpo"></tbody>
                     </table>
                 </div>
             </main>
         </div>
     </div>
-
-    <dialog id="dialogo-cosecha" class="ancho" aria-labelledby="titulo-cosecha">
-        <h2 id="titulo-cosecha">Registrar cosecha</h2>
-        <form id="formulario-cosecha">
-            <div class="campos-dos">
-                <div><label for="co-cultivo">Cultivo</label><select id="co-cultivo" required></select></div>
-                <div><label for="co-usuario">Registrado por</label><select id="co-usuario" required></select></div>
-                <div><label for="co-fecha">Fecha de cosecha</label><input id="co-fecha" type="date" required></div>
-                <div><label for="co-empacado">Kilos empacados</label><input id="co-empacado" type="number" min="0.01" step="0.01" required></div>
-                <div><label for="co-maduracion">Maduración del lote</label><select id="co-maduracion" required><option value="verde">Verde</option><option value="maduro">Maduro</option></select></div>
-            </div>
-            <p id="mensaje-cosecha" class="mensaje error" role="alert"></p>
-            <div class="botones-pedido">
-                <button class="boton" type="submit">Guardar lote</button>
-                <button id="cancelar-cosecha" class="boton boton-secundario" type="button">Cancelar</button>
-            </div>
-        </form>
-    </dialog>
 
     <script src="../js/sidebar.js"></script>
     <script src="../js/admin-comun.js"></script>

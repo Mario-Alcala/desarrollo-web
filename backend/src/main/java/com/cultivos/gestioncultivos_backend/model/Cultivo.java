@@ -6,6 +6,7 @@ public class Cultivo {
 
     private Long id;
     private Long idParcela;
+    private Integer idVariedad;
     private String nombre;
     private String tipo;
     private String familia;
@@ -27,6 +28,8 @@ public class Cultivo {
 
     public Long getIdParcela() { return idParcela; }
     public void setIdParcela(Long idParcela) { this.idParcela = idParcela; }
+    public Integer getIdVariedad() { return idVariedad; }
+    public void setIdVariedad(Integer idVariedad) { this.idVariedad = idVariedad; }
 
     public String getNombre() {
         return nombre;

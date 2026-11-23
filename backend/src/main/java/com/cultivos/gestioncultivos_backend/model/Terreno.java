@@ -6,6 +6,7 @@ public class Terreno {
     private String nombre;
     private String ubicacion;
     private Double superficieHa;
+    private Double superficieM2;
     private String tipoSuelo;
     private String estado;
     private Double latitud;
@@ -45,6 +46,9 @@ public class Terreno {
     public void setSuperficieHa(Double superficieHa) {
         this.superficieHa = superficieHa;
     }
+
+    public Double getSuperficieM2() { return superficieM2; }
+    public void setSuperficieM2(Double superficieM2) { this.superficieM2 = superficieM2; }
 
     public String getTipoSuelo() {
         return tipoSuelo;

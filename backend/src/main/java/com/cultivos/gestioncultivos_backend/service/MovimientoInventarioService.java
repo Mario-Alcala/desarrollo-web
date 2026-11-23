@@ -54,10 +54,10 @@ public class MovimientoInventarioService {
             throw new IllegalArgumentException("No hay cantidad suficiente para registrar la salida");
         }
 
-        movimiento.setIdMovimiento(repositorio.insertar(movimiento));
         if (movimiento.getFechaMovimiento() == null) {
             movimiento.setFechaMovimiento(LocalDateTime.now());
         }
+        movimiento.setIdMovimiento(repositorio.insertar(movimiento));
         return movimiento;
     }
 
@@ -80,6 +80,10 @@ public class MovimientoInventarioService {
                 || movimiento.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
         }
+        if (movimiento.getObservacion() == null || movimiento.getObservacion().isBlank()) {
+            throw new IllegalArgumentException("La observación es obligatoria");
+        }
+        movimiento.setObservacion(movimiento.getObservacion().trim());
     }
 
     private void verificarInventario(int idInventario) {

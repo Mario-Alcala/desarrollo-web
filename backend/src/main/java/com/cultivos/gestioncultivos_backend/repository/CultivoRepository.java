@@ -44,10 +44,11 @@ public class CultivoRepository {
     public Long insertar(Cultivo c) {
         KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
-                INSERT INTO cultivos (id_parcela, nombre, familia, etapa_fenologica, fecha_siembra, estado)
-                VALUES (:parcela, :nombre, :familia, :etapa, :fecha, :estado)
+                INSERT INTO cultivos (id_parcela, id_variedad, nombre, familia, etapa_fenologica, fecha_siembra, estado)
+                VALUES (:parcela, :variedad, :nombre, :familia, :etapa, :fecha, :estado)
                 """)
                 .param("parcela", c.getIdParcela())
+                .param("variedad", c.getIdVariedad())
                 .param("nombre", c.getNombre())
                 .param("familia", c.getFamilia() != null ? c.getFamilia() : c.getTipo())
                 .param("etapa", c.getEtapaFenologica())
@@ -60,11 +61,12 @@ public class CultivoRepository {
     public boolean actualizar(Cultivo c) {
         int filas = jdbc.sql("""
                 UPDATE cultivos
-                   SET id_parcela = :parcela, nombre = :nombre, familia = :familia,
+                   SET id_parcela = :parcela, id_variedad = :variedad, nombre = :nombre, familia = :familia,
                        etapa_fenologica = :etapa, fecha_siembra = :fecha, estado = :estado
                  WHERE id = :id
                 """)
                 .param("parcela", c.getIdParcela())
+                .param("variedad", c.getIdVariedad())
                 .param("nombre", c.getNombre())
                 .param("familia", c.getFamilia() != null ? c.getFamilia() : c.getTipo())
                 .param("etapa", c.getEtapaFenologica())

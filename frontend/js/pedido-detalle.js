@@ -93,6 +93,15 @@ async function cargar() {
         cosechas = await pedir("/cosechas");
         document.getElementById("miga-pedido").textContent = `#${pedido.idPedido}`;
         document.getElementById("titulo-pedido").textContent = `Pedido #${pedido.idPedido}`;
+        const datosEntrega = document.getElementById("datos-entrega-pedido");
+        datosEntrega.textContent = pedido.tipoEntrega === "domicilio"
+            ? `Dirección: ${pedido.direccionEntrega || "No registrada"}${pedido.numeroRastreo ? ` · Rastreo: ${pedido.numeroRastreo}` : ""}`
+            : `Recolección en bodega: ${formatoFecha(pedido.fechaRecoleccion)} · Horario de 6:00 a. m. a 6:00 p. m.`;
+        document.getElementById("etiqueta-rastreo").hidden = pedido.tipoEntrega !== "domicilio";
+        document.getElementById("numero-rastreo").hidden = pedido.tipoEntrega !== "domicilio";
+        document.getElementById("numero-rastreo").value = pedido.numeroRastreo || "";
+        document.getElementById("formulario-asignacion").hidden = pedido.compraCatalogo === true;
+        document.getElementById("aviso-asignacion-catalogo").hidden = pedido.compraCatalogo !== true;
         const trazaEntrega = pedido.fechaEntrega
             ? ` · ${pedido.tipoEntrega === "domicilio" ? "Entregado" : "Recogido"}: ${formatoFechaHora(pedido.fechaEntrega)}`
             : pedido.fechaSalida ? ` · Enviado: ${formatoFechaHora(pedido.fechaSalida)}` : "";
@@ -143,7 +152,10 @@ document.getElementById("formulario-entrega").addEventListener("submit", async f
     try {
         await pedir(`/pedidos/${encodeURIComponent(idPedido)}/entrega`, {
             method: "PUT", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ estado: selectorEstado.value })
+            body: JSON.stringify({
+                estado: selectorEstado.value,
+                numeroRastreo: document.getElementById("numero-rastreo").value.trim()
+            })
         });
         await cargar();
     } catch (error) {

@@ -1,86 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Inventario - Gestión de Cultivos</title>
-        <link rel="stylesheet" href="../css/styles.css">
-        <link rel="stylesheet" href="../css/cultivos.css">
-        <link rel="stylesheet" href="../css/operaciones.css">
-    </head>
-    <body>
-        <header class="barra">
-            <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <a href="../index.html">Inicio</a>
-        </header>
-        <main class="pagina">
-            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
-                <a href="cultivos.html">Cultivos activos</a>
-                <a href="inventario.html" aria-current="page">Inventario</a>
-                <a href="observaciones.html">Observaciones</a>
-                <a href="riegos.html">Riego</a>
-                <a href="fertilizantes.html">Fertilizantes</a>
-                <a href="abonos.html">Abono</a>
-                <a href="terrenos.html">Terreno</a>
-                <a href="calendario.html">Calendario</a>
-            </nav>
-            <h1>Inventario</h1>
-            <nav class="menu-trabajador" aria-label="Contenido del inventario">
-                <a href="inventario.html">Existencias</a>
-                <a href="inventario.html?seccion=semillas">Semillas</a>
-            </nav>
-            <p id="mensaje-operacion" class="mensaje" role="status"></p>
-            <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/inventario" data-id="idInventario" novalidate>
-                    <div class="campos-operacion">
-                        <div>
-                            <label for="idInsumo">Insumo</label>
-                            <select id="idInsumo" name="idInsumo" data-ruta="/insumos" data-id="idInsumo" data-nombre="nombre" data-numero="true" required></select>
-                        </div>
-                        <div>
-                            <label for="cantidad">Cantidad</label>
-                            <input id="cantidad" name="cantidad" type="number" required min="0" step="0.01">
-                        </div>
-                        <div>
-                            <label for="fechaIngreso">Fecha de ingreso</label>
-                            <input id="fechaIngreso" name="fechaIngreso" type="date" required>
-                        </div>
-                        <div>
-                            <label for="fechaCaducidad">Caducidad</label>
-                            <input id="fechaCaducidad" name="fechaCaducidad" type="date">
-                        </div>
-                    </div>
-                    <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
-                    </div>
-                </form>
-            </section>
-            <section class="panel espacio">
-                <h2>Registros</h2>
-                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
-                <div class="tabla-contenedor espacio">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th data-campo="idInsumo">Insumo</th>
-                                <th data-campo="categoria">Categoría</th>
-                                <th data-campo="cantidad">Cantidad</th>
-                                <th data-campo="unidadMedida">Unidad</th>
-                                <th data-campo="fechaIngreso">Ingreso</th>
-                                <th data-campo="fechaCaducidad">Caducidad</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registros-operacion"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-        <script src="../js/api.js"></script>
-        <script src="../js/proveedores.js"></script>
-        <script src="../js/inventario.js"></script>
-        <script src="../js/operaciones.js"></script>
-    </body>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Movimientos de inventario - Gestión de Cultivos</title><link rel="stylesheet" href="../css/styles.css"><link rel="stylesheet" href="../css/cultivos.css"><link rel="stylesheet" href="../css/operaciones.css"></head>
+<body>
+    <header class="barra"><span class="marca">Gestión de Cultivos · Empleado</span><a href="../index.html">Inicio</a></header>
+    <main class="pagina">
+        <nav class="menu-trabajador" aria-label="Secciones del empleado"><a href="cultivos.html">Cultivos</a><a href="terrenos.html">Terrenos</a><a href="inventario.html" aria-current="page">Inventario</a><a href="observaciones.html">Observaciones</a><a href="riegos.html">Riegos</a><a href="abonos.html">Abono</a><a href="fertilizantes.html">Fertilizantes</a><a href="calendario.html">Calendario</a><a href="../administrador-agricultor/pedidos.html">Preparar pedidos</a></nav>
+        <h1>Inventario</h1><p>Registra entradas o salidas de artículos y lotes que ya existen. El movimiento actualiza la existencia registrada por administración.</p>
+        <p id="mensaje-movimiento-empleado" class="mensaje" role="status"></p>
+        <section class="panel"><h2>Registrar movimiento</h2>
+            <form id="formulario-movimiento-empleado" novalidate><div class="campos-operacion">
+                <div><label for="lote-movimiento">Artículo o lote existente</label><select id="lote-movimiento" required><option value="">Cargando inventario…</option></select></div>
+                <div><label for="tipo-movimiento">Tipo</label><select id="tipo-movimiento" required><option value="entrada">Entrada</option><option value="salida">Salida</option></select></div>
+                <div><label for="cantidad-movimiento">Cantidad</label><input id="cantidad-movimiento" type="number" min="0.01" step="0.01" required></div>
+                <div><label for="fecha-movimiento">Fecha y hora</label><input id="fecha-movimiento" type="datetime-local" required></div>
+                <div><label for="observacion-movimiento">Observación</label><input id="observacion-movimiento" type="text" maxlength="255" required></div>
+            </div><p id="error-movimiento-empleado" class="mensaje" role="alert"></p><button id="guardar-movimiento-empleado" class="boton" type="submit">Guardar movimiento</button></form>
+        </section>
+        <section class="panel espacio"><h2>Existencias actuales</h2><div class="tabla-contenedor"><table><thead><tr><th>Lote</th><th>Artículo</th><th>Tipo</th><th>Existencia</th><th>Unidad</th><th>Caducidad</th></tr></thead><tbody id="existencias-empleado"></tbody></table></div></section>
+        <section class="panel espacio"><h2>Movimientos recientes</h2><div class="tabla-contenedor"><table><thead><tr><th>Fecha y hora</th><th>Lote</th><th>Movimiento</th><th>Cantidad</th><th>Observación</th></tr></thead><tbody id="lista-movimientos-empleado"></tbody></table></div></section>
+    </main><script src="../js/inventario-movimientos-empleado.js"></script>
+</body>
 </html>

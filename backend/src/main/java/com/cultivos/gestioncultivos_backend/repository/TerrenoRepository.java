@@ -20,13 +20,13 @@ public class TerrenoRepository {
     }
 
     public List<Terreno> buscarTodos() {
-        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2 / 10000 AS superficie_ha, latitud, longitud, estado FROM terrenos ORDER BY id")
+        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2, superficie_m2 / 10000 AS superficie_ha, latitud, longitud, estado FROM terrenos ORDER BY id")
                 .query(Terreno.class)
                 .list();
     }
 
     public Optional<Terreno> buscarPorId(Long id) {
-        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2 / 10000 AS superficie_ha, latitud, longitud, estado FROM terrenos WHERE id = :id")
+        return jdbc.sql("SELECT id, nombre, ubicacion, superficie_m2, superficie_m2 / 10000 AS superficie_ha, latitud, longitud, estado FROM terrenos WHERE id = :id")
                 .param("id", id)
                 .query(Terreno.class)
                 .optional();

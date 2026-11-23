@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cultivos.gestioncultivos_backend.model.AsignacionLote;
 import com.cultivos.gestioncultivos_backend.model.Pedido;
 import com.cultivos.gestioncultivos_backend.model.PedidoLote;
+import com.cultivos.gestioncultivos_backend.model.PedidoNuevo;
 import com.cultivos.gestioncultivos_backend.service.PedidoService;
 
 @RestController
@@ -27,6 +28,17 @@ public class PedidoController {
 
     @GetMapping
     public List<Pedido> listar() { return servicio.listar(); }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, Object> crearCompra(@RequestBody PedidoNuevo solicitud) {
+        return servicio.crearCompra(solicitud);
+    }
+
+    @GetMapping("/cliente/{idUsuario}")
+    public List<Map<String, Object>> historialCliente(@PathVariable("idUsuario") int idUsuario) {
+        return servicio.historialCliente(idUsuario);
+    }
 
     @GetMapping("/{id}")
     public Pedido obtener(@PathVariable("id") int id) { return servicio.obtener(id); }
@@ -43,6 +55,6 @@ public class PedidoController {
     @PutMapping("/{id}/entrega")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void actualizarEntrega(@PathVariable("id") int id, @RequestBody Map<String, String> solicitud) {
-        servicio.actualizarEntrega(id, solicitud.get("estado"));
+        servicio.actualizarEntrega(id, solicitud.get("estado"), solicitud.get("numeroRastreo"));
     }
 }

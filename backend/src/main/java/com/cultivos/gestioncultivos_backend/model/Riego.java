@@ -1,14 +1,14 @@
 package com.cultivos.gestioncultivos_backend.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Riego {
 
     private Integer idRiego;
     private Long idCultivo;
-    private Long idTerreno;
-    private LocalDate fechaRiego;
+    private Integer idUsuario;
+    private LocalDateTime fechaRiego;
     private BigDecimal cantidadAgua;
     private String unidadMedida;
     private String metodo;
@@ -33,19 +33,14 @@ public class Riego {
         this.idCultivo = idCultivo;
     }
 
-    public Long getIdTerreno() {
-        return idTerreno;
-    }
+    public Integer getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
 
-    public void setIdTerreno(Long idTerreno) {
-        this.idTerreno = idTerreno;
-    }
-
-    public LocalDate getFechaRiego() {
+    public LocalDateTime getFechaRiego() {
         return fechaRiego;
     }
 
-    public void setFechaRiego(LocalDate fechaRiego) {
+    public void setFechaRiego(LocalDateTime fechaRiego) {
         this.fechaRiego = fechaRiego;
     }
 

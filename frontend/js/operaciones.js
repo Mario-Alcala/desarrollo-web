@@ -145,6 +145,15 @@ formularioOperacion.addEventListener('submit', async function (evento) {
             : (campo.type === 'number' || campo.dataset.numero ? Number(valor) : valor);
     }
 
+    if (['/riegos', '/observaciones-cultivos', '/incidencias-cultivo', '/cosechas', '/movimientos-inventario'].includes(rutaOperacion)) {
+        var usuarioActual = sessionStorage.getItem('usuarioId');
+        if (!usuarioActual) {
+            mensajeOperacion.textContent = 'Inicia sesión para registrar esta actividad.';
+            return;
+        }
+        datos.idUsuario = Number(usuarioActual);
+    }
+
     if (datos.fechaCaducidad && datos.fechaIngreso && datos.fechaCaducidad < datos.fechaIngreso) {
         mensajeOperacion.textContent = 'La caducidad no puede ser anterior al ingreso.';
         return;

@@ -46,6 +46,7 @@ if (formularioLogin) {
 
             sessionStorage.setItem('usuarioNombre', usuario.nombreUsuario);
             sessionStorage.setItem('usuarioRol', usuario.rol);
+            sessionStorage.setItem('usuarioId', usuario.idUsuario);
 
             if (usuario.rol === 'administrador_agricultor' || usuario.rol === 'agricultor') {
                 window.location.href = 'administrador-agricultor/resumen.html';

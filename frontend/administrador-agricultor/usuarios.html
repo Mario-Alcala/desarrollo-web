@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Usuarios - Gestión de Cultivos</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin-vistas.css">
+    <style>
+        .form-usuario { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+        .form-usuario label { display:block; margin-bottom:6px; }
+        .form-usuario input,.form-usuario select { width:100%; }
+        .acciones-usuario { display:flex; gap:10px; margin-top:16px; }
+        .filtros-usuario { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+        @media(max-width:700px){ .form-usuario { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body class="admin">
+    <div class="app-admin">
+        <aside id="sidebar" class="sidebar-admin" data-activo="usuarios"></aside>
+        <div class="contenido-admin">
+            <header id="topbar" class="topbar-admin" data-sin-buscador="true"></header>
+            <main class="pagina">
+                <div class="encabezado-pagina">
+                    <div><h1>Usuarios</h1><p>Registra cuentas de administrador o trabajador. Los clientes crean su propia cuenta.</p></div>
+                    <button id="mostrar-formulario" class="boton" type="button">Agregar usuario</button>
+                </div>
+                <section id="panel-formulario" class="panel" hidden>
+                    <h2 id="titulo-formulario">Agregar usuario</h2>
+                    <form id="formulario-usuario" novalidate>
+                        <div class="form-usuario">
+                            <div><label for="nombre-usuario">Nombre</label><input id="nombre-usuario" maxlength="100" required></div>
+                            <div><label for="correo-usuario">Correo</label><input id="correo-usuario" type="email" maxlength="100" required></div>
+                            <div><label for="contrasena-usuario">Contraseña</label><input id="contrasena-usuario" type="password" minlength="8" autocomplete="new-password"><small>Al editar, déjala vacía para conservar la contraseña.</small></div>
+                            <div><label for="rol-usuario">Rol</label><select id="rol-usuario" required><option value="trabajador">Empleado</option><option value="administrador_agricultor">Administrador / Agricultor</option></select></div>
+                        </div>
+                        <p id="mensaje-formulario" class="mensaje" role="alert"></p>
+                        <div class="acciones-usuario"><button class="boton" type="submit">Guardar</button><button id="cancelar-formulario" class="boton boton-secundario" type="button">Cancelar</button></div>
+                    </form>
+                </section>
+                <div class="filtros-usuario" aria-label="Filtrar usuarios">
+                    <button class="boton boton-secundario" data-rol="todos" type="button">Todos</button>
+                    <button class="boton boton-secundario" data-rol="administrador_agricultor" type="button">Administradores</button>
+                    <button class="boton boton-secundario" data-rol="trabajador" type="button">Empleados</button>
+                    <button class="boton boton-secundario" data-rol="cliente" type="button">Clientes</button>
+                </div>
+                <p id="mensaje-usuarios" class="mensaje" role="status"></p>
+                <div class="tabla-contenedor"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead><tbody id="lista-usuarios"></tbody></table></div>
+            </main>
+        </div>
+    </div>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/usuarios-admin.js"></script>
+</body>
+</html>

@@ -9,6 +9,7 @@ public class Parcela {
     private Double superficieM2;
     private String estado;
     private Long idCultivo;
+    private Integer idVariedad;
     private String cultivoNombre;
     private String cultivoFamilia;
     private String etapaFenologica;
@@ -27,6 +28,8 @@ public class Parcela {
     public void setEstado(String estado) { this.estado = estado; }
     public Long getIdCultivo() { return idCultivo; }
     public void setIdCultivo(Long idCultivo) { this.idCultivo = idCultivo; }
+    public Integer getIdVariedad() { return idVariedad; }
+    public void setIdVariedad(Integer idVariedad) { this.idVariedad = idVariedad; }
     public String getCultivoNombre() { return cultivoNombre; }
     public void setCultivoNombre(String cultivoNombre) { this.cultivoNombre = cultivoNombre; }
     public String getCultivoFamilia() { return cultivoFamilia; }

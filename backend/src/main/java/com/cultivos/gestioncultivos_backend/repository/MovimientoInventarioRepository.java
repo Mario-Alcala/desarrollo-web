@@ -76,13 +76,14 @@ public class MovimientoInventarioRepository {
         KeyHolder llaves = new GeneratedKeyHolder();
         jdbc.sql("""
                 INSERT INTO movimientos_inventario
-                (id_inventario, id_usuario, tipo_movimiento, cantidad, observacion)
-                VALUES (:inventario, :usuario, :tipo, :cantidad, :observacion)
+                (id_inventario, id_usuario, tipo_movimiento, cantidad, fecha_movimiento, observacion)
+                VALUES (:inventario, :usuario, :tipo, :cantidad, :fecha, :observacion)
                 """)
                 .param("inventario", movimiento.getIdInventario())
                 .param("usuario", movimiento.getIdUsuario())
                 .param("tipo", movimiento.getTipoMovimiento())
                 .param("cantidad", movimiento.getCantidad())
+                .param("fecha", movimiento.getFechaMovimiento())
                 .param("observacion", movimiento.getObservacion())
                 .update(llaves);
         return llaves.getKey().intValue();

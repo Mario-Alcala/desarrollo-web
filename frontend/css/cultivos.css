@@ -38,6 +38,22 @@
     overflow-wrap: anywhere;
 }
 
+.producto-imagen {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.sin-imagen {
+    display: grid;
+    place-items: center;
+    background: #edf3e8;
+    color: #52714c;
+}
+
 .panel h2, .producto h2, dialog h2 {
     margin-top: 0;
 }

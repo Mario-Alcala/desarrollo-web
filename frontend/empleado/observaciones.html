@@ -1,82 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Observaciones - Gestión de Cultivos</title>
-        <link rel="stylesheet" href="../css/styles.css">
-        <link rel="stylesheet" href="../css/cultivos.css">
-        <link rel="stylesheet" href="../css/operaciones.css">
-    </head>
-    <body>
-        <header class="barra">
-            <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <a href="../index.html">Inicio</a>
-        </header>
-        <main class="pagina">
-            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
-                <a href="cultivos.html">Cultivos activos</a>
-                <a href="inventario.html">Inventario</a>
-                <a href="observaciones.html" aria-current="page">Observaciones</a>
-                <a href="riegos.html">Riego</a>
-                <a href="fertilizantes.html">Fertilizantes</a>
-                <a href="abonos.html">Abono</a>
-                <a href="terrenos.html">Terreno</a>
-                <a href="calendario.html">Calendario</a>
-            </nav>
-            <h1>Observaciones</h1>
-            <p id="mensaje-operacion" class="mensaje" role="status"></p>
-            <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/observaciones-cultivos" data-id="idObservacion" novalidate>
-                    <div class="campos-operacion">
-                        <div>
-                            <label for="idCultivo">Cultivo</label>
-                            <select id="idCultivo" name="idCultivo" data-numero="true" data-ruta="/cultivos" data-id="id" data-nombre="nombre" required>
-                                <option value="">Selecciona una opción</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="idUsuario">Trabajador</label>
-                            <select id="idUsuario" name="idUsuario" data-numero="true" data-ruta="/usuarios" data-id="idUsuario" data-nombre="nombreUsuario" required>
-                                <option value="">Selecciona una opción</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="fechaObservacion">Fecha</label>
-                            <input id="fechaObservacion" name="fechaObservacion" type="date" required>
-                        </div>
-                        <div>
-                            <label for="descripcion">Observación</label>
-                            <textarea id="descripcion" name="descripcion" rows="3" required maxlength="2000"></textarea>
-                        </div>
-                    </div>
-                    <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
-                    </div>
-                </form>
-            </section>
-            <section class="panel espacio">
-                <h2>Registros</h2>
-                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
-                <div class="tabla-contenedor espacio">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th data-campo="idCultivo">Cultivo</th>
-                                <th data-campo="idUsuario">Trabajador</th>
-                                <th data-campo="fechaObservacion">Fecha</th>
-                                <th data-campo="descripcion">Observación</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registros-operacion"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-        <script src="../js/api.js"></script>
-        <script src="../js/operaciones.js"></script>
-    </body>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bitácora de campo - Gestión de Cultivos</title><link rel="stylesheet" href="../css/styles.css"><link rel="stylesheet" href="../css/cultivos.css"><link rel="stylesheet" href="../css/operaciones.css"></head>
+<body>
+    <header class="barra"><span class="marca">Gestión de Cultivos · Empleado</span><a href="../index.html">Inicio</a></header>
+    <main class="pagina">
+        <nav class="menu-trabajador" aria-label="Secciones del empleado"><a href="cultivos.html">Cultivos</a><a href="terrenos.html">Terrenos</a><a href="inventario.html">Inventario</a><a href="observaciones.html" aria-current="page">Bitácora</a><a href="riegos.html">Riegos</a><a href="abonos.html">Abono</a><a href="fertilizantes.html">Fertilizantes</a><a href="calendario.html">Calendario</a><a href="../administrador-agricultor/pedidos.html">Preparar pedidos</a></nav>
+        <h1>Bitácora de campo</h1><p>Registra observaciones generales o incidencias sobre cultivos existentes. Administración consulta estos mismos registros en el detalle de la parcela.</p>
+        <p id="mensaje-bitacora-empleado" class="mensaje" role="status"></p>
+        <section class="panel"><h2>Nuevo registro</h2><form id="formulario-bitacora-empleado" novalidate>
+            <div class="campos-operacion">
+                <div><label for="tipo-registro-bitacora">Tipo de registro</label><select id="tipo-registro-bitacora"><option value="observacion">Observación general</option><option value="incidencia">Plaga o enfermedad</option></select></div>
+                <div><label for="cultivo-bitacora">Cultivo existente</label><select id="cultivo-bitacora" required><option value="">Cargando cultivos…</option></select></div>
+                <div><label for="fecha-bitacora">Fecha</label><input id="fecha-bitacora" type="date" required></div>
+                <div id="campo-tipo-incidencia" hidden><label for="tipo-incidencia-bitacora">Tipo de incidencia</label><select id="tipo-incidencia-bitacora"><option value="plaga">Plaga</option><option value="enfermedad">Enfermedad</option></select></div>
+                <div id="campo-gravedad-incidencia" hidden><label for="gravedad-incidencia-bitacora">Gravedad</label><select id="gravedad-incidencia-bitacora"><option value="bajo">Baja</option><option value="medio">Media</option><option value="alto">Alta</option></select></div>
+                <div><label for="descripcion-bitacora">Descripción / observación</label><textarea id="descripcion-bitacora" rows="4" maxlength="2000" required></textarea></div>
+            </div><p id="error-bitacora-empleado" class="mensaje" role="alert"></p><button id="guardar-bitacora-empleado" class="boton" type="submit">Guardar registro</button>
+        </form></section>
+        <section class="panel espacio"><h2>Registros de campo</h2><div class="tabla-contenedor"><table><thead><tr><th>Fecha</th><th>Cultivo</th><th>Registro</th><th>Detalle</th><th>Gravedad</th></tr></thead><tbody id="lista-bitacora-empleado"></tbody></table></div></section>
+    </main><script src="../js/bitacora-empleado.js"></script>
+</body>
 </html>

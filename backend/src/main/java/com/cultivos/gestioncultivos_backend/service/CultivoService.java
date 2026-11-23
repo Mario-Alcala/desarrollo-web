@@ -73,6 +73,9 @@ public class CultivoService {
         if (cultivo.getIdParcela() == null) {
             throw new IllegalArgumentException("La parcela del cultivo es obligatoria");
         }
+        if (cultivo.getIdVariedad() == null || cultivo.getIdVariedad() <= 0) {
+            throw new IllegalArgumentException("Selecciona una variedad existente del catálogo");
+        }
     }
 
     

@@ -52,7 +52,7 @@ public class UsuarioController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void crear(@RequestBody Usuario usuario) {
-        servicio.crear(usuario);
+        servicio.crearPersonal(usuario);
     }
 
     @PutMapping("/{id}")

@@ -1,7 +1,7 @@
 package com.cultivos.gestioncultivos_backend.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -60,12 +60,12 @@ public class RiegoService {
             throw new IllegalArgumentException("El cultivo es obligatorio");
         }
 
-        if (riego.getIdTerreno() == null) {
-            throw new IllegalArgumentException("El terreno es obligatorio");
+        if (riego.getIdUsuario() == null) {
+            throw new IllegalArgumentException("El usuario que registra el riego es obligatorio");
         }
 
         if (riego.getFechaRiego() == null) {
-            riego.setFechaRiego(LocalDate.now());
+            riego.setFechaRiego(LocalDateTime.now());
         }
 
         if (riego.getCantidadAgua() == null

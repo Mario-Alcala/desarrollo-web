@@ -101,6 +101,7 @@ async function cargarTerreno() {
             if (p.idCultivo != null) {
                 p.cultivo = {
                     id: p.idCultivo,
+                    idVariedad: p.idVariedad,
                     nombre: p.cultivoNombre,
                     familia: p.cultivoFamilia,
                     etapa: p.etapaFenologica,
@@ -479,7 +480,7 @@ const dialogoCultivo = document.getElementById("dialogo-cultivo");
 const formularioCultivo = document.getElementById("formulario-cultivo-parcela");
 const mensajeCultivo = document.getElementById("mensaje-cultivo-parcela");
 
-document.getElementById("gestionar-cultivo").addEventListener("click", function () {
+document.getElementById("gestionar-cultivo").addEventListener("click", async function () {
     if (!parcelaActual) return;
     mensajeCultivo.textContent = "";
     formularioCultivo.reset();
@@ -490,8 +491,22 @@ document.getElementById("gestionar-cultivo").addEventListener("click", function 
         ? "Guardar cambios"
         : "Guardar cultivo";
     const cultivo = parcelaActual.cultivo;
-    document.getElementById("c-nombre").value = cultivo ? cultivo.nombre : "";
-    document.getElementById("c-familia").value = cultivo ? cultivo.familia || "" : "";
+    const selectorVariedad = document.getElementById("c-variedad");
+    selectorVariedad.replaceChildren(new Option("Cargando variedades…", ""));
+    try {
+        const variedades = await pedir("/variedades-producto");
+        selectorVariedad.replaceChildren(new Option("Selecciona un producto del catálogo", ""));
+        variedades.forEach(function (variedad) {
+            const opcion = new Option(variedad.nombreFamilia + " · " + variedad.nombre, String(variedad.idVariedad));
+            opcion.dataset.familia = variedad.nombreFamilia;
+            opcion.dataset.nombre = variedad.nombre;
+            selectorVariedad.add(opcion);
+        });
+        selectorVariedad.value = cultivo && cultivo.idVariedad ? String(cultivo.idVariedad) : "";
+    } catch (error) {
+        selectorVariedad.replaceChildren(new Option("No se pudieron cargar productos", ""));
+        mensajeCultivo.textContent = "No se pudo consultar el catálogo para asignar este cultivo.";
+    }
     document.getElementById("c-etapa").value = cultivo ? cultivo.etapa || "" : "";
     document.getElementById("c-fecha-siembra").value = cultivo ? cultivo.fechaSiembra || "" : "";
     document.getElementById("c-estado").value = cultivo ? cultivo.estado || "activo" : "activo";
@@ -506,12 +521,21 @@ formularioCultivo.addEventListener("submit", async function (evento) {
     mensajeCultivo.textContent = "";
     const datos = {
         idParcela: parcelaActual.idParcela,
-        nombre: document.getElementById("c-nombre").value.trim(),
-        familia: document.getElementById("c-familia").value.trim() || null,
+        idVariedad: Number(document.getElementById("c-variedad").value),
+        nombre: "",
+        familia: null,
         etapaFenologica: document.getElementById("c-etapa").value.trim() || null,
         fechaSiembra: document.getElementById("c-fecha-siembra").value || null,
         estado: document.getElementById("c-estado").value
     };
+    const seleccion = document.getElementById("c-variedad");
+    const variedadElegida = seleccion.options[seleccion.selectedIndex];
+    if (!datos.idVariedad || !variedadElegida || !variedadElegida.value) {
+        mensajeCultivo.textContent = "Selecciona un producto existente del catálogo.";
+        return;
+    }
+    datos.familia = variedadElegida.dataset.familia;
+    datos.nombre = datos.familia + " " + variedadElegida.dataset.nombre;
     const cultivoExistente = parcelaActual.cultivo;
     const ruta = cultivoExistente
         ? `${API}/cultivos/${encodeURIComponent(cultivoExistente.id)}`

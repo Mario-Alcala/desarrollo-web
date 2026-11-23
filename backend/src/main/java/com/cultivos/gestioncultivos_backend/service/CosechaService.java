@@ -36,7 +36,13 @@ public class CosechaService {
 
     public void crear(Cosecha cosecha) {
         validar(cosecha);
+        if (!repositorio.cultivoActivo(cosecha.getIdCultivo())) {
+            throw new IllegalArgumentException("Solo se puede cosechar un cultivo activo");
+        }
+        // Al crear el lote, todo lo cosechado queda inicialmente disponible en bodega.
+        cosecha.setCantidadDisponible(cosecha.getCantidadCosechada());
         repositorio.insertar(cosecha);
+        repositorio.finalizarCultivo(cosecha.getIdCultivo());
     }
 
     public void actualizar(int id, Cosecha cosecha) {
@@ -60,6 +66,10 @@ public class CosechaService {
             throw new IllegalArgumentException("El cultivo es obligatorio");
         }
 
+        if (cosecha.getIdUsuario() == null) {
+            throw new IllegalArgumentException("El usuario que registra la cosecha es obligatorio");
+        }
+
         if (cosecha.getFechaCosecha() == null) {
             cosecha.setFechaCosecha(LocalDate.now());
         }
@@ -71,19 +81,14 @@ public class CosechaService {
                     "La cantidad cosechada debe ser mayor que cero");
         }
 
-        if (cosecha.getCantidadDisponible() == null) {
-            cosecha.setCantidadDisponible(cosecha.getCantidadCosechada());
-        }
-        if (cosecha.getCantidadDisponible().compareTo(BigDecimal.ZERO) < 0
-                || cosecha.getCantidadDisponible().compareTo(cosecha.getCantidadCosechada()) > 0) {
-            throw new IllegalArgumentException("Los kilos disponibles deben estar entre cero y los kilos cosechados");
-        }
-        if (cosecha.getEstadoMaduracion() != null
-                && !List.of("verde", "maduro").contains(cosecha.getEstadoMaduracion().trim().toLowerCase())) {
+        if (cosecha.getEstadoMaduracion() == null
+                || !List.of("verde", "maduro").contains(cosecha.getEstadoMaduracion().trim().toLowerCase())) {
             throw new IllegalArgumentException("La maduración debe ser verde o maduro");
         }
-        if (cosecha.getEstadoMaduracion() != null) {
-            cosecha.setEstadoMaduracion(cosecha.getEstadoMaduracion().trim().toLowerCase());
+        cosecha.setEstadoMaduracion(cosecha.getEstadoMaduracion().trim().toLowerCase());
+        if (cosecha.getUbicacionBodega() == null || cosecha.getUbicacionBodega().isBlank()) {
+            throw new IllegalArgumentException("La ubicación en bodega es obligatoria");
         }
+        cosecha.setUbicacionBodega(cosecha.getUbicacionBodega().trim());
     }
 }

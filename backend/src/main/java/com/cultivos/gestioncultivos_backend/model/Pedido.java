@@ -13,8 +13,12 @@ public class Pedido {
     private String estadoEntrega;
     private BigDecimal total;
     private Integer cantidadLotes;
+    private Boolean compraCatalogo;
     private LocalDateTime fechaSalida;
     private LocalDateTime fechaEntrega;
+    private String numeroRastreo;
+    private String direccionEntrega;
+    private java.time.LocalDate fechaRecoleccion;
 
     public Integer getIdPedido() { return idPedido; }
     public void setIdPedido(Integer idPedido) { this.idPedido = idPedido; }
@@ -34,8 +38,16 @@ public class Pedido {
     public void setTotal(BigDecimal total) { this.total = total; }
     public Integer getCantidadLotes() { return cantidadLotes; }
     public void setCantidadLotes(Integer cantidadLotes) { this.cantidadLotes = cantidadLotes; }
+    public Boolean getCompraCatalogo() { return compraCatalogo; }
+    public void setCompraCatalogo(Boolean compraCatalogo) { this.compraCatalogo = compraCatalogo; }
     public LocalDateTime getFechaSalida() { return fechaSalida; }
     public void setFechaSalida(LocalDateTime fechaSalida) { this.fechaSalida = fechaSalida; }
     public LocalDateTime getFechaEntrega() { return fechaEntrega; }
     public void setFechaEntrega(LocalDateTime fechaEntrega) { this.fechaEntrega = fechaEntrega; }
+    public String getNumeroRastreo() { return numeroRastreo; }
+    public void setNumeroRastreo(String numeroRastreo) { this.numeroRastreo = numeroRastreo; }
+    public String getDireccionEntrega() { return direccionEntrega; }
+    public void setDireccionEntrega(String direccionEntrega) { this.direccionEntrega = direccionEntrega; }
+    public java.time.LocalDate getFechaRecoleccion() { return fechaRecoleccion; }
+    public void setFechaRecoleccion(java.time.LocalDate fechaRecoleccion) { this.fechaRecoleccion = fechaRecoleccion; }
 }

@@ -62,6 +62,16 @@ public class CosechaRepository {
                 .update();
     }
 
+    public boolean cultivoActivo(Long idCultivo) {
+        return jdbc.sql("SELECT COUNT(*) FROM cultivos WHERE id = :id AND estado = 'activo'")
+                .param("id", idCultivo).query(Integer.class).single() > 0;
+    }
+
+    public void finalizarCultivo(Long idCultivo) {
+        jdbc.sql("UPDATE cultivos SET estado = 'finalizado' WHERE id = :id")
+                .param("id", idCultivo).update();
+    }
+
     public void actualizar(Cosecha cosecha) {
         jdbc.sql("""
                 UPDATE cosechas

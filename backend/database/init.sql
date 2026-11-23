@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS parcelas (
 CREATE TABLE IF NOT EXISTS cultivos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     id_parcela BIGINT NOT NULL,
+    id_variedad INT NULL,
     nombre VARCHAR(100) NOT NULL,
     familia VARCHAR(100),
     etapa_fenologica VARCHAR(100),
@@ -82,6 +83,27 @@ CREATE TABLE IF NOT EXISTS variedades_producto (
     UNIQUE (id_familia, nombre),
     FOREIGN KEY (id_familia) REFERENCES familias_producto(id_familia)
 );
+
+-- Mantiene la relación con variedades al volver a ejecutar init.sql en bases ya creadas.
+SET @columna_id_variedad = (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cultivos' AND COLUMN_NAME = 'id_variedad'
+);
+SET @sql_id_variedad = IF(@columna_id_variedad = 0,
+    'ALTER TABLE cultivos ADD COLUMN id_variedad INT NULL AFTER id_parcela', 'SELECT 1');
+PREPARE sentencia_id_variedad FROM @sql_id_variedad;
+EXECUTE sentencia_id_variedad;
+DEALLOCATE PREPARE sentencia_id_variedad;
+
+SET @fk_id_variedad = (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cultivos' AND CONSTRAINT_NAME = 'fk_cultivos_variedad'
+);
+SET @sql_fk_variedad = IF(@fk_id_variedad = 0,
+    'ALTER TABLE cultivos ADD CONSTRAINT fk_cultivos_variedad FOREIGN KEY (id_variedad) REFERENCES variedades_producto(id_variedad)', 'SELECT 1');
+PREPARE sentencia_fk_variedad FROM @sql_fk_variedad;
+EXECUTE sentencia_fk_variedad;
+DEALLOCATE PREPARE sentencia_fk_variedad;
 
 -- Proveedores e insumos que pueden recibirse en varias existencias o lotes.
 CREATE TABLE IF NOT EXISTS proveedores (
