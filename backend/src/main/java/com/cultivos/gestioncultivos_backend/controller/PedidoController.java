@@ -43,6 +43,17 @@ public class PedidoController {
     @PutMapping("/{id}/entrega")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void actualizarEntrega(@PathVariable("id") int id, @RequestBody Map<String, String> solicitud) {
-        servicio.actualizarEntrega(id, solicitud.get("estado"));
+        servicio.actualizarEntrega(id, solicitud.get("estado"), entero(solicitud.get("idUsuario")));
+    }
+
+    private static Integer entero(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(texto.trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("El id del trabajador no es válido");
+        }
     }
 }

@@ -60,8 +60,8 @@ public class RiegoService {
             throw new IllegalArgumentException("El cultivo es obligatorio");
         }
 
-        if (riego.getIdTerreno() == null) {
-            throw new IllegalArgumentException("El terreno es obligatorio");
+        if (riego.getIdUsuario() == null) {
+            throw new IllegalArgumentException("El trabajador que registra el riego es obligatorio");
         }
 
         if (riego.getFechaRiego() == null) {

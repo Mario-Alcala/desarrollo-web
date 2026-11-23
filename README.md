@@ -137,6 +137,12 @@ Base: `http://localhost:8081/api`
 | GET · POST · PUT · DELETE | `/insumos`, `/insumos/{id}` · `/inventario`, `/inventario/{id}` | Catálogo de insumos y existencias por lote |
 | GET | `/pedidos`, `/pedidos/{id}/lotes` | Consulta pedidos y kilos asignados desde cosechas |
 | POST · PUT | `/pedidos/{id}/lotes`, `/pedidos/{id}/entrega` | Asigna kilos disponibles o registra envío/recolección |
+| GET · POST · PUT · DELETE | `/riegos`, `/riegos/{id}` | Riegos por cultivo. Guarda `idUsuario` (quien riega); el terreno se obtiene por la parcela |
+| GET · POST · PUT · DELETE | `/observaciones-cultivos`, `/incidencias-cultivo` | Bitácora: observaciones y plagas/enfermedades (`estado`: abierta, en_seguimiento, erradicada) |
+| GET · POST | `/seguimientos-incidencia` (`?idIncidencia=`) | Acciones de seguimiento; `estadoIncidencia` opcional cambia el estado de la incidencia |
+| GET · POST · PUT · DELETE | `/etapas-cultivo` (`?idCultivo=`), `/etapas-cultivo/{id}` | Calendario: germinación, siembra, vegetación/riego, floración y cosecha |
+| PUT | `/etapas-cultivo/{id}/completar` | `{"idUsuario":2,"fechaReal":"2026-11-22"}`: completa la etapa y actualiza `cultivos.etapa_fenologica` |
+| GET · POST | `/inventario/categoria/{categoria}`, `/movimientos-inventario` | Lotes por categoría (semilla, abono, fertilizante) y entradas/salidas |
 
 Los errores se devuelven como JSON: `{"fecha": "...", "estado": 404, "mensaje": "..."}` (400 datos inválidos, 404 no encontrado, 500 error de base de datos).
 
@@ -174,7 +180,33 @@ curl -X POST http://localhost:8081/api/herramientas \
 
 En un Ubuntu/WSL limpio basta con repetir, en orden, las secciones **2 → 3 → 4 → 5 → 6**.
 
-## 8. Solución de problemas
+## 8. Pantallas del trabajador (`frontend/empleado/`)
+
+Inicia sesión con `empleado.prueba@local.test` / `Prueba123!`. Todas usan Fetch (`js/api.js`) y la sesión de `js/sesion.js`
+(quien registra sale de la sesión, no de un selector).
+
+| Pantalla | Archivo | Qué hace |
+|----------|---------|----------|
+| Cultivos activos | `cultivos.html` | Consulta cultivos, clima del terreno, registra riego, observación y cosecha |
+| Banco de semillas | `semillas.html` | Lotes de semilla, caducidad, uso en siembra (salida) y entradas |
+| Inventario | `inventario.html` | Entradas y salidas sobre lotes existentes |
+| Observaciones | `observaciones.html` | Observaciones, plagas/enfermedades, seguimientos y bitácora unificada |
+| Riego / Fertilizantes / Abono | `riegos.html`, `fertilizantes.html`, `abonos.html` | Riegos por cultivo; aplicación de insumos (salida del lote) |
+| Terreno | `terrenos.html` | Consulta de terrenos y parcelas (ocupada/disponible calculado) |
+| Distribución | `distribucion.html` | Empacador asigna kilos de lotes; cargador registra salida o "listo para recoger"; chofer confirma entrega |
+| Calendario | `calendario.html`, `etapas.html` | Etapas guardadas en el servidor; al completarlas se actualiza la etapa del cultivo |
+
+Pruebas de la lógica del frontend (validaciones, calendario, cosecha, usuarios):
+
+```bash
+node --test frontend/pruebas/*.test.js
+```
+
+> **Si tu base se creó con una versión anterior de `init.sql`** (por ejemplo, `riegos` con `id_terreno`),
+> vuelve a crearla: `sudo mysql -e "DROP DATABASE gestion_cultivos;" && sudo mysql < database/init.sql`.
+> El script también agrega por sí solo la columna `estado` de `incidencias_cultivo` y la tabla `etapas_cultivo`.
+
+## 9. Solución de problemas
 
 | Síntoma | Solución |
 |---------|----------|

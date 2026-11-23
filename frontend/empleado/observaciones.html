@@ -1,82 +1,183 @@
 <!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/observaciones.html · Observaciones, plagas/enfermedades, seguimientos y bitácora unificada.
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/bitacora.js
+-->
 <html lang="es">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Observaciones - Gestión de Cultivos</title>
+        <title>Observaciones y bitácora - Gestión de Cultivos</title>
         <link rel="stylesheet" href="../css/styles.css">
         <link rel="stylesheet" href="../css/cultivos.css">
         <link rel="stylesheet" href="../css/operaciones.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
     </head>
-    <body>
+    <body data-roles="trabajador,administrador_agricultor">
         <header class="barra">
             <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <a href="../index.html">Inicio</a>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
         </header>
         <main class="pagina">
             <nav class="menu-trabajador" aria-label="Secciones del trabajador">
                 <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html">Banco de semillas</a>
                 <a href="inventario.html">Inventario</a>
                 <a href="observaciones.html" aria-current="page">Observaciones</a>
                 <a href="riegos.html">Riego</a>
                 <a href="fertilizantes.html">Fertilizantes</a>
                 <a href="abonos.html">Abono</a>
                 <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html">Distribución</a>
                 <a href="calendario.html">Calendario</a>
             </nav>
-            <h1>Observaciones</h1>
-            <p id="mensaje-operacion" class="mensaje" role="status"></p>
-            <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/observaciones-cultivos" data-id="idObservacion" novalidate>
-                    <div class="campos-operacion">
-                        <div>
-                            <label for="idCultivo">Cultivo</label>
-                            <select id="idCultivo" name="idCultivo" data-numero="true" data-ruta="/cultivos" data-id="id" data-nombre="nombre" required>
-                                <option value="">Selecciona una opción</option>
-                            </select>
+            <h1>Observaciones y bitácora</h1>
+            <p>Anota lo que ves en campo: observaciones, plagas o enfermedades y las acciones de seguimiento. Abajo se reúne la bitácora con riegos, cosechas y etapas completadas. Quien registra sale de tu sesión.</p>
+            <p id="mensaje" class="mensaje" role="status"></p>
+            <section id="formularios-bitacora" class="panel">
+                <h2>Registrar</h2>
+                <div id="pestanas-bitacora" class="pestanas" role="group" aria-label="Tipo de registro">
+                    <button type="button" data-panel="panel-observacion" aria-pressed="true">Observación</button>
+                    <button type="button" data-panel="panel-incidencia" aria-pressed="false">Plaga o enfermedad</button>
+                    <button type="button" data-panel="panel-seguimiento" aria-pressed="false">Seguimiento</button>
+                </div>
+
+                <div id="panel-observacion">
+                    <form id="formulario-observacion" novalidate>
+                        <div class="campos-operacion">
+                            <div>
+                                <label for="obs-cultivo">Cultivo</label>
+                                <select id="obs-cultivo" required><option value="">Cargando cultivos…</option></select>
+                            </div>
+                            <div>
+                                <label for="obs-fecha">Fecha</label>
+                                <input id="obs-fecha" type="date" required>
+                            </div>
                         </div>
-                        <div>
-                            <label for="idUsuario">Trabajador</label>
-                            <select id="idUsuario" name="idUsuario" data-numero="true" data-ruta="/usuarios" data-id="idUsuario" data-nombre="nombreUsuario" required>
-                                <option value="">Selecciona una opción</option>
-                            </select>
+                        <label for="obs-descripcion">Observación</label>
+                        <textarea id="obs-descripcion" rows="3" maxlength="2000" required></textarea>
+                        <p id="mensaje-observacion" class="mensaje error" role="alert"></p>
+                        <div class="acciones-operacion">
+                            <button id="guardar-observacion" class="boton" type="submit">Guardar observación</button>
                         </div>
-                        <div>
-                            <label for="fechaObservacion">Fecha</label>
-                            <input id="fechaObservacion" name="fechaObservacion" type="date" required>
+                    </form>
+                </div>
+
+                <div id="panel-incidencia" hidden>
+                    <form id="formulario-incidencia" novalidate>
+                        <div class="campos-operacion">
+                            <div>
+                                <label for="inc-cultivo">Cultivo</label>
+                                <select id="inc-cultivo" required><option value="">Cargando cultivos…</option></select>
+                            </div>
+                            <div>
+                                <label for="inc-fecha">Fecha</label>
+                                <input id="inc-fecha" type="date" required>
+                            </div>
+                            <div>
+                                <label for="inc-tipo">Tipo</label>
+                                <select id="inc-tipo" required>
+                                    <option value="">Selecciona</option>
+                                    <option value="plaga">Plaga</option>
+                                    <option value="enfermedad">Enfermedad</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="inc-gravedad">Gravedad</label>
+                                <select id="inc-gravedad" required>
+                                    <option value="">Selecciona</option>
+                                    <option value="bajo">Baja</option>
+                                    <option value="medio">Media</option>
+                                    <option value="alto">Alta</option>
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label for="descripcion">Observación</label>
-                            <textarea id="descripcion" name="descripcion" rows="3" required maxlength="2000"></textarea>
+                        <label for="inc-descripcion">Descripción (síntomas, zona afectada)</label>
+                        <textarea id="inc-descripcion" rows="3" maxlength="2000" required></textarea>
+                        <p id="mensaje-incidencia" class="mensaje error" role="alert"></p>
+                        <div class="acciones-operacion">
+                            <button id="guardar-incidencia" class="boton" type="submit">Registrar incidencia</button>
                         </div>
-                    </div>
-                    <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
+
+                <div id="panel-seguimiento" hidden>
+                    <form id="formulario-seguimiento" novalidate>
+                        <div class="campos-operacion">
+                            <div>
+                                <label for="seg-incidencia">Incidencia</label>
+                                <select id="seg-incidencia" required><option value="">Cargando incidencias…</option></select>
+                            </div>
+                            <div>
+                                <label for="seg-fecha">Fecha</label>
+                                <input id="seg-fecha" type="date" required>
+                            </div>
+                            <div>
+                                <label for="seg-estado">Estado después de la acción</label>
+                                <select id="seg-estado">
+                                    <option value="">Sin cambio</option>
+                                    <option value="en_seguimiento">En seguimiento</option>
+                                    <option value="erradicada">Erradicada</option>
+                                </select>
+                            </div>
+                        </div>
+                        <label for="seg-accion">Acción realizada</label>
+                        <textarea id="seg-accion" rows="2" maxlength="2000" required></textarea>
+                        <label for="seg-observacion">Observación (opcional)</label>
+                        <textarea id="seg-observacion" rows="2" maxlength="2000"></textarea>
+                        <p id="mensaje-seguimiento" class="mensaje error" role="alert"></p>
+                        <div class="acciones-operacion">
+                            <button id="guardar-seguimiento" class="boton" type="submit">Registrar seguimiento</button>
+                        </div>
+                    </form>
+                </div>
             </section>
             <section class="panel espacio">
-                <h2>Registros</h2>
-                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <h2>Bitácora</h2>
+                <div class="filtros-linea">
+                    <div>
+                        <label for="filtro-cultivo">Cultivo</label>
+                        <select id="filtro-cultivo"><option value="">Todos los cultivos</option></select>
+                    </div>
+                    <div>
+                        <label for="filtro-tipo">Tipo</label>
+                        <select id="filtro-tipo">
+                            <option value="">Todo</option>
+                            <option value="observacion">Observaciones</option>
+                            <option value="incidencia">Plagas, enfermedades y seguimientos</option>
+                            <option value="riego">Riegos</option>
+                            <option value="cosecha">Cosechas</option>
+                            <option value="etapa">Etapas completadas</option>
+                        </select>
+                    </div>
+                    <button id="actualizar" class="boton boton-secundario" type="button">Actualizar</button>
+                </div>
                 <div class="tabla-contenedor espacio">
                     <table>
                         <thead>
                             <tr>
-                                <th data-campo="idCultivo">Cultivo</th>
-                                <th data-campo="idUsuario">Trabajador</th>
-                                <th data-campo="fechaObservacion">Fecha</th>
-                                <th data-campo="descripcion">Observación</th>
-                                <th>Acciones</th>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Cultivo</th>
+                                <th>Detalle</th>
+                                <th>Registró</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
-                        <tbody id="registros-operacion"></tbody>
+                        <tbody id="lista-bitacora"></tbody>
                     </table>
                 </div>
             </section>
         </main>
         <script src="../js/api.js"></script>
-        <script src="../js/operaciones.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/bitacora.js"></script>
     </body>
 </html>

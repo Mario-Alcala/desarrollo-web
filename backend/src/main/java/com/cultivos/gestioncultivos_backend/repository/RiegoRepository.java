@@ -39,14 +39,14 @@ public class RiegoRepository {
     public void insertar(Riego riego) {
         jdbc.sql("""
                 INSERT INTO riegos
-                (id_cultivo, id_terreno, fecha_riego, cantidad_agua,
+                (id_cultivo, id_usuario, fecha_riego, cantidad_agua,
                  unidad_medida, metodo, observaciones)
                 VALUES
-                (:cultivo, :terreno, :fecha, :cantidad,
+                (:cultivo, :usuario, :fecha, :cantidad,
                  :unidad, :metodo, :observaciones)
                 """)
                 .param("cultivo", riego.getIdCultivo())
-                .param("terreno", riego.getIdTerreno())
+                .param("usuario", riego.getIdUsuario())
                 .param("fecha", riego.getFechaRiego())
                 .param("cantidad", riego.getCantidadAgua())
                 .param("unidad", riego.getUnidadMedida())
@@ -59,7 +59,7 @@ public class RiegoRepository {
         jdbc.sql("""
                 UPDATE riegos
                 SET id_cultivo = :cultivo,
-                    id_terreno = :terreno,
+                    id_usuario = :usuario,
                     fecha_riego = :fecha,
                     cantidad_agua = :cantidad,
                     unidad_medida = :unidad,
@@ -68,7 +68,7 @@ public class RiegoRepository {
                 WHERE id_riego = :id
                 """)
                 .param("cultivo", riego.getIdCultivo())
-                .param("terreno", riego.getIdTerreno())
+                .param("usuario", riego.getIdUsuario())
                 .param("fecha", riego.getFechaRiego())
                 .param("cantidad", riego.getCantidadAgua())
                 .param("unidad", riego.getUnidadMedida())

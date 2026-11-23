@@ -7,7 +7,8 @@ public class Riego {
 
     private Integer idRiego;
     private Long idCultivo;
-    private Long idTerreno;
+    /** Trabajador que registró el riego (riegos.id_usuario). El terreno se obtiene por la parcela del cultivo. */
+    private Integer idUsuario;
     private LocalDate fechaRiego;
     private BigDecimal cantidadAgua;
     private String unidadMedida;
@@ -33,12 +34,12 @@ public class Riego {
         this.idCultivo = idCultivo;
     }
 
-    public Long getIdTerreno() {
-        return idTerreno;
+    public Integer getIdUsuario() {
+        return idUsuario;
     }
 
-    public void setIdTerreno(Long idTerreno) {
-        this.idTerreno = idTerreno;
+    public void setIdUsuario(Integer idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     public LocalDate getFechaRiego() {

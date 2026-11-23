@@ -12,6 +12,8 @@ import com.cultivos.gestioncultivos_backend.repository.IncidenciaCultivoReposito
 @Service
 public class IncidenciaCultivoService {
 
+    public static final List<String> ESTADOS = List.of("abierta", "en_seguimiento", "erradicada");
+
     private final IncidenciaCultivoRepository repositorio;
 
     public IncidenciaCultivoService(
@@ -40,7 +42,11 @@ public class IncidenciaCultivoService {
     }
 
     public void actualizar(int id, IncidenciaCultivo incidencia) {
-        obtener(id);
+        IncidenciaCultivo actual = obtener(id);
+        // Si la pantalla no manda el estado (por ejemplo, al corregir la descripción), se conserva.
+        if (incidencia != null && (incidencia.getEstado() == null || incidencia.getEstado().isBlank())) {
+            incidencia.setEstado(actual.getEstado());
+        }
         validar(incidencia);
         incidencia.setIdIncidencia(id);
         repositorio.actualizar(incidencia);
@@ -90,6 +96,15 @@ public class IncidenciaCultivoService {
         if (incidencia.getFechaIncidencia() == null) {
             incidencia.setFechaIncidencia(LocalDate.now());
         }
+
+        String estado = incidencia.getEstado() == null || incidencia.getEstado().isBlank()
+                ? "abierta"
+                : incidencia.getEstado().trim().toLowerCase().replace(' ', '_');
+        if (!ESTADOS.contains(estado)) {
+            throw new IllegalArgumentException(
+                    "El estado debe ser abierta, en_seguimiento o erradicada");
+        }
+        incidencia.setEstado(estado);
 
         incidencia.setTipoIncidencia(
                 incidencia.getTipoIncidencia().toLowerCase());

@@ -15,6 +15,9 @@ public class Pedido {
     private Integer cantidadLotes;
     private LocalDateTime fechaSalida;
     private LocalDateTime fechaEntrega;
+    /** Trabajador responsable de la entrega (distribuciones.id_usuario). */
+    private Integer idResponsable;
+    private String responsable;
 
     public Integer getIdPedido() { return idPedido; }
     public void setIdPedido(Integer idPedido) { this.idPedido = idPedido; }
@@ -38,4 +41,8 @@ public class Pedido {
     public void setFechaSalida(LocalDateTime fechaSalida) { this.fechaSalida = fechaSalida; }
     public LocalDateTime getFechaEntrega() { return fechaEntrega; }
     public void setFechaEntrega(LocalDateTime fechaEntrega) { this.fechaEntrega = fechaEntrega; }
+    public Integer getIdResponsable() { return idResponsable; }
+    public void setIdResponsable(Integer idResponsable) { this.idResponsable = idResponsable; }
+    public String getResponsable() { return responsable; }
+    public void setResponsable(String responsable) { this.responsable = responsable; }
 }

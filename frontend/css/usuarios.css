@@ -1,0 +1,42 @@
+/*
+ * ARCHIVO: css/usuarios.css
+ * CAPA: FRONTEND (estilos, cascarón). Solo la tabla de usuarios.
+ * USA: las variables de color de css/admin.css.
+ */
+
+.envoltura-tabla-usuarios {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.tabla-usuarios {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+}
+
+.tabla-usuarios th,
+.tabla-usuarios td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+}
+
+.tabla-usuarios th {
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.tabla-usuarios tbody tr:last-child td { border-bottom: none; }
+.tabla-usuarios tbody tr:hover { background: var(--tarjeta-2); }
+
+.solo-lectores-usuarios {
+    position: absolute;
+    left: -9999px;
+}

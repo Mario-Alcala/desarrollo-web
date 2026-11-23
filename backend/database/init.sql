@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS incidencias_cultivo (
     tipo_incidencia ENUM('plaga', 'enfermedad') NOT NULL,
     descripcion TEXT NOT NULL,
     nivel_gravedad ENUM('bajo', 'medio', 'alto') NOT NULL,
+    estado ENUM('abierta', 'en_seguimiento', 'erradicada') NOT NULL DEFAULT 'abierta',
     FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
@@ -193,6 +194,22 @@ CREATE TABLE IF NOT EXISTS riegos (
     metodo VARCHAR(50),
     observaciones VARCHAR(255),
     FOREIGN KEY (id_cultivo) REFERENCES cultivos(id),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+-- Calendario: fechas programadas y reales de cada etapa (germinación, siembra, vegetación/riego,
+-- floración y cosecha). Al completar una etapa, el API actualiza cultivos.etapa_fenologica.
+CREATE TABLE IF NOT EXISTS etapas_cultivo (
+    id_etapa INT PRIMARY KEY AUTO_INCREMENT,
+    id_cultivo BIGINT NOT NULL,
+    etapa VARCHAR(30) NOT NULL,
+    fecha_programada DATE NOT NULL,
+    fecha_real DATE,
+    estado ENUM('pendiente', 'completada') NOT NULL DEFAULT 'pendiente',
+    notas VARCHAR(500),
+    id_usuario INT,
+    UNIQUE (id_cultivo, etapa),
+    FOREIGN KEY (id_cultivo) REFERENCES cultivos(id) ON DELETE CASCADE,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
 
@@ -231,6 +248,23 @@ CREATE TABLE IF NOT EXISTS distribuciones (
     FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
+
+-- ---------------------------------------------------------------------
+-- Ajustes para bases creadas con una versión anterior de este script
+-- (CREATE TABLE IF NOT EXISTS no agrega columnas a una tabla que ya existe).
+-- ---------------------------------------------------------------------
+SET @falta_estado := (
+    SELECT COUNT(*) = 0 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'gestion_cultivos'
+      AND TABLE_NAME = 'incidencias_cultivo'
+      AND COLUMN_NAME = 'estado'
+);
+SET @sql := IF(@falta_estado,
+    'ALTER TABLE incidencias_cultivo ADD COLUMN estado ENUM(''abierta'', ''en_seguimiento'', ''erradicada'') NOT NULL DEFAULT ''abierta''',
+    'SELECT 1');
+PREPARE ajuste FROM @sql;
+EXECUTE ajuste;
+DEALLOCATE PREPARE ajuste;
 
 -- ---------------------------------------------------------------------
 -- Datos de ejemplo (solo se insertan si la tabla está vacía)
@@ -408,3 +442,16 @@ SELECT * FROM (
            'Mantenimiento', '2026-03-10'
 ) AS datos
 WHERE NOT EXISTS (SELECT 1 FROM herramientas);
+
+-- Pedidos de ejemplo para probar Distribución (empacador, cargador y chofer).
+-- Solo se insertan si no hay pedidos. Quedan pendientes: el trabajador asigna los kilos
+-- de un lote y luego registra el envío o la recolección.
+INSERT INTO pedidos (id_usuario, metodo_pago, tipo_entrega, estado, total)
+SELECT u.id_usuario, datos.metodo, datos.tipo, 'pendiente', datos.total
+FROM usuarios u
+CROSS JOIN (
+    SELECT 'transferencia' AS metodo, 'domicilio' AS tipo, 480.00 AS total
+    UNION ALL SELECT 'tarjeta', 'recoleccion', 300.00
+) AS datos
+WHERE u.correo_electronico = 'cliente.prueba@local.test'
+AND NOT EXISTS (SELECT 1 FROM pedidos);

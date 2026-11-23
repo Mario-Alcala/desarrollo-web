@@ -60,6 +60,10 @@ public class CosechaService {
             throw new IllegalArgumentException("El cultivo es obligatorio");
         }
 
+        if (cosecha.getIdUsuario() == null) {
+            throw new IllegalArgumentException("El trabajador que registra la cosecha es obligatorio");
+        }
+
         if (cosecha.getFechaCosecha() == null) {
             cosecha.setFechaCosecha(LocalDate.now());
         }

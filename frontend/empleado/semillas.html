@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/semillas.html · Banco de semillas: lotes, caducidad, usos en siembra y entradas.
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/semillas.js
+-->
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Banco de semillas - Gestión de Cultivos</title>
+        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="../css/cultivos.css">
+        <link rel="stylesheet" href="../css/operaciones.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
+    </head>
+    <body data-roles="trabajador,administrador_agricultor">
+        <header class="barra">
+            <span class="marca">Gestión de Cultivos · Trabajador</span>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
+        </header>
+        <main class="pagina">
+            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
+                <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html" aria-current="page">Banco de semillas</a>
+                <a href="inventario.html">Inventario</a>
+                <a href="observaciones.html">Observaciones</a>
+                <a href="riegos.html">Riego</a>
+                <a href="fertilizantes.html">Fertilizantes</a>
+                <a href="abonos.html">Abono</a>
+                <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html">Distribución</a>
+                <a href="calendario.html">Calendario</a>
+            </nav>
+            <h1>Banco de semillas</h1>
+            <p>Consulta las semillas en bodega por lote, su caducidad y su proveedor. Registra lo que usas en una siembra (salida) o lo que regresa al banco (entrada). Las semillas y los lotes nuevos los da de alta el administrador.</p>
+            <p id="mensaje" class="mensaje" role="status"></p>
+            <section class="panel">
+                <h2>Semillas por lote</h2>
+                <div class="filtros-linea">
+                    <div>
+                        <label for="buscar-semilla">Buscar</label>
+                        <input id="buscar-semilla" type="search" placeholder="Semilla o proveedor">
+                    </div>
+                    <div>
+                        <label><input id="solo-usables" type="checkbox" checked> Solo vigentes con existencia</label>
+                    </div>
+                    <button id="actualizar" class="boton boton-secundario" type="button">Actualizar</button>
+                </div>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lote</th>
+                                <th>Semilla</th>
+                                <th>Proveedor</th>
+                                <th>Disponible</th>
+                                <th>Ingreso</th>
+                                <th>Caducidad</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-semillas"></tbody>
+                    </table>
+                </div>
+                <p class="ayuda">Total vigente en la selección: <strong id="total-semillas">—</strong></p>
+            </section>
+            <section class="panel espacio">
+                <h2>Registrar uso o entrada</h2>
+                <form id="formulario-semilla" novalidate>
+                    <div class="campos-operacion">
+                        <div>
+                            <label for="s-tipo">Movimiento</label>
+                            <select id="s-tipo" required>
+                                <option value="salida">Uso en siembra (salida)</option>
+                                <option value="entrada">Entrada o devolución</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="s-lote">Lote</label>
+                            <select id="s-lote" required><option value="">Cargando lotes…</option></select>
+                            <p id="s-disponible" class="ayuda"></p>
+                        </div>
+                        <div id="bloque-cultivo-semilla">
+                            <label for="s-cultivo">Cultivo sembrado</label>
+                            <select id="s-cultivo"><option value="">Sin cultivo (otro uso)</option></select>
+                        </div>
+                        <div>
+                            <label for="s-cantidad">Cantidad</label>
+                            <input id="s-cantidad" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+                        </div>
+                        <div>
+                            <label for="s-notas">Notas</label>
+                            <input id="s-notas" type="text" maxlength="120">
+                        </div>
+                    </div>
+                    <p id="mensaje-semilla" class="mensaje error" role="alert"></p>
+                    <div class="acciones-operacion">
+                        <button id="guardar-semilla" class="boton" type="submit">Registrar movimiento</button>
+                    </div>
+                </form>
+            </section>
+            <section class="panel espacio">
+                <h2>Movimientos recientes de semillas</h2>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Registro</th>
+                                <th>Semilla</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-movimientos-semilla"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <script src="../js/api.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/semillas.js"></script>
+    </body>
+</html>

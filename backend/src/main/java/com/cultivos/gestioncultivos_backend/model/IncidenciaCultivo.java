@@ -11,6 +11,8 @@ public class IncidenciaCultivo {
     private String tipoIncidencia;
     private String descripcion;
     private String nivelGravedad;
+    /** abierta, en_seguimiento o erradicada. */
+    private String estado;
 
     public IncidenciaCultivo() {
     }
@@ -69,5 +71,13 @@ public class IncidenciaCultivo {
 
     public void setNivelGravedad(String nivelGravedad) {
         this.nivelGravedad = nivelGravedad;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }

@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/abonos.html · Existencias de abonos por lote y registro de aplicaciones a cultivos.
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/aplicacion-insumos.js (data-categoria="abono")
+-->
 <html lang="es">
     <head>
         <meta charset="UTF-8">
@@ -7,77 +13,106 @@
         <link rel="stylesheet" href="../css/styles.css">
         <link rel="stylesheet" href="../css/cultivos.css">
         <link rel="stylesheet" href="../css/operaciones.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
     </head>
-    <body>
+    <body data-roles="trabajador,administrador_agricultor">
         <header class="barra">
             <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <a href="../index.html">Inicio</a>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
         </header>
         <main class="pagina">
             <nav class="menu-trabajador" aria-label="Secciones del trabajador">
                 <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html">Banco de semillas</a>
                 <a href="inventario.html">Inventario</a>
                 <a href="observaciones.html">Observaciones</a>
                 <a href="riegos.html">Riego</a>
                 <a href="fertilizantes.html">Fertilizantes</a>
                 <a href="abonos.html" aria-current="page">Abono</a>
                 <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html">Distribución</a>
                 <a href="calendario.html">Calendario</a>
             </nav>
             <h1>Abono</h1>
-            <p id="mensaje-operacion" class="mensaje" role="status"></p>
-            <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/abonos" data-id="idInsumo" novalidate>
+            <p>Consulta las existencias de abonos por lote y registra cuánto aplicaste a un cultivo. La aplicación se descuenta del lote como salida de inventario. Los productos y los lotes nuevos los da de alta el administrador.</p>
+            <p id="mensaje" class="mensaje" role="status"></p>
+            <section id="aplicacion" class="panel" data-categoria="abono" data-nombre="abonos">
+                <h2>Registrar aplicación de abono</h2>
+                <form id="formulario-aplicacion" novalidate>
                     <div class="campos-operacion">
                         <div>
-                            <label for="nombre">Nombre</label>
-                            <input id="nombre" name="nombre" type="text" required maxlength="100">
+                            <label for="ap-lote">Lote</label>
+                            <select id="ap-lote" required><option value="">Cargando lotes…</option></select>
+                            <p id="ap-disponible" class="ayuda"></p>
                         </div>
                         <div>
-                            <label for="tipoAbono">Tipo de abono</label>
-                            <select id="tipoAbono" name="tipoAbono" required>
-                                <option value="">Selecciona el tipo</option>
-                                <option value="organico">Abono orgánico</option>
-                                <option value="inorganico">Abono inorgánico</option>
-                            </select>
+                            <label for="ap-cultivo">Cultivo</label>
+                            <select id="ap-cultivo" required><option value="">Cargando cultivos…</option></select>
                         </div>
                         <div>
-                            <label for="unidadMedida">Unidad de medida</label>
-                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="50">
+                            <label for="ap-cantidad">Cantidad aplicada</label>
+                            <input id="ap-cantidad" type="number" min="0.01" step="0.01" inputmode="decimal" required>
                         </div>
                         <div>
-                            <label for="proveedorNombre">Proveedor</label>
-                            <input id="proveedorNombre" name="proveedorNombre" type="text" maxlength="100" placeholder="Nombre del proveedor" required>
+                            <label for="ap-fecha">Fecha de aplicación</label>
+                            <input id="ap-fecha" type="date" required>
+                        </div>
+                        <div>
+                            <label for="ap-notas">Notas (dosis, método)</label>
+                            <input id="ap-notas" type="text" maxlength="120">
                         </div>
                     </div>
+                    <p id="mensaje-aplicacion" class="mensaje error" role="alert"></p>
                     <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                        <button id="guardar-aplicacion" class="boton" type="submit">Registrar aplicación</button>
                     </div>
                 </form>
             </section>
             <section class="panel espacio">
-                <h2>Registros</h2>
-                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <h2>Existencias por lote</h2>
+                <button id="actualizar" class="boton boton-secundario" type="button">Actualizar</button>
                 <div class="tabla-contenedor espacio">
                     <table>
                         <thead>
                             <tr>
-                                <th data-campo="nombre">Nombre</th>
-                                <th data-campo="tipoAbono">Tipo de abono</th>
-                                <th data-campo="unidadMedida">Unidad de medida</th>
-                                <th data-campo="idProveedor">Proveedor</th>
-                                <th>Acciones</th>
+                                <th>Lote</th>
+                                <th>Producto</th>
+                                <th>Tipo</th>
+                                <th>Proveedor</th>
+                                <th>Disponible</th>
+                                <th>Ingreso</th>
+                                <th>Caducidad</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
-                        <tbody id="registros-operacion"></tbody>
+                        <tbody id="lista-lotes"></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="panel espacio">
+                <h2>Aplicaciones recientes</h2>
+                <div class="tabla-contenedor espacio">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Registro</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-aplicaciones"></tbody>
                     </table>
                 </div>
             </section>
         </main>
         <script src="../js/api.js"></script>
-        <script src="../js/proveedores.js"></script>
-        <script src="../js/operaciones.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/aplicacion-insumos.js"></script>
     </body>
 </html>

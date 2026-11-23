@@ -47,6 +47,12 @@ public class PedidoService {
 
     @Transactional
     public void actualizarEntrega(int idPedido, String estado) {
+        actualizarEntrega(idPedido, estado, null);
+    }
+
+    /** idResponsable: trabajador (empacador, cargador o chofer) que registra el cambio; puede ser null. */
+    @Transactional
+    public void actualizarEntrega(int idPedido, String estado, Integer idResponsable) {
         Pedido pedido = obtener(idPedido);
         if (pedido.getCantidadLotes() == null || pedido.getCantidadLotes() == 0) throw new IllegalArgumentException("Asigna los kilos disponibles al pedido antes de registrar la entrega");
         String normalizado = estado == null ? "" : estado.trim().toLowerCase();
@@ -57,6 +63,6 @@ public class PedidoService {
         if (!"pendiente".equals(actual) && !"entregado".equals(normalizado)) throw new IllegalArgumentException("Después del envío o de dejarlo listo, el siguiente estado es entregado o recogido");
         if ("domicilio".equals(pedido.getTipoEntrega()) && "listo_recoleccion".equals(normalizado)) throw new IllegalArgumentException("Este pedido es para envío a domicilio");
         if ("recoleccion".equals(pedido.getTipoEntrega()) && "en_transito".equals(normalizado)) throw new IllegalArgumentException("Este pedido se recoge en bodega");
-        repositorio.cambiarEntrega(idPedido, normalizado, ESTADOS_PEDIDO.get(normalizado));
+        repositorio.cambiarEntrega(idPedido, normalizado, ESTADOS_PEDIDO.get(normalizado), idResponsable);
     }
 }

@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  ARCHIVO: empleado/riegos.html · Registro y consulta de riegos por cultivo.
+  CAPA: FRONTEND (estructura HTML + CSS). La lógica está en el script indicado y usa Fetch (js/api.js).
+  SESIÓN: <body data-roles> hace que js/sesion.js pida iniciar sesión como trabajador o administrador.
+  SCRIPT: js/riegos-trabajador.js
+-->
 <html lang="es">
     <head>
         <meta charset="UTF-8">
@@ -7,91 +13,110 @@
         <link rel="stylesheet" href="../css/styles.css">
         <link rel="stylesheet" href="../css/cultivos.css">
         <link rel="stylesheet" href="../css/operaciones.css">
+        <link rel="stylesheet" href="../css/trabajador.css">
     </head>
-    <body>
+    <body data-roles="trabajador,administrador_agricultor">
         <header class="barra">
             <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <a href="../index.html">Inicio</a>
+            <div class="sesion-barra">
+                <span id="usuario-barra"></span>
+                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
+            </div>
         </header>
         <main class="pagina">
             <nav class="menu-trabajador" aria-label="Secciones del trabajador">
                 <a href="cultivos.html">Cultivos activos</a>
+                <a href="semillas.html">Banco de semillas</a>
                 <a href="inventario.html">Inventario</a>
                 <a href="observaciones.html">Observaciones</a>
                 <a href="riegos.html" aria-current="page">Riego</a>
                 <a href="fertilizantes.html">Fertilizantes</a>
                 <a href="abonos.html">Abono</a>
                 <a href="terrenos.html">Terreno</a>
+                <a href="distribucion.html">Distribución</a>
                 <a href="calendario.html">Calendario</a>
             </nav>
             <h1>Riego</h1>
-            <p id="mensaje-operacion" class="mensaje" role="status"></p>
+            <p>Registra los riegos de cada cultivo activo. El terreno se obtiene de la parcela del cultivo y quien registra sale de tu sesión. Para fertilizantes y abono usa sus pestañas.</p>
+            <p id="mensaje" class="mensaje" role="status"></p>
             <section class="panel">
-                <h2>Registrar o actualizar</h2>
-                <form id="formulario-operacion" data-ruta="/riegos" data-id="idRiego" novalidate>
+                <h2>Registrar riego</h2>
+                <form id="formulario-riego" novalidate>
                     <div class="campos-operacion">
                         <div>
-                            <label for="idCultivo">Cultivo</label>
-                            <select id="idCultivo" name="idCultivo" data-numero="true" data-ruta="/cultivos" data-id="id" data-nombre="nombre" required>
-                                <option value="">Selecciona una opción</option>
+                            <label for="riego-cultivo">Cultivo</label>
+                            <select id="riego-cultivo" required><option value="">Cargando cultivos…</option></select>
+                            <p id="riego-ubicacion" class="ayuda"></p>
+                        </div>
+                        <div>
+                            <label for="riego-fecha">Fecha de riego</label>
+                            <input id="riego-fecha" type="date" required>
+                        </div>
+                        <div>
+                            <label for="riego-cantidad">Cantidad de agua</label>
+                            <input id="riego-cantidad" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+                        </div>
+                        <div>
+                            <label for="riego-unidad">Unidad</label>
+                            <select id="riego-unidad" required>
+                                <option value="litros">Litros</option>
+                                <option value="m3">Metros cúbicos (m³)</option>
+                                <option value="galones">Galones</option>
                             </select>
                         </div>
                         <div>
-                            <label for="idTerreno">Terreno</label>
-                            <select id="idTerreno" name="idTerreno" data-numero="true" data-ruta="/terrenos" data-id="id" data-nombre="nombre" required>
-                                <option value="">Selecciona una opción</option>
+                            <label for="riego-metodo">Método</label>
+                            <select id="riego-metodo">
+                                <option value="">Sin especificar</option>
+                                <option>Goteo</option>
+                                <option>Aspersión</option>
+                                <option>Microaspersión</option>
+                                <option>Gravedad / surcos</option>
+                                <option>Manual</option>
                             </select>
                         </div>
                         <div>
-                            <label for="fechaRiego">Fecha de riego</label>
-                            <input id="fechaRiego" name="fechaRiego" type="date" required>
-                        </div>
-                        <div>
-                            <label for="cantidadAgua">Cantidad de agua</label>
-                            <input id="cantidadAgua" name="cantidadAgua" type="number" required min="0.01" step="0.01">
-                        </div>
-                        <div>
-                            <label for="unidadMedida">Unidad de medida</label>
-                            <input id="unidadMedida" name="unidadMedida" type="text" required maxlength="20">
-                        </div>
-                        <div>
-                            <label for="metodo">Método</label>
-                            <input id="metodo" name="metodo" type="text" maxlength="50">
-                        </div>
-                        <div>
-                            <label for="observaciones">Observaciones</label>
-                            <textarea id="observaciones" name="observaciones" rows="3" maxlength="255"></textarea>
+                            <label for="riego-notas">Observaciones</label>
+                            <textarea id="riego-notas" rows="2" maxlength="255"></textarea>
                         </div>
                     </div>
+                    <p id="mensaje-riego" class="mensaje error" role="alert"></p>
                     <div class="acciones-operacion">
-                        <button id="guardar-operacion" class="boton" type="submit">Guardar</button>
-                        <button id="cancelar-operacion" class="boton boton-secundario" type="button">Cancelar edición</button>
+                        <button id="guardar-riego" class="boton" type="submit">Registrar riego</button>
                     </div>
                 </form>
             </section>
             <section class="panel espacio">
-                <h2>Registros</h2>
-                <button id="actualizar-operacion" class="boton boton-secundario" type="button">Actualizar</button>
+                <h2>Riegos registrados</h2>
+                <div class="filtros-linea">
+                    <div>
+                        <label for="filtro-cultivo">Cultivo</label>
+                        <select id="filtro-cultivo"><option value="">Todos los cultivos</option></select>
+                    </div>
+                    <button id="actualizar" class="boton boton-secundario" type="button">Actualizar</button>
+                </div>
                 <div class="tabla-contenedor espacio">
                     <table>
                         <thead>
                             <tr>
-                                <th data-campo="idCultivo">Cultivo</th>
-                                <th data-campo="idTerreno">Terreno</th>
-                                <th data-campo="fechaRiego">Fecha de riego</th>
-                                <th data-campo="cantidadAgua">Cantidad de agua</th>
-                                <th data-campo="unidadMedida">Unidad de medida</th>
-                                <th data-campo="metodo">Método</th>
-                                <th data-campo="observaciones">Observaciones</th>
-                                <th>Acciones</th>
+                                <th>Fecha</th>
+                                <th>Cultivo</th>
+                                <th>Agua</th>
+                                <th>Método</th>
+                                <th>Registró</th>
+                                <th>Observaciones</th>
                             </tr>
                         </thead>
-                        <tbody id="registros-operacion"></tbody>
+                        <tbody id="lista-riegos"></tbody>
                     </table>
                 </div>
+                <p class="ayuda">Total de agua en la selección: <strong id="total-agua">—</strong></p>
             </section>
         </main>
         <script src="../js/api.js"></script>
-        <script src="../js/operaciones.js"></script>
+        <script src="../js/sesion.js"></script>
+        <script src="../js/validacion.js"></script>
+        <script src="../js/datos-campo.js"></script>
+        <script src="../js/riegos-trabajador.js"></script>
     </body>
 </html>
