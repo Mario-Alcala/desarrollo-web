@@ -56,10 +56,10 @@ public class PedidoRepository {
                        c.ubicacion_bodega AS `ubicacionBodega`
                 FROM variedades_producto v
                 JOIN familias_producto f ON f.id_familia = v.id_familia
-                JOIN cultivos cu ON cu.id_variedad = v.id_variedad
+                LEFT JOIN cultivos cu ON cu.id_variedad = v.id_variedad
                     OR (cu.id_variedad IS NULL AND LOWER(cu.nombre) = LOWER(CONCAT(f.nombre, ' ', v.nombre)))
-                JOIN cosechas c ON c.id_cultivo = cu.id
-                WHERE c.cantidad_disponible > 0 AND v.precio_por_kg > 0
+                LEFT JOIN cosechas c ON c.id_cultivo = cu.id AND c.cantidad_disponible > 0
+                WHERE v.precio_por_kg > 0
                 ORDER BY f.nombre, v.nombre, c.fecha_cosecha, c.id_cosecha
                 """).query().listOfRows();
         return normalizarClaves(filas);

@@ -101,9 +101,15 @@ public class PedidoController {
 
     private void exigirPersonal(HttpSession sesion) {
         String rol = rolSesion(sesion);
-        if (!"administrador_agricultor".equals(rol) && !"trabajador".equals(rol)) {
+        if (!esPersonal(rol)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta acción requiere una cuenta de empleado o administrador.");
         }
+    }
+
+    private boolean esPersonal(String rol) {
+        return "administrador_agricultor".equals(rol)
+                || "agricultor".equals(rol)
+                || "trabajador".equals(rol);
     }
 
     private void exigirClientePropio(HttpSession sesion, int idSolicitado) {
