@@ -1,48 +1,81 @@
-/*
- * ARCHIVO: pruebas/login.test.js
- * Pruebas de sesionDeTrabajador() en js/ap.js (la sesión que se guarda al entrar como trabajador).
- * Se ejecuta con:  node --test frontend/pruebas/login.test.js
- */
 const test = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 
 const codigo = fs.readFileSync(path.join(__dirname, '..', 'js', 'ap.js'), 'utf8');
-// document simulado sin elementos: la parte de pantalla de ap.js no se activa.
-const ctx = vm.createContext({ document: { getElementById: () => null }, String });
-vm.runInContext(codigo, ctx);
-const plano = (x) => JSON.parse(JSON.stringify(x));
 
-const usuarios = [
-    { idUsuario: 1, nombreUsuario: 'Felipe', correoElectronico: 'trabajador@gmail.com', rol: 'trabajador' },
-    { idUsuario: 2, nombreUsuario: 'Ana', correoElectronico: 'ana@correo.com', rol: 'administrador_agricultor' },
-    { idUsuario: 3, nombreUsuario: 'Cli', correoElectronico: 'cli@correo.com', rol: 'cliente' },
-    { idUsuario: 7, nombreUsuario: 'Luis', correoElectronico: 'Luis.Campo@Correo.com ', rol: 'trabajador' }
+function prepararLogin(usuario) {
+    const guardados = new Map();
+    const correo = { value: usuario.correoElectronico, checkValidity: () => true, focus() {} };
+    const contrasena = { value: 'clave-prueba', focus() {} };
+    const mensaje = { textContent: '' };
+    const formulario = {
+        submit: null,
+        addEventListener(evento, accion) {
+            if (evento === 'submit') this.submit = accion;
+        }
+    };
+    const elementos = {
+        'crear-cuenta': null,
+        'formulario-login': formulario,
+        'formulario-registro': null,
+        correo,
+        contrasena,
+        'mensaje-login': mensaje
+    };
+    const llamadas = [];
+    const ctx = vm.createContext({
+        URLSearchParams,
+        document: { getElementById: id => elementos[id] || null },
+        window: { location: {
+            search: '', hostname: '127.0.0.1', href: 'http://127.0.0.1:3000/frontend/login.html',
+            replace(url) {
+                this.href = url;
+                if (url.indexOf('http://localhost') === 0) this.hostname = 'localhost';
+            }
+        } },
+        sessionStorage: {
+            setItem: (clave, valor) => guardados.set(clave, String(valor)),
+            getItem: clave => guardados.get(clave),
+            removeItem: clave => guardados.delete(clave)
+        },
+        fetch: async (url, opciones) => {
+            llamadas.push({ url, opciones });
+            return { ok: true, json: async () => usuario };
+        }
+    });
+    vm.runInContext(codigo, ctx);
+    return { ctx, formulario, llamadas, guardados, mensaje };
+}
+
+const cuentas = [
+    ['trabajador', 'empleado/cultivos.html'],
+    ['administrador_agricultor', 'administrador-agricultor/resumen.html'],
+    ['cliente', 'cliente/catalogo.html']
 ];
 
-test('devuelve la sesión con el id real, el nombre y el rol del trabajador', () => {
-    assert.deepStrictEqual(plano(ctx.sesionDeTrabajador(usuarios, 'trabajador@gmail.com')),
-        { idUsuario: 1, nombre: 'Felipe', rol: 'trabajador' });
-});
+for (const [rol, destino] of cuentas) {
+    test('el login de ' + rol + ' autentica por API, guarda la sesión y abre su interfaz', async () => {
+        const usuario = {
+            idUsuario: 7,
+            nombreUsuario: 'Cuenta de prueba',
+            correoElectronico: rol + '@local.test',
+            rol
+        };
+        const estado = prepararLogin(usuario);
+        await estado.formulario.submit({ preventDefault() {} });
 
-test('ignora mayúsculas y espacios en el correo', () => {
-    assert.strictEqual(ctx.sesionDeTrabajador(usuarios, '  TRABAJADOR@Gmail.com ').idUsuario, 1);
-});
-
-test('un correo que no es de trabajador (administrador o cliente) no abre sesión de trabajador', () => {
-    assert.strictEqual(ctx.sesionDeTrabajador(usuarios, 'ana@correo.com'), null);
-    assert.strictEqual(ctx.sesionDeTrabajador(usuarios, 'cli@correo.com'), null);
-});
-
-test('correo inexistente, lista vacía o nula devuelven null', () => {
-    assert.strictEqual(ctx.sesionDeTrabajador(usuarios, 'otro@correo.com'), null);
-    assert.strictEqual(ctx.sesionDeTrabajador([], 'trabajador@gmail.com'), null);
-    assert.strictEqual(ctx.sesionDeTrabajador(null, 'trabajador@gmail.com'), null);
-});
-
-test('usa el id del usuario encontrado (no un id fijo) y compara sin importar mayúsculas guardadas', () => {
-    assert.deepStrictEqual(plano(ctx.sesionDeTrabajador(usuarios, 'luis.campo@correo.com')),
-        { idUsuario: 7, nombre: 'Luis', rol: 'trabajador' });
-});
+        assert.equal(estado.llamadas.length, 1);
+        assert.equal(estado.llamadas[0].url, 'http://localhost:8081/api/usuarios/login');
+        assert.equal(estado.llamadas[0].opciones.credentials, 'include');
+        assert.deepEqual(JSON.parse(estado.llamadas[0].opciones.body), {
+            correoElectronico: usuario.correoElectronico,
+            contrasena: 'clave-prueba'
+        });
+        assert.equal(JSON.parse(estado.guardados.get('usuarioSesion')).rol, rol);
+        assert.equal(estado.guardados.get('usuarioId'), '7');
+        assert.equal(estado.ctx.window.location.href, destino);
+    });
+}

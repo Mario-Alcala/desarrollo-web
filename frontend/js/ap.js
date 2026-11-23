@@ -1,7 +1,12 @@
 var botonCrearCuenta = document.getElementById('crear-cuenta');
 var formularioLogin = document.getElementById('formulario-login');
 var formularioRegistro = document.getElementById('formulario-registro');
-var urlUsuarios = 'http://localhost:8081/api/usuarios';
+if (window.location.hostname === '127.0.0.1') {
+    window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));
+}
+var hostApiUsuarios = typeof window !== 'undefined' && window.location.hostname
+    ? window.location.hostname : 'localhost';
+var urlUsuarios = 'http://' + hostApiUsuarios + ':8081/api/usuarios';
 
 if (botonCrearCuenta) {
     botonCrearCuenta.addEventListener('click', function () {
@@ -36,6 +41,7 @@ if (formularioLogin) {
         try {
             var respuesta = await fetch(urlUsuarios + '/login', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     correoElectronico: correo.value.trim(),

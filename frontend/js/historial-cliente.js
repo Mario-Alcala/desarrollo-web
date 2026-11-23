@@ -1,4 +1,4 @@
-const API_HISTORIAL_CLIENTE = 'http://localhost:8081/api';
+const API_HISTORIAL_CLIENTE = 'http://' + window.location.hostname + ':8081/api';
 const cuerpoHistorialCliente = document.getElementById('historial-pedidos');
 const mensajeHistorialCliente = document.getElementById('mensaje-historial');
 
@@ -17,7 +17,7 @@ async function cargarHistorialCliente() {
     }
     mensajeHistorialCliente.textContent = 'Cargando pedidos…';
     try {
-        const respuesta = await fetch(API_HISTORIAL_CLIENTE + '/pedidos/cliente/' + encodeURIComponent(idUsuario));
+        const respuesta = await fetch(API_HISTORIAL_CLIENTE + '/pedidos/cliente/' + encodeURIComponent(idUsuario), { credentials: 'include' });
         if (!respuesta.ok) throw new Error('No se pudo cargar tu historial de pedidos.');
         const pedidos = await respuesta.json();
         cuerpoHistorialCliente.replaceChildren();

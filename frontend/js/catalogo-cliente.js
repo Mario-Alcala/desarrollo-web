@@ -21,7 +21,9 @@ function agruparProductos(lotes) {
     lotes.forEach(function (lote) {
         const llave = String(lote.idVariedad);
         if (!grupos[llave]) grupos[llave] = { idVariedad:lote.idVariedad, familia:lote.familia, variedad:lote.variedad, descripcion:lote.descripcion, imagenUrl:lote.imagenUrl, precioPorKg:Number(lote.precioPorKg), lotes:[] };
-        grupos[llave].lotes.push(lote);
+        if (lote.idCosecha !== null && lote.idCosecha !== undefined) {
+            grupos[llave].lotes.push(lote);
+        }
     });
     return Object.values(grupos);
 }
@@ -55,7 +57,7 @@ function dibujarCatalogoCliente() {
     const productos = agruparProductos(lotesCatalogoCliente).filter(function (producto) {
         const coincide = (producto.familia + ' ' + producto.variedad + ' ' + (producto.descripcion || '')).toLowerCase().includes(texto);
         producto.lotes = producto.lotes.filter(function (lote) { return !maduracion || lote.maduracion === maduracion; });
-        return coincide && producto.lotes.length > 0;
+        return coincide && (!maduracion || producto.lotes.length > 0);
     });
     productos.forEach(function (producto) {
         const tarjeta = crearNodo('article', undefined, 'producto');
@@ -74,6 +76,9 @@ function dibujarCatalogoCliente() {
         tarjeta.appendChild(titulo);
         if (producto.descripcion) tarjeta.appendChild(crearNodo('p', producto.descripcion));
         tarjeta.appendChild(crearNodo('p', dineroCliente(producto.precioPorKg) + ' / kg'));
+        if (producto.lotes.length === 0) {
+            tarjeta.appendChild(crearNodo('p', 'Sin cosecha disponible por el momento.'));
+        }
         producto.lotes.forEach(function (lote) {
             const filaLote = crearNodo('div', undefined, 'panel espacio');
             filaLote.appendChild(crearNodo('strong', 'Lote #' + lote.idCosecha + ' · ' + (lote.maduracion || 'Sin clasificar')));
@@ -123,5 +128,4 @@ document.getElementById('finalizar').addEventListener('click', function () {
     sessionStorage.setItem('pedidoGestionCultivos', JSON.stringify(detalles));
     window.location.href = 'pago.html';
 });
-document.getElementById('rastrear').addEventListener('click', function () { window.location.href = 'historial.html'; });
 cargarCatalogoCliente();

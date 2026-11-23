@@ -1,4 +1,4 @@
-const API_RESUMEN = "http://localhost:8081/api";
+const API_RESUMEN = "http://" + window.location.hostname + ":8081/api";
 const mensajeResumen = document.getElementById("mensaje-resumen");
 const mensajeClima = document.getElementById("mensaje-clima");
 let terrenosResumen = [];
@@ -9,11 +9,31 @@ function numero(valor, decimales) {
 }
 
 async function consultar(url) {
-    const respuesta = await fetch(url);
-    if (!respuesta.ok) {
-        throw new Error("Error al consultar el API");
+    const respuesta = await fetch(url, { credentials: 'include' });
+    const contenido = await respuesta.text();
+    let datos = null;
+
+    try {
+        datos = contenido ? JSON.parse(contenido) : null;
+    } catch (error) {
+        datos = contenido;
     }
-    return await respuesta.json();
+
+    if (!respuesta.ok) {
+        if (respuesta.status === 401) {
+            sessionStorage.removeItem("usuarioSesion");
+            sessionStorage.removeItem("usuarioNombre");
+            sessionStorage.removeItem("usuarioRol");
+            sessionStorage.removeItem("usuarioId");
+            window.location.replace("../login.html?motivo=sesion");
+            throw new Error("Tu sesión terminó. Inicia sesión de nuevo.");
+        }
+        const mensaje = datos && datos.mensaje ? datos.mensaje : "Error al consultar el API";
+        const detalle = datos && datos.detalle ? " " + datos.detalle : "";
+        throw new Error(mensaje + detalle);
+    }
+
+    return datos;
 }
 
 function fechaPronostico(fecha) {
@@ -182,7 +202,12 @@ async function cargarResumen(actualizarClima) {
             await cargarClima(terrenos);
         }
     } catch (error) {
-        mensajeResumen.textContent = "No se pudo cargar el resumen. Revisa que Spring Boot y MySQL estén activos.";
+        if (String(error.message).includes("id_variedad")) {
+            mensajeResumen.textContent = "La base de datos está desactualizada: falta la relación del cultivo con el catálogo. Ejecuta de nuevo backend/database/init.sql desde la carpeta backend y recarga esta página.";
+        } else {
+            mensajeResumen.textContent = "No se pudo cargar el resumen: "
+                + (error.message || "revisa la conexión con el API.");
+        }
         document.getElementById("total-terrenos").textContent = "—";
         document.getElementById("total-parcelas").textContent = "—";
         document.getElementById("total-cultivos").textContent = "—";
@@ -209,9 +234,17 @@ function programarActualizacionDelClima() {
 }
 
 // Los indicadores cambian cada minuto. El pronóstico se consulta al abrir y a medianoche.
-setInterval(function () {
-    cargarResumen(false);
-}, 60000);
+const usuarioResumen = usuarioActual();
+if (window.location.hostname === "127.0.0.1") {
+    // En WSL, Windows expone el backend por localhost; usa el mismo host que el login para la sesión.
+    window.location.replace(window.location.href.replace("127.0.0.1", "localhost"));
+} else if (usuarioResumen && (usuarioResumen.rol === "administrador_agricultor" || usuarioResumen.rol === "agricultor")) {
+    setInterval(function () {
+        cargarResumen(false);
+    }, 60000);
 
-programarActualizacionDelClima();
-cargarResumen(true);
+    programarActualizacionDelClima();
+    cargarResumen(true);
+} else {
+    window.location.replace("../login.html?motivo=sesion");
+}

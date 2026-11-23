@@ -1,4 +1,4 @@
-const API = "http://localhost:8081/api";
+const API = "http://" + window.location.hostname + ":8081/api";
 const idPedido = new URLSearchParams(location.search).get("id");
 const filas = document.getElementById("lotes-pedido");
 const mensaje = document.getElementById("mensaje-pedido");
@@ -9,6 +9,8 @@ let pedido;
 let cosechas = [];
 
 async function pedir(url, opciones) {
+    opciones = opciones || {};
+    opciones.credentials = 'include';
     const respuesta = await fetch(`${API}${url}`, opciones);
     if (!respuesta.ok) {
         let mensajeError = `Error ${respuesta.status}`;

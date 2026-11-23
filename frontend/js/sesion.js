@@ -9,6 +9,11 @@
  */
 
 var CLAVE_SESION = 'usuarioSesion';
+var redirigiendoAlHostLocal = window.location.hostname === '127.0.0.1';
+
+if (redirigiendoAlHostLocal) {
+    window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));
+}
 
 function usuarioActual() {
     try {
@@ -33,10 +38,18 @@ function guardarSesion(usuario) {
 }
 
 function cerrarSesion(rutaLogin) {
-    sessionStorage.removeItem(CLAVE_SESION);
-    sessionStorage.removeItem('usuarioNombre');
-    sessionStorage.removeItem('usuarioRol');
-    window.location.href = rutaLogin || '../login.html';
+    var destino = rutaLogin || '../login.html';
+    var host = window.location.hostname || 'localhost';
+    fetch('http://' + host + ':8081/api/usuarios/logout', {
+        method: 'POST',
+        credentials: 'include'
+    }).catch(function () {}).finally(function () {
+        sessionStorage.removeItem(CLAVE_SESION);
+        sessionStorage.removeItem('usuarioNombre');
+        sessionStorage.removeItem('usuarioRol');
+        sessionStorage.removeItem('usuarioId');
+        window.location.href = destino;
+    });
 }
 
 /* Devuelve el usuario si su rol está en la lista; si no, redirige al login y devuelve null. */
@@ -61,7 +74,7 @@ function prepararBarraSesion(usuario) {
     }
 }
 
-if (typeof document !== 'undefined' && document.body && document.body.dataset.roles) {
+if (!redirigiendoAlHostLocal && typeof document !== 'undefined' && document.body && document.body.dataset.roles) {
     var usuarioDePagina = exigirSesion(document.body.dataset.roles.split(','));
     prepararBarraSesion(usuarioDePagina);
 }

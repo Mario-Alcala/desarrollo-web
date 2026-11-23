@@ -1,4 +1,4 @@
-const API_PAGO_CLIENTE = 'http://localhost:8081/api';
+const API_PAGO_CLIENTE = 'http://' + window.location.hostname + ':8081/api';
 const cuerpoResumenPago = document.getElementById('resumen-pago');
 const mensajePagoCliente = document.getElementById('mensaje-pago');
 const formularioPagoCliente = document.getElementById('formulario-pago');
@@ -31,7 +31,7 @@ async function cargarResumenPago() {
     if (!borrador) throw new Error('No hay productos seleccionados. Regresa al catálogo.');
     detallesPagoCliente = JSON.parse(borrador);
     if (!Array.isArray(detallesPagoCliente) || detallesPagoCliente.length === 0) throw new Error('No hay productos seleccionados. Regresa al catálogo.');
-    const respuesta = await fetch(API_PAGO_CLIENTE + '/catalogo');
+    const respuesta = await fetch(API_PAGO_CLIENTE + '/catalogo', { credentials: 'include' });
     if (!respuesta.ok) throw new Error('No se pudo actualizar la disponibilidad del catálogo.');
     catalogoPagoCliente = await respuesta.json();
     cuerpoResumenPago.replaceChildren();
@@ -75,7 +75,7 @@ formularioPagoCliente.addEventListener('submit', async function (evento) {
     mensajePagoCliente.textContent = 'Registrando pedido…';
     try {
         const respuesta = await fetch(API_PAGO_CLIENTE + '/pedidos', {
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(solicitud)
+            method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(solicitud)
         });
         const resultado = await respuesta.json().catch(function () { return {}; });
         if (!respuesta.ok) throw new Error(resultado.mensaje || resultado.message || 'No se pudo registrar el pedido.');

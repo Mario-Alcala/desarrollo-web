@@ -1,4 +1,4 @@
-const API_PEDIDOS = "http://localhost:8081/api/pedidos";
+const API_PEDIDOS = "http://" + window.location.hostname + ":8081/api/pedidos";
 const contenedor = document.getElementById("lista-pedidos");
 const mensaje = document.getElementById("mensaje-pedidos");
 const buscador = document.querySelector("#topbar input");
@@ -63,7 +63,7 @@ function dibujar() {
 async function cargarPedidos() {
     mensaje.textContent = "Cargando pedidos…";
     try {
-        const respuesta = await fetch(API_PEDIDOS);
+        const respuesta = await fetch(API_PEDIDOS, { credentials: 'include' });
         if (!respuesta.ok) throw new Error();
         pedidos = await respuesta.json();
         dibujar();
