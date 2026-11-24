@@ -73,6 +73,75 @@ class PedidoApiTests {
         return jdbc.sql("SELECT cantidad_disponible FROM cosechas WHERE id_cosecha=1").query(BigDecimal.class).single();
     }
 
+    HttpClient personal() throws Exception {
+        jdbc.sql("INSERT INTO usuarios VALUES (3, 'Empacador', 'personal@prueba.test', :clave, 'trabajador')")
+                .param("clave", encoder.encode("clave-prueba")).update();
+        return login("personal@prueba.test");
+    }
+
+    @Test
+    void personalRegistraPedidoParaClienteYConservaPreciosDelServidor() throws Exception {
+        var trabajador = personal();
+        String json = "{\"idUsuario\":2," + pedido("1.25").substring(1);
+        var resultado = enviar(trabajador, "/pedidos/registro", json);
+        assertEquals(201, resultado.statusCode(), resultado.body());
+        assertEquals(2, jdbc.sql("SELECT id_usuario FROM pedidos").query(Integer.class).single());
+        assertEquals(0, disponible().compareTo(new BigDecimal("8.75")));
+        assertEquals(0, jdbc.sql("SELECT total FROM pedidos").query(BigDecimal.class).single().compareTo(new BigDecimal("25.63")));
+        assertEquals(200, enviar(trabajador, "/pedidos", null).statusCode());
+        assertEquals(403, enviar(cliente, "/pedidos/registro", json).statusCode());
+        assertEquals(401, enviar(HttpClient.newHttpClient(), "/pedidos/registro", json).statusCode());
+        assertEquals(400, enviar(trabajador, "/pedidos/registro", json.replace("\"idUsuario\":2", "\"idUsuario\":3")).statusCode());
+        assertEquals(400, enviar(trabajador, "/pedidos/registro", pedido("1")).statusCode());
+        assertEquals(1, cuenta("pedidos"));
+    }
+
+    @Test
+    void empacadorRegistraKilosYEntregaSinSuplantarResponsable() throws Exception {
+        var trabajador = personal();
+        jdbc.sql("INSERT INTO pedidos (id_pedido,id_usuario,metodo_pago,tipo_entrega,estado,total) VALUES (99,1,'transferencia','recoleccion','pendiente',0)").update();
+        assertEquals(400, enviar(trabajador, "/pedidos/99/lotes", "{\"idCosecha\":1,\"kilos\":0.001}").statusCode());
+        assertEquals(201, enviar(trabajador, "/pedidos/99/lotes", "{\"idCosecha\":1,\"kilos\":2}").statusCode());
+        assertEquals(3, jdbc.sql("SELECT id_usuario FROM distribuciones WHERE id_pedido=99").query(Integer.class).single());
+        assertEquals(0, disponible().compareTo(new BigDecimal("8")));
+        for (String estado : new String[]{"listo_recoleccion", "entregado"}) {
+            var req = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/pedidos/99/entrega"))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString("{\"estado\":\"" + estado + "\",\"idUsuario\":\"2\"}")).build();
+            var resultado = trabajador.send(req, HttpResponse.BodyHandlers.ofString());
+            assertEquals(204, resultado.statusCode(), resultado.body());
+        }
+        assertEquals(3, jdbc.sql("SELECT id_usuario FROM distribuciones WHERE id_pedido=99").query(Integer.class).single());
+        assertEquals("entregado", jdbc.sql("SELECT estado FROM pedidos WHERE id_pedido=99").query(String.class).single());
+        assertEquals(400, enviar(trabajador, "/pedidos/99/lotes", "{\"idCosecha\":1,\"kilos\":1}").statusCode());
+    }
+
+    @Test
+    void corsPermiteCookiesYPreflightSoloDesdeOrigenesConfigurados() throws Exception {
+        for (String origen : new String[]{"http://localhost:5500", "http://127.0.0.1:5501", "https://no-permitido.test"}) {
+            var req = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/pedidos/registro"))
+                    .header("Origin", origen).header("Access-Control-Request-Method", "POST")
+                    .header("Access-Control-Request-Headers", "content-type")
+                    .method("OPTIONS", HttpRequest.BodyPublishers.noBody()).build();
+            var resultado = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
+            if (origen.startsWith("https")) {
+                assertEquals(403, resultado.statusCode());
+            } else {
+                assertEquals(200, resultado.statusCode());
+                assertEquals(origen, resultado.headers().firstValue("Access-Control-Allow-Origin").orElse(""));
+                assertEquals("true", resultado.headers().firstValue("Access-Control-Allow-Credentials").orElse(""));
+            }
+        }
+    }
+
+    @Test
+    void logoutInvalidaLaSesionHttpAunqueElClienteConserveLaCookie() throws Exception {
+        var trabajador = personal();
+        assertEquals(200, enviar(trabajador, "/pedidos", null).statusCode());
+        assertEquals(204, enviar(trabajador, "/usuarios/logout", "{}").statusCode());
+        assertEquals(401, enviar(trabajador, "/pedidos", null).statusCode());
+    }
+
     @Test
     void catalogoConLotesDecimalesYPreciosDelServidor() throws Exception {
         var catalogo = enviar(cliente, "/catalogo", null);

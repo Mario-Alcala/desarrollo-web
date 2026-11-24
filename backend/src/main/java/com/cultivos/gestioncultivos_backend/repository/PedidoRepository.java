@@ -190,6 +190,20 @@ public class PedidoRepository {
                 .query(PedidoLote.class).list();
     }
 
+    public void bloquearPedido(int idPedido) {
+        jdbc.sql("SELECT id_pedido FROM pedidos WHERE id_pedido = :id FOR UPDATE")
+                .param("id", idPedido).query(Integer.class).optional()
+                .orElseThrow(() -> new java.util.NoSuchElementException("No existe el pedido #" + idPedido));
+    }
+
+    public void registrarEmpacador(int idPedido, int idResponsable) {
+        jdbc.sql("""
+                INSERT INTO distribuciones (id_pedido, id_usuario, estado)
+                VALUES (:pedido, :usuario, 'pendiente')
+                ON DUPLICATE KEY UPDATE id_usuario = :usuario
+                """).param("pedido", idPedido).param("usuario", idResponsable).update();
+    }
+
     public BigDecimal bloquearDisponible(int idCosecha) {
         return jdbc.sql("SELECT cantidad_disponible FROM cosechas WHERE id_cosecha = :id FOR UPDATE")
                 .param("id", idCosecha).query(BigDecimal.class).optional().orElse(null);

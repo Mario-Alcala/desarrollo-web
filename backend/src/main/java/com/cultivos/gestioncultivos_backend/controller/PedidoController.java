@@ -44,6 +44,13 @@ public class PedidoController {
         return servicio.crearCompra(solicitud);
     }
 
+    @PostMapping("/registro")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, Object> registrar(@RequestBody PedidoNuevo solicitud, HttpSession sesion) {
+        exigirPersonal(sesion);
+        return servicio.crearCompra(solicitud);
+    }
+
     @GetMapping("/cliente/{idUsuario}")
     public List<Map<String, Object>> historialCliente(@PathVariable("idUsuario") int idUsuario, HttpSession sesion) {
         exigirClientePropio(sesion, idUsuario);
@@ -66,23 +73,14 @@ public class PedidoController {
     @ResponseStatus(HttpStatus.CREATED)
     public void asignarLote(@PathVariable("id") int id, @RequestBody AsignacionLote asignacion, HttpSession sesion) {
         exigirPersonal(sesion);
-        servicio.asignarLote(id, asignacion);
+        servicio.asignarLote(id, asignacion, usuarioSesion(sesion));
     }
 
     @PutMapping("/{id}/entrega")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void actualizarEntrega(@PathVariable("id") int id, @RequestBody Map<String, String> solicitud, HttpSession sesion) {
         exigirPersonal(sesion);
-        Integer responsable = null;
-        String idUsuario = solicitud.get("idUsuario");
-        if (idUsuario != null && !idUsuario.isBlank()) {
-            try {
-                responsable = Integer.valueOf(idUsuario.trim());
-            } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException("El id del trabajador no es válido");
-            }
-        }
-        servicio.actualizarEntrega(id, solicitud.get("estado"), solicitud.get("numeroRastreo"), responsable);
+        servicio.actualizarEntrega(id, solicitud.get("estado"), solicitud.get("numeroRastreo"), usuarioSesion(sesion));
     }
 
     private int usuarioSesion(HttpSession sesion) {
@@ -102,7 +100,7 @@ public class PedidoController {
     private void exigirPersonal(HttpSession sesion) {
         String rol = rolSesion(sesion);
         if (!esPersonal(rol)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta acción requiere una cuenta de empleado o administrador.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta acción requiere una cuenta de trabajador o administrador.");
         }
     }
 
