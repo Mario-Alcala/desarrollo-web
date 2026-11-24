@@ -1,0 +1,1 @@
+Las operaciones deben reutilizar los artículos administrados.

@@ -1,5 +1,0 @@
-## Reflexion
-Obtuve las interfaces como las queria, queria que fueran agrables a la vista y que se veanofesionales, ademas de que lleven el mismo color las entanas y tengan una misma estructura, hice terreno.js pero no me funciono a la primera ya que lo hahbia duplicado por error lo tuve que mover ya que lo habia añadido a otra carpeta, cambien del codigo algunos nombres ya que no queria que pusieran eso y busque una forma de ponerle mas texto ya que queria que dijera cosas en especifico
-Siento cómo se organiza la pantalla. La barra lateral y la superior las dibuja n solo archivo de la sidebar para que todas las páginas compartan el mismo menú; cada página tiene su HTML con el contenido, su CSS con los colores y su JS que llena la lista de tarjetas.
-Todavia no me queda claro Cómo funciona el fetch a la API y por qué, si falla o viene vacía, se usan los datos de ejemplo
-Cómo se consulta el clima con Open-Meteo. Git: la diferencia entre fetch, pull y ramas

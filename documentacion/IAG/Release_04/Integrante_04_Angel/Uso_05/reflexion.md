@@ -1,0 +1,1 @@
+Separar alta administrativa de consulta del empleado evita mezclar permisos.

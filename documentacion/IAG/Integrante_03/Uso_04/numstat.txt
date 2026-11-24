@@ -1,5 +1,0 @@
-git diff --numstat 51821ed 8153263
-93	0	frontend/bodega.html
-8	0	frontend/css/admin-vistas.css
-35	0	frontend/js/admin-datos.js
-256	0	frontend/js/bodega.js

@@ -1,0 +1,1 @@
+Una misma vista puede compartirse si sus acciones dependen del rol.

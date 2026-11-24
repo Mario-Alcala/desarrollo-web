@@ -1,3 +1,0 @@
-git diff --numstat 6ee5af5 51821ed
-179	0	frontend/js/proveedores.js
-121	0	frontend/proveedores.html

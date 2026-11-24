@@ -1,0 +1,1 @@
+Confirmar rama y upstream antes de pull evita traer cambios a una rama equivocada.

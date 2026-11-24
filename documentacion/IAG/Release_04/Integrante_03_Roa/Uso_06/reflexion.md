@@ -1,0 +1,1 @@
+Comparar con el HTML existente evita borrar funciones de otra actividad.

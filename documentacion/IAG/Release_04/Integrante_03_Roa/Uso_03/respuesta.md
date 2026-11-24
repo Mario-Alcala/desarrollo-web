@@ -1,0 +1,1 @@
+Se ajustó api.js y se añadió consulta-insumos.js para ambas pantallas.

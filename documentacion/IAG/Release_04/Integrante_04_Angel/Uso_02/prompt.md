@@ -1,0 +1,1 @@
+Comprueba que la semilla de inventario se guarde en MySQL y enlaza proveedor por ID; evita productos duplicados en abonos/fertilizantes.

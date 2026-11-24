@@ -1,0 +1,1 @@
+git diff --numstat e890b41 15829d9: cultivos.html +58/-1; cosecha-registro.js +246; cosecha.test.js +150.

@@ -1,0 +1,1 @@
+git diff --stat 6dfe008 2c245eb. Incluye CatalogoController, PedidoNuevo, PedidoRepository/Service y pantallas/scripts de catálogo, pago e historial.

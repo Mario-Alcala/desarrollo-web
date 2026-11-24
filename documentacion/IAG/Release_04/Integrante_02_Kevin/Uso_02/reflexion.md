@@ -1,0 +1,1 @@
+Diferencié la variedad comercial del lote que aporta los kilos comprados.

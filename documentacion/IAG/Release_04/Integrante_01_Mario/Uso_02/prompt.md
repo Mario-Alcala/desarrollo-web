@@ -1,0 +1,1 @@
+Alinea las capas Java con las tablas: registra etapas de cultivo, seguimiento de plagas y enfermedades, riego y responsable de entrega.

@@ -1,0 +1,1 @@
+Se añadió consulta de parcelas por terreno y se ajustó la vista.

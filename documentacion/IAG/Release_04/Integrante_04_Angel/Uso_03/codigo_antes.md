@@ -1,0 +1,1 @@
+Vista sin lotes visibles.

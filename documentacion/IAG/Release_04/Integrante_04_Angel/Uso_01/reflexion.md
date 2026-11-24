@@ -1,0 +1,1 @@
+Producto comercial, cultivo sembrado y lote cosechado son entidades relacionadas pero distintas.

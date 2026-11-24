@@ -1,0 +1,1 @@
+Se añadieron permisos por rol, sesión, enlaces y pruebas.

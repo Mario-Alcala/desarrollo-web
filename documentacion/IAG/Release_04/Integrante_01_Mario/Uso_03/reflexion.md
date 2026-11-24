@@ -1,0 +1,1 @@
+Aprendí que las etapas deben guardarse en el servidor para compartir el avance entre usuarios.

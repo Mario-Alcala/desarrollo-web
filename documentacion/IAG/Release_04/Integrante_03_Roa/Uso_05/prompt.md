@@ -1,0 +1,1 @@
+El trabajador consulta terrenos y parcelas existentes y ve áreas en m²; no registra terrenos.

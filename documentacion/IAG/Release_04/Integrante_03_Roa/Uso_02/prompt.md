@@ -1,0 +1,1 @@
+Reutiliza lista y detalle de pedidos; adapta acciones por rol y agrega el menú y la sesión del trabajador.

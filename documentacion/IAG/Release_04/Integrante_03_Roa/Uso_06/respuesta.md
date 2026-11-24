@@ -1,0 +1,1 @@
+Se actualizó cultivos-actividades.js y se aisló su lógica para evitar colisiones.

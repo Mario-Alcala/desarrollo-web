@@ -1,0 +1,1 @@
+Se compararon cambios y se corrigieron enlaces a CSS, JavaScript y navegación tras el movimiento de vistas.

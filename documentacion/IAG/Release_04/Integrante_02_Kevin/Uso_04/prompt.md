@@ -1,0 +1,1 @@
+Revisa la rama activa, las referencias remotas y los cambios entre ramas antes de integrar; conserva el trabajo sin forzar el historial.

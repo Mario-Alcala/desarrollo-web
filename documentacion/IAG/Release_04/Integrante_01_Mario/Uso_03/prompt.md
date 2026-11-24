@@ -1,0 +1,1 @@
+Conecta pantallas del trabajador con el API, usa el ID de sesión, valida cantidades y fechas y sincroniza etapas del calendario.

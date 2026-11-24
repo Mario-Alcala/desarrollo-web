@@ -1,0 +1,1 @@
+Relaciona catálogo y cosechas con IDs. Al comprar conserva lote, cantidad y precio por kilo, sin comparar nombres.

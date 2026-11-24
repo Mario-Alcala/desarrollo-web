@@ -1,0 +1,1 @@
+Revisa init.sql y las clases de parcelas, terrenos, inventario, usuarios y clima; haz coincidir tipos y nombres manteniendo las relaciones acordadas.

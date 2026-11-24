@@ -1,0 +1,1 @@
+Una respuesta vacía puede deberse a ausencia de relaciones, aunque el endpoint funcione.

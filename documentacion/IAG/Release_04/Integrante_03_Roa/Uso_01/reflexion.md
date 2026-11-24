@@ -1,0 +1,1 @@
+Bodega consulta el lote creado en cosecha y no duplica la captura.

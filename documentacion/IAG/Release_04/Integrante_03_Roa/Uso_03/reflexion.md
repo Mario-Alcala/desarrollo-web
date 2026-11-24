@@ -1,0 +1,1 @@
+Puerto, CORS y caché deben diagnosticarse por separado.

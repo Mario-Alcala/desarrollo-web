@@ -1,0 +1,1 @@
+Se revisaron rama local, upstream, commits y estado de integración; se identificó qué rama contenía las funciones del empleado.

@@ -1,0 +1,1 @@
+Contrato alineado con Usuario.java y nombre_usuario.

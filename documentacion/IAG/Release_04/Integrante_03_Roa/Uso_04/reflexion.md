@@ -1,0 +1,1 @@
+Un movimiento altera un lote existente; no da de alta otro artículo.

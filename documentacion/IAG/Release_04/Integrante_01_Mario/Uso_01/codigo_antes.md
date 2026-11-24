@@ -1,0 +1,1 @@
+6dfe008 y 9c1b831; pantallas y scripts antes de la integración.

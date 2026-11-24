@@ -1,0 +1,1 @@
+Diseña pantalla separada para parcelas con terreno existente, nombre, m² decimal y estado, usando el API.

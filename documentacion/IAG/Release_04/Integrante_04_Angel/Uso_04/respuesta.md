@@ -1,0 +1,1 @@
+Se alineó JSON con nombreUsuario/correoElectronico/contrasena y se separaron registro y login.

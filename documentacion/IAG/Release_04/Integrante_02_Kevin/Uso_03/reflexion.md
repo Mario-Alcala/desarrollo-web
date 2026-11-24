@@ -1,0 +1,1 @@
+Aprendí que un merge incluye trabajo de compañeros y no convierte todo su contenido en código de mi autoría.

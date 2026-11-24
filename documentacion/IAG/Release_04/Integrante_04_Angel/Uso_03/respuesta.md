@@ -1,0 +1,1 @@
+Se revisó GET /api/catalogo y su JOIN entre variedades, cultivos y cosechas.

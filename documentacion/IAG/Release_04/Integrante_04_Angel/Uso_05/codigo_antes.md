@@ -1,0 +1,1 @@
+Vista territorial sin gestión separada de parcelas.

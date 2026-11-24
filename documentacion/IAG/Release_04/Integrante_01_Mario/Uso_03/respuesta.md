@@ -1,0 +1,1 @@
+Se añadieron scripts para actividades del trabajador, validación compartida y calendario persistido.

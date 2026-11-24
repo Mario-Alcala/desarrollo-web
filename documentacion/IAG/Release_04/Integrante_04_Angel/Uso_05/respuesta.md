@@ -1,0 +1,1 @@
+Se propusieron parcelas.html/css/js y rutas GET, POST, PUT y DELETE con validación de relaciones.

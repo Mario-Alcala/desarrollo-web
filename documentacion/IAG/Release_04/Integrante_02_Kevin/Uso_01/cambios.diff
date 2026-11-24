@@ -1,0 +1,1 @@
+git diff --stat 9ed045e 087c022. Cambios en init.sql, controladores, modelos, repositorios y servicios de Clima, Parcela, Terreno, Insumo y Usuario.

@@ -1,0 +1,1 @@
+Añade cosecha dentro de cultivos del trabajador: usa cultivo y usuario de sesión, registra kilos, fecha, maduración y ubicación y crea un lote consultable en Bodega.

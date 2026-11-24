@@ -1,1 +1,0 @@
-El archivo 'frontend/css/admin-vistas.css' no existía en el commit 'f46b1aa'.

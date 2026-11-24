@@ -1,0 +1,1 @@
+Lista cultivos existentes y registra riego/observación ligados al cultivo; conserva el panel de cosecha.

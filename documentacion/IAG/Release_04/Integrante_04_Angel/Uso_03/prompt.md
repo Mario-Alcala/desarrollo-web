@@ -1,0 +1,1 @@
+Analiza por qué catálogo está vacío y muestra variedades, precio, maduración y kilos por lote.

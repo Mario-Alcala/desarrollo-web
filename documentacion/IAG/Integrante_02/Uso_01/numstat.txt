@@ -1,9 +1,0 @@
-git diff --numstat 250831d fbdfea3
-16	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/config/ClimaConfig.java
-4	3	backend/src/main/java/com/cultivos/gestioncultivos_backend/controller/TerrenoController.java
-118	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/model/ClimaRespuesta.java
-19	1	backend/src/main/java/com/cultivos/gestioncultivos_backend/model/Terreno.java
-36	22	backend/src/main/java/com/cultivos/gestioncultivos_backend/repository/TerrenoRepository.java
-119	0	backend/src/main/java/com/cultivos/gestioncultivos_backend/service/ClimaService.java
-58	13	backend/src/main/java/com/cultivos/gestioncultivos_backend/service/TerrenoService.java
-1	1	backend/src/main/resources/application.yaml

@@ -1,1 +1,0 @@
-El archivo 'frontend/pedido.html' no existía en el commit '1e425ea'.

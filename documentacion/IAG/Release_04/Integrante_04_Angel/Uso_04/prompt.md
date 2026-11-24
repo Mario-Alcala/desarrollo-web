@@ -1,0 +1,1 @@
+Conecta el registro existente usando fetch, fija rol cliente y conserva sesión para catálogo e historial.

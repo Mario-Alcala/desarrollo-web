@@ -1,0 +1,1 @@
+El estado de parcela se puede calcular por presencia del cultivo.

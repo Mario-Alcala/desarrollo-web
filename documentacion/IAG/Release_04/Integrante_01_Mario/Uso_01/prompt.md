@@ -1,0 +1,1 @@
+Revisa cómo integrar funciones de distintas ramas, conserva la organización por rol y corrige las rutas relativas al mover pantallas.

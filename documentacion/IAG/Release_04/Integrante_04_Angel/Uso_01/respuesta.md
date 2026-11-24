@@ -1,0 +1,1 @@
+Se revisaron llaves y tipos con SHOW CREATE TABLE y DESCRIBE.

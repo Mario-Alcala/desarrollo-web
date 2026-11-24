@@ -1,0 +1,1 @@
+git diff --numstat a124604 00ca9ca: inventario.html +50/-28; inventario-movimientos.js +224; sesion.js +22.

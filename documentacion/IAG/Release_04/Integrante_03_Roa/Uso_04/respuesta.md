@@ -1,0 +1,1 @@
+Se añadió formulario de movimientos y validación contra existencia.

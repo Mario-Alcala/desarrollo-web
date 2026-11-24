@@ -1,0 +1,1 @@
+Relaciona variedad comercial, cultivo de parcela y lote mediante IDs; guarda maduración por lote y mantiene unidades.

@@ -1,0 +1,1 @@
+El contrato JSON debe coincidir con Java y el servidor debe controlar el rol.

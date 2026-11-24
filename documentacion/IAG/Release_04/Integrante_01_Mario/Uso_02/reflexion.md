@@ -1,0 +1,1 @@
+Entendí que incidencia y seguimiento son registros relacionados, y que el terreno se puede derivar del cultivo.

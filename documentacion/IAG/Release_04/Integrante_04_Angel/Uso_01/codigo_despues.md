@@ -1,0 +1,1 @@
+Contrato con id_variedad, id_parcela e id_cultivo confirmado en los resultados compartidos.

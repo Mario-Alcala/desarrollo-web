@@ -1,0 +1,1 @@
+Esquema consultado antes de la revisión.

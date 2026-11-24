@@ -1,0 +1,1 @@
+Se integraron cambios en commits locales separados, preservando en el historial las ramas fuente.

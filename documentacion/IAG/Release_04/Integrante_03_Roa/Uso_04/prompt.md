@@ -1,0 +1,1 @@
+Registra entradas/salidas sobre un lote existente, limita salidas al saldo y toma el usuario de sesión.

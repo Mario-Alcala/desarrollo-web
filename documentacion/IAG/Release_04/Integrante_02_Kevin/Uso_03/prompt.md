@@ -1,0 +1,1 @@
+Usa mi rama como base y conserva init.sql; adapta las funciones de usuarios-admin y de empleado-y-trabajador-funcionando-angel al modelo y rutas acordados.

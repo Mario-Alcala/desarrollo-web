@@ -1,1 +1,0 @@
-El archivo 'frontend/proveedores.html' no existía en el commit '6ee5af5'.

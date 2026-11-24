@@ -1,1 +1,0 @@
-El archivo 'frontend/pago.html' no existía en el commit 'd2c9ce6'.

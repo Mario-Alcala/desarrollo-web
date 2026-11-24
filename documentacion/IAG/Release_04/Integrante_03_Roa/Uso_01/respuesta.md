@@ -1,0 +1,1 @@
+Se añadió panel, lógica de registro y pruebas de validación.

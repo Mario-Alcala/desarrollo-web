@@ -1,0 +1,1 @@
+Se ajustaron esquema, modelos, repositorios y servicios relacionados con parcelas, insumos, terrenos, usuarios y clima.

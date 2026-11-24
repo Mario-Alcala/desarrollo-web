@@ -1,0 +1,1 @@
+git branch -a; git log --graph --oneline --decorate; git show --stat a6d6f27.

@@ -1,0 +1,1 @@
+Se identificó insumos con categoría y llave de proveedor.

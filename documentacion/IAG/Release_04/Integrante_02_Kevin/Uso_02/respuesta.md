@@ -1,0 +1,1 @@
+Se incorporó consulta de catálogo y modelo de pedido nuevo, con cambios en servicio, repositorio y vistas del cliente.

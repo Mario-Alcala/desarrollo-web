@@ -1,0 +1,1 @@
+Aprendí que mover una página requiere revisar todas sus dependencias y no solo el HTML.

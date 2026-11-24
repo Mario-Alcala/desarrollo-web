@@ -1,0 +1,1 @@
+Contrato con idVariedad, idCosecha, precioKilo, maduracion y kilos.

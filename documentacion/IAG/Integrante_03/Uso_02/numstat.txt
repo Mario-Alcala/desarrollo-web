@@ -1,7 +1,0 @@
-git diff --numstat f46b1aa 6ee5af5
-98	0	frontend/catalogo-admin.html
-142	0	frontend/css/admin-vistas.css
-57	0	frontend/js/admin-comun.js
-51	0	frontend/js/admin-datos.js
-146	0	frontend/js/catalogo-admin.js
-34	17	frontend/js/sidebar.js
