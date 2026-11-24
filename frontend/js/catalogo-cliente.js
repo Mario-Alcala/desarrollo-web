@@ -1,9 +1,25 @@
+/* Datos: carga el catálogo desde la API y prepara los lotes elegidos para el pago. No recibe atributos. */
 const API_CATALOGO_CLIENTE = 'http://localhost:8081/api';
 const productosCatalogoCliente = document.getElementById('productos');
 const detalleCatalogoCliente = document.getElementById('detalle-pedido');
 const mensajeCatalogoCliente = document.getElementById('mensaje-catalogo');
 const cantidadesCatalogoCliente = {};
 let lotesCatalogoCliente = [];
+
+/* Datos: consulta los productos y lotes de la API. No recibe atributos. */
+async function cargarCatalogoCliente() {
+    mensajeCatalogoCliente.textContent = 'Cargando productos disponibles…';
+    try {
+        const respuesta = await fetch(API_CATALOGO_CLIENTE + '/catalogo');
+        if (!respuesta.ok) {
+            throw new Error('No se pudo cargar el catálogo desde el API.');
+        }
+        lotesCatalogoCliente = await respuesta.json();
+        dibujarCatalogoCliente();
+    } catch (error) {
+        mensajeCatalogoCliente.textContent = error.message;
+    }
+}
 
 function crearNodo(tag, texto, clase) {
     const nodo = document.createElement(tag);
@@ -16,18 +32,7 @@ function dineroCliente(valor) {
     return '$' + Number(valor || 0).toFixed(2);
 }
 
-function agruparProductos(lotes) {
-    const grupos = {};
-    lotes.forEach(function (lote) {
-        const llave = String(lote.idVariedad);
-        if (!grupos[llave]) grupos[llave] = { idVariedad:lote.idVariedad, familia:lote.familia, variedad:lote.variedad, descripcion:lote.descripcion, imagenUrl:lote.imagenUrl, precioPorKg:Number(lote.precioPorKg), lotes:[] };
-        if (lote.idCosecha !== null && lote.idCosecha !== undefined) {
-            grupos[llave].lotes.push(lote);
-        }
-    });
-    return Object.values(grupos);
-}
-
+/* Datos: muestra los kilos elegidos y calcula subtotales y total. No recibe atributos. */
 function mostrarResumenCliente() {
     detalleCatalogoCliente.replaceChildren();
     let total = 0;
@@ -44,21 +49,20 @@ function mostrarResumenCliente() {
     if (!detalleCatalogoCliente.children.length) {
         const fila = document.createElement('tr');
         const celda = crearNodo('td', 'Todavía no seleccionas productos.');
-        celda.colSpan = 3; fila.appendChild(celda); detalleCatalogoCliente.appendChild(fila);
+        celda.colSpan = 3;
+        fila.appendChild(celda);
+        detalleCatalogoCliente.appendChild(fila);
     }
     document.getElementById('total').textContent = dineroCliente(total);
     document.getElementById('finalizar').disabled = total <= 0;
 }
 
+/* Datos: dibuja las tarjetas que coinciden con la búsqueda y la maduración. No recibe atributos. */
 function dibujarCatalogoCliente() {
     const texto = document.getElementById('buscar-producto-cliente').value.trim().toLowerCase();
     const maduracion = document.getElementById('filtro-maduracion-cliente').value;
     productosCatalogoCliente.replaceChildren();
-    const productos = agruparProductos(lotesCatalogoCliente).filter(function (producto) {
-        const coincide = (producto.familia + ' ' + producto.variedad + ' ' + (producto.descripcion || '')).toLowerCase().includes(texto);
-        producto.lotes = producto.lotes.filter(function (lote) { return !maduracion || lote.maduracion === maduracion; });
-        return coincide && (!maduracion || producto.lotes.length > 0);
-    });
+    const productos = filtrarProductos(texto, maduracion);
     productos.forEach(function (producto) {
         const tarjeta = crearNodo('article', undefined, 'producto');
         const titulo = crearNodo('h2', producto.familia + ' ' + producto.variedad);
@@ -79,53 +83,98 @@ function dibujarCatalogoCliente() {
         if (producto.lotes.length === 0) {
             tarjeta.appendChild(crearNodo('p', 'Sin cosecha disponible por el momento.'));
         }
-        producto.lotes.forEach(function (lote) {
-            const filaLote = crearNodo('div', undefined, 'panel espacio');
-            filaLote.appendChild(crearNodo('strong', 'Lote #' + lote.idCosecha + ' · ' + (lote.maduracion || 'Sin clasificar')));
-            filaLote.appendChild(crearNodo('p', 'Disponible: ' + Number(lote.kilos).toLocaleString('es-MX') + ' kg'));
-            const etiqueta = crearNodo('label', 'Kilos');
-            const campo = document.createElement('input');
-            campo.type = 'number'; campo.min = '0'; campo.max = String(lote.kilos); campo.step = '0.01';
-            campo.value = cantidadesCatalogoCliente[lote.idCosecha] || '';
-            campo.setAttribute('aria-label', 'Kilos del lote ' + lote.idCosecha);
-            campo.addEventListener('input', function () {
-                let valor = Number(campo.value);
-                if (!campo.value || valor <= 0) delete cantidadesCatalogoCliente[lote.idCosecha];
-                else {
-                    valor = Math.min(valor, Number(lote.kilos));
-                    cantidadesCatalogoCliente[lote.idCosecha] = Math.round(valor * 100) / 100;
-                    campo.value = cantidadesCatalogoCliente[lote.idCosecha];
-                }
-                mostrarResumenCliente();
-            });
-            etiqueta.appendChild(campo);
-            filaLote.appendChild(etiqueta);
-            tarjeta.appendChild(filaLote);
-        });
+        for (const lote of producto.lotes) {
+            tarjeta.appendChild(dibujarLoteCliente(lote));
+        }
         productosCatalogoCliente.appendChild(tarjeta);
     });
     mensajeCatalogoCliente.textContent = productos.length ? '' : 'No hay lotes disponibles que coincidan con la búsqueda.';
     mostrarResumenCliente();
 }
 
-async function cargarCatalogoCliente() {
-    mensajeCatalogoCliente.textContent = 'Cargando productos disponibles…';
-    try {
-        const respuesta = await fetch(API_CATALOGO_CLIENTE + '/catalogo');
-        if (!respuesta.ok) throw new Error('No se pudo cargar el catálogo desde el API.');
-        lotesCatalogoCliente = await respuesta.json();
-        dibujarCatalogoCliente();
-    } catch (error) { mensajeCatalogoCliente.textContent = error.message; }
+/* Datos: crea el control de cantidad. Recibe un lote con idCosecha, maduracion y kilos. */
+function dibujarLoteCliente(lote) {
+    const filaLote = crearNodo('div', undefined, 'panel espacio');
+    filaLote.appendChild(crearNodo('strong', 'Lote #' + lote.idCosecha + ' · ' + (lote.maduracion || 'Sin clasificar')));
+    filaLote.appendChild(crearNodo('p', 'Disponible: ' + Number(lote.kilos).toLocaleString('es-MX') + ' kg'));
+    const etiqueta = crearNodo('label', 'Kilos');
+    const campo = document.createElement('input');
+    campo.type = 'number';
+    campo.min = '0';
+    campo.max = String(lote.kilos);
+    campo.step = '0.01';
+    campo.value = cantidadesCatalogoCliente[lote.idCosecha] || '';
+    campo.setAttribute('aria-label', 'Kilos del lote ' + lote.idCosecha);
+    campo.addEventListener('input', function () {
+        const valor = Number(campo.value);
+        if (!campo.value || valor <= 0) {
+            delete cantidadesCatalogoCliente[lote.idCosecha];
+        } else {
+            const kilos = Math.min(valor, Number(lote.kilos));
+            cantidadesCatalogoCliente[lote.idCosecha] = Math.round(kilos * 100) / 100;
+            campo.value = cantidadesCatalogoCliente[lote.idCosecha];
+        }
+        mostrarResumenCliente();
+    });
+    etiqueta.appendChild(campo);
+    filaLote.appendChild(etiqueta);
+    return filaLote;
 }
 
-document.getElementById('buscar-producto-cliente').addEventListener('input', dibujarCatalogoCliente);
-document.getElementById('filtro-maduracion-cliente').addEventListener('change', dibujarCatalogoCliente);
-document.getElementById('finalizar').addEventListener('click', function () {
+/* Datos: agrupa por idVariedad. Recibe las filas del catálogo que devuelve la API. */
+function agruparProductos(lotes) {
+    const grupos = {};
+    for (const lote of lotes) {
+        const llave = String(lote.idVariedad);
+        if (!grupos[llave]) {
+            grupos[llave] = {
+                idVariedad: lote.idVariedad,
+                familia: lote.familia,
+                variedad: lote.variedad,
+                descripcion: lote.descripcion,
+                imagenUrl: lote.imagenUrl,
+                precioPorKg: Number(lote.precioPorKg),
+                lotes: []
+            };
+        }
+        if (lote.idCosecha !== null && lote.idCosecha !== undefined) {
+            grupos[llave].lotes.push(lote);
+        }
+    }
+    return Object.values(grupos);
+}
+
+/* Datos: elige qué productos mostrar. Recibe el texto de búsqueda y la maduración del filtro. */
+function filtrarProductos(texto, maduracion) {
+    return agruparProductos(lotesCatalogoCliente).filter(function (producto) {
+        const descripcion = producto.familia + ' ' + producto.variedad + ' ' + (producto.descripcion || '');
+        producto.lotes = producto.lotes.filter(lote => !maduracion || lote.maduracion === maduracion);
+        return descripcion.toLowerCase().includes(texto) && (!maduracion || producto.lotes.length > 0);
+    });
+}
+
+/* Datos: guarda idCosecha y kilos del carrito para abrir el pago. No recibe atributos. */
+function finalizarPedidoCliente() {
     const usuarioId = sessionStorage.getItem('usuarioId');
     const rol = sessionStorage.getItem('usuarioRol');
-    if (!usuarioId || rol !== 'cliente') { mensajeCatalogoCliente.textContent = 'Inicia sesión con una cuenta de cliente para continuar.'; return; }
-    const detalles = Object.keys(cantidadesCatalogoCliente).map(function (id) { return { idCosecha:Number(id), kilos:Number(cantidadesCatalogoCliente[id]) }; });
+    if (!usuarioId || rol !== 'cliente') {
+        mensajeCatalogoCliente.textContent = 'Inicia sesión con una cuenta de cliente para continuar.';
+        return;
+    }
+    const detalles = Object.keys(cantidadesCatalogoCliente).map(function (id) {
+        return { idCosecha: Number(id), kilos: Number(cantidadesCatalogoCliente[id]) };
+    });
     sessionStorage.setItem('pedidoGestionCultivos', JSON.stringify(detalles));
+    sessionStorage.removeItem('fechaRecoleccionGestionCultivos');
     window.location.href = 'pago.html';
-});
-cargarCatalogoCliente();
+}
+
+/* Datos: conecta los controles y carga el catálogo al abrir. No recibe atributos. */
+function iniciarCatalogoCliente() {
+    document.getElementById('buscar-producto-cliente').addEventListener('input', dibujarCatalogoCliente);
+    document.getElementById('filtro-maduracion-cliente').addEventListener('change', dibujarCatalogoCliente);
+    document.getElementById('finalizar').addEventListener('click', finalizarPedidoCliente);
+    cargarCatalogoCliente();
+}
+
+iniciarCatalogoCliente();

@@ -1,57 +1,55 @@
-/*
- * ARCHIVO: js/validacion.js
- * CAPA: FRONTEND (lógica compartida). Reglas de validación de los formularios del trabajador.
- * Todas las funciones devuelven '' si el dato es válido o el texto del error.
- * Las mismas reglas las vuelve a revisar el backend; aquí se validan antes de llamar al API
- * para avisar al trabajador sin esperar la respuesta.
- * Pruebas: node --test frontend/pruebas/validacion.test.js
- */
+/* Datos: valida los campos de formularios y maneja fechas locales. Devuelve un mensaje vacío para los campos válidos. No recibe atributos. */
 
-var Validacion = (function () {
+const Validacion = (function () {
 
+    /* Datos: pone en mayúscula la primera letra. Recibe el texto. */
     function capitalizar(texto) {
         return texto.charAt(0).toUpperCase() + texto.slice(1);
     }
 
+    /* Datos: completa un número con cero. Recibe el número. */
     function dosDigitos(n) {
         return (n < 10 ? '0' : '') + n;
     }
 
-    /* Fecha local de hoy como AAAA-MM-DD (no usa UTC para no cambiar de día en la noche). */
-    function hoy() {
-        var d = new Date();
+        /* Datos: devuelve la fecha local de hoy con formato AAAA-MM-DD. No recibe atributos. */
+        function hoy() {
+        const d = new Date();
         return d.getFullYear() + '-' + dosDigitos(d.getMonth() + 1) + '-' + dosDigitos(d.getDate());
     }
 
+    /* Datos: calcula una fecha desplazada. Recibe la fecha y los días. */
     function sumarDias(fecha, dias) {
-        var p = fecha.split('-');
-        var d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + dias));
+        const p = fecha.split('-');
+        const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + dias));
         return d.getUTCFullYear() + '-' + dosDigitos(d.getUTCMonth() + 1) + '-' + dosDigitos(d.getUTCDate());
     }
 
+    /* Datos: calcula los días entre dos fechas. Recibe las dos fechas. */
     function diasEntre(desde, hasta) {
-        var a = desde.split('-');
-        var b = hasta.split('-');
-        var ms = Date.UTC(Number(b[0]), Number(b[1]) - 1, Number(b[2])) - Date.UTC(Number(a[0]), Number(a[1]) - 1, Number(a[2]));
+        const a = desde.split('-');
+        const b = hasta.split('-');
+        const ms = Date.UTC(Number(b[0]), Number(b[1]) - 1, Number(b[2])) - Date.UTC(Number(a[0]), Number(a[1]) - 1, Number(a[2]));
         return Math.round(ms / 86400000);
     }
 
+    /* Datos: comprueba que la fecha exista. Recibe el texto de la fecha. */
     function fechaExiste(texto) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(texto || '')) {
             return false;
         }
-        var p = texto.split('-');
-        var anio = Number(p[0]);
-        var mes = Number(p[1]);
-        var dia = Number(p[2]);
-        var d = new Date(Date.UTC(anio, mes - 1, dia));
+        const p = texto.split('-');
+        const anio = Number(p[0]);
+        const mes = Number(p[1]);
+        const dia = Number(p[2]);
+        const d = new Date(Date.UTC(anio, mes - 1, dia));
         return anio >= 1900 && d.getUTCFullYear() === anio && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
     }
 
-    /* opciones: { nombre, noFutura, hoy, minima, nombreMinima } */
-    function fecha(texto, opciones) {
-        var o = opciones || {};
-        var nombre = o.nombre || 'la fecha';
+        /* Datos: valida una fecha y sus límites. Recibe el texto y las opciones. */
+        function fecha(texto, opciones) {
+        const o = opciones || {};
+        const nombre = o.nombre || 'la fecha';
         if (!texto) {
             return 'Indica ' + nombre + '.';
         }
@@ -67,16 +65,16 @@ var Validacion = (function () {
         return '';
     }
 
-    /* opciones: { nombre, decimales (2), maximo, mayorQueCero (true) } */
-    function numero(valor, opciones) {
-        var o = opciones || {};
-        var nombre = o.nombre || 'la cantidad';
-        var decimales = o.decimales === undefined ? 2 : o.decimales;
-        var texto = String(valor === undefined || valor === null ? '' : valor).trim();
+        /* Datos: valida cantidades y decimales. Recibe el valor y las opciones. */
+        function numero(valor, opciones) {
+        const o = opciones || {};
+        const nombre = o.nombre || 'la cantidad';
+        const decimales = o.decimales === undefined ? 2 : o.decimales;
+        const texto = String(valor === undefined || valor === null ? '' : valor).trim();
         if (texto === '') {
             return 'Indica ' + nombre + '.';
         }
-        var patron = decimales > 0
+        const patron = decimales > 0
             ? new RegExp('^\\d+(\\.\\d{1,' + decimales + '})?$')
             : /^\d+$/;
         if (!patron.test(texto)) {
@@ -84,7 +82,7 @@ var Validacion = (function () {
                 ? 'Escribe ' + nombre + ' como número positivo con máximo ' + decimales + ' decimales.'
                 : 'Escribe ' + nombre + ' como número entero positivo.';
         }
-        var n = Number(texto);
+        const n = Number(texto);
         if (o.mayorQueCero !== false && n <= 0) {
             return 'Indica ' + nombre + ' mayor que cero.';
         }
@@ -94,10 +92,10 @@ var Validacion = (function () {
         return '';
     }
 
-    /* opciones: { nombre, maximo, obligatorio (true) } */
-    function texto(valor, opciones) {
-        var o = opciones || {};
-        var limpio = String(valor || '').trim();
+        /* Datos: valida si el texto está completo y cumple su longitud. Recibe el valor y las opciones. */
+        function texto(valor, opciones) {
+        const o = opciones || {};
+        const limpio = String(valor || '').trim();
         if (o.obligatorio !== false && !limpio) {
             return 'Escribe ' + (o.nombre || 'el texto') + '.';
         }
@@ -107,20 +105,22 @@ var Validacion = (function () {
         return '';
     }
 
+    /* Datos: comprueba si la opción está permitida. Recibe el valor, la lista y su nombre. */
     function opcion(valor, permitidas, nombre) {
         return permitidas.indexOf(valor) === -1 ? 'Elige ' + (nombre || 'una opción') + '.' : '';
     }
 
+    /* Datos: comprueba que el identificador sea un entero positivo. Recibe el valor y el nombre del registro. */
     function idValido(valor, nombre) {
-        var n = Number(valor);
+        const n = Number(valor);
         return valor && Number.isInteger(n) && n > 0 ? '' : 'Selecciona ' + (nombre || 'un registro') + '.';
     }
 
-    /* Recorre una lista de [campo, error] y marca el primero con error (para lectores de pantalla). */
-    function primerError(pares) {
-        for (var i = 0; i < pares.length; i++) {
-            var campo = pares[i][0];
-            var error = pares[i][1];
+        /* Datos: marca los campos inválidos y enfoca el primero. Recibe pares de campo y mensaje. */
+        function primerError(pares) {
+        for (let i = 0; i < pares.length; i++) {
+            const campo = pares[i][0];
+            const error = pares[i][1];
             if (campo && campo.setAttribute) {
                 if (error) {
                     campo.setAttribute('aria-invalid', 'true');
@@ -129,7 +129,7 @@ var Validacion = (function () {
                 }
             }
         }
-        for (var j = 0; j < pares.length; j++) {
+        for (let j = 0; j < pares.length; j++) {
             if (pares[j][1]) {
                 if (pares[j][0] && pares[j][0].focus) {
                     pares[j][0].focus();
@@ -154,7 +154,7 @@ var Validacion = (function () {
     };
 })();
 
-/* Mensaje de error de pedirApi() para mostrarlo al usuario. */
+/* Datos: elige el mensaje que se muestra al fallar una solicitud. Recibe el error. */
 function textoErrorApi(error) {
     if (error instanceof TypeError) {
         return 'No hay conexión con el servidor. Revisa que Spring Boot esté corriendo en el puerto 8081.';

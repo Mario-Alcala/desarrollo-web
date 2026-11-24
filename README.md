@@ -93,7 +93,7 @@ bash iniciar-api.sh
 
 La primera vez tarda unos minutos (descarga Maven y las dependencias). Está listo cuando aparece
 `Started GestioncultivosBackendApplication`.
-El script inicia con el perfil `mysql`, que usa la base preparada con `database/init.sql`. Si Spring Boot ya está activo, lo detecta y no intenta iniciar otra instancia en el mismo puerto. Para usar la base local H2, ejecuta `SPRING_PROFILES_ACTIVE=local bash iniciar-api.sh`.
+El backend usa MySQL y la base se prepara con `database/init.sql`. Puedes iniciar con `./mvnw spring-boot:run` o `bash iniciar-api.sh`. El script comprueba si Spring Boot ya está activo antes de iniciar otra instancia.
 
 Comprobar que funciona y que está conectado a MySQL:
 

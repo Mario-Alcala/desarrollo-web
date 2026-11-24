@@ -332,30 +332,6 @@ WHERE t.nombre = 'El Encino' AND NOT EXISTS (
     SELECT 1 FROM parcelas p WHERE p.id_terreno = t.id AND p.nombre = 'Parcela A'
 );
 
-INSERT INTO cultivos (id_parcela, nombre, familia, etapa_fenologica, fecha_siembra, estado)
-SELECT p.id_parcela, 'Tomate cherry', 'Hortaliza', 'Floración', CURRENT_DATE, 'activo'
-FROM parcelas p JOIN terrenos t ON t.id = p.id_terreno
-WHERE t.nombre = 'El Encino' AND p.nombre = 'Parcela A'
-AND NOT EXISTS (SELECT 1 FROM cultivos c WHERE c.id_parcela = p.id_parcela AND c.estado = 'activo');
-
-INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
-                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
-SELECT c.id, u.id_usuario, CURRENT_DATE, 85.5, 85.5, 'maduro', 'Bodega Central'
-FROM cultivos c CROSS JOIN usuarios u
-WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
-AND NOT EXISTS (
-    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'maduro'
-);
-
-INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
-                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
-SELECT c.id, u.id_usuario, CURRENT_DATE, 60, 60, 'verde', 'Bodega Central'
-FROM cultivos c CROSS JOIN usuarios u
-WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
-AND NOT EXISTS (
-    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'verde'
-);
-
 INSERT INTO familias_producto (nombre)
 SELECT datos.nombre
 FROM (
@@ -387,6 +363,33 @@ JOIN familias_producto f ON LOWER(f.nombre) = LOWER(datos.familia)
 WHERE NOT EXISTS (
     SELECT 1 FROM variedades_producto v
     WHERE v.id_familia = f.id_familia AND LOWER(v.nombre) = LOWER(datos.variedad)
+);
+
+INSERT INTO cultivos (id_parcela, id_variedad, nombre, familia, etapa_fenologica, fecha_siembra, estado)
+SELECT p.id_parcela, v.id_variedad, 'Tomate cherry', 'Hortaliza', 'Floración', CURRENT_DATE, 'activo'
+FROM parcelas p
+JOIN terrenos t ON t.id = p.id_terreno
+JOIN familias_producto f ON f.nombre = 'Tomate'
+JOIN variedades_producto v ON v.id_familia = f.id_familia AND v.nombre = 'Cherry'
+WHERE t.nombre = 'El Encino' AND p.nombre = 'Parcela A'
+AND NOT EXISTS (SELECT 1 FROM cultivos c WHERE c.id_parcela = p.id_parcela AND c.estado = 'activo');
+
+INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
+                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
+SELECT c.id, u.id_usuario, CURRENT_DATE, 85.5, 85.5, 'maduro', 'Bodega Central'
+FROM cultivos c CROSS JOIN usuarios u
+WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
+AND NOT EXISTS (
+    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'maduro'
+);
+
+INSERT INTO cosechas (id_cultivo, id_usuario, fecha_cosecha, cantidad_cosechada,
+                      cantidad_disponible, estado_maduracion, ubicacion_bodega)
+SELECT c.id, u.id_usuario, CURRENT_DATE, 60, 60, 'verde', 'Bodega Central'
+FROM cultivos c CROSS JOIN usuarios u
+WHERE c.nombre = 'Tomate cherry' AND u.correo_electronico = 'admin@gestioncultivos.local'
+AND NOT EXISTS (
+    SELECT 1 FROM cosechas x WHERE x.id_cultivo = c.id AND x.estado_maduracion = 'verde'
 );
 
 INSERT INTO proveedores (nombre_empresa, contacto, telefono, email, direccion)

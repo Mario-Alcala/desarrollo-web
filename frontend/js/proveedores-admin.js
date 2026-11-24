@@ -1,3 +1,5 @@
+/* Datos: consulta, busca y guarda proveedores mediante la API. No recibe atributos. */
+
 const API_PROVEEDORES = "http://localhost:8081/api/proveedores";
 const buscador = document.querySelector("#topbar input");
 const mensaje = document.getElementById("mensaje-prov");
@@ -9,6 +11,7 @@ const msgFormulario = document.getElementById("mensaje-proveedor");
 let proveedores = [];
 let editando = null;
 
+/* Datos: consulta los proveedores y actualiza la tabla. No recibe atributos. */
 async function cargarProveedores() {
     mensaje.textContent = "Cargando proveedores…";
     try {
@@ -23,6 +26,36 @@ async function cargarProveedores() {
     }
 }
 
+/* Datos: envía el proveedor nuevo o editado a la API. Recibe el evento del formulario. */
+async function guardarProveedor(evento) {
+    evento.preventDefault();
+    msgFormulario.textContent = "";
+    const datos = {
+        nombreEmpresa: document.getElementById("pv-empresa").value.trim(),
+        contacto: document.getElementById("pv-contacto").value.trim(),
+        telefono: document.getElementById("pv-telefono").value.trim(),
+        email: document.getElementById("pv-email").value.trim(),
+        direccion: document.getElementById("pv-direccion").value.trim()
+    };
+    try {
+        const respuesta = await fetch(editando === null ? API_PROVEEDORES : `${API_PROVEEDORES}/${editando}`, {
+            method: editando === null ? "POST" : "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            let error = {};
+            try { error = await respuesta.json(); } catch (noEsJson) { error = {}; }
+            throw new Error(error.mensaje || "No se pudo guardar el proveedor.");
+        }
+        dialogo.close();
+        await cargarProveedores();
+    } catch (error) {
+        msgFormulario.textContent = error.message;
+    }
+}
+
+/* Datos: muestra los proveedores que coinciden con el texto buscado. No recibe atributos. */
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const visibles = [];
@@ -56,6 +89,7 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay proveedores para mostrar.";
 }
 
+/* Datos: abre el formulario de proveedor. Recibe el proveedor a editar o null para crear. */
 function abrir(p) {
     editando = p ? p.idProveedor : null;
     document.getElementById("titulo-proveedor").textContent = p ? "Editar proveedor" : "Agregar proveedor";
@@ -71,35 +105,13 @@ function abrir(p) {
     dialogo.showModal();
 }
 
-formulario.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    msgFormulario.textContent = "";
-    const datos = {
-        nombreEmpresa: document.getElementById("pv-empresa").value.trim(),
-        contacto: document.getElementById("pv-contacto").value.trim(),
-        telefono: document.getElementById("pv-telefono").value.trim(),
-        email: document.getElementById("pv-email").value.trim(),
-        direccion: document.getElementById("pv-direccion").value.trim()
-    };
-    try {
-        const respuesta = await fetch(editando === null ? API_PROVEEDORES : `${API_PROVEEDORES}/${editando}`, {
-            method: editando === null ? "POST" : "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            let error = {};
-            try { error = await respuesta.json(); } catch (noEsJson) { error = {}; }
-            throw new Error(error.mensaje || "No se pudo guardar el proveedor.");
-        }
-        dialogo.close();
-        await cargarProveedores();
-    } catch (error) {
-        msgFormulario.textContent = error.message;
-    }
-});
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarProveedores() {
+    formulario.addEventListener("submit", guardarProveedor);
+    document.getElementById("agregar-proveedor").addEventListener("click", function () { abrir(null); });
+    document.getElementById("cancelar-proveedor").addEventListener("click", function () { dialogo.close(); });
+    buscador.addEventListener("input", dibujar);
+    cargarProveedores();
+}
 
-document.getElementById("agregar-proveedor").addEventListener("click", function () { abrir(null); });
-document.getElementById("cancelar-proveedor").addEventListener("click", function () { dialogo.close(); });
-buscador.addEventListener("input", dibujar);
-cargarProveedores();
+iniciarProveedores();

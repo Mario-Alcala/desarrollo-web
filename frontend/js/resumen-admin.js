@@ -1,13 +1,11 @@
+/* Datos: consulta los registros de administración y el pronóstico del tiempo para el resumen. No recibe atributos. */
+
 const API_RESUMEN = "http://" + window.location.hostname + ":8081/api";
 const mensajeResumen = document.getElementById("mensaje-resumen");
 const mensajeClima = document.getElementById("mensaje-clima");
 let terrenosResumen = [];
 
-function numero(valor, decimales) {
-    if (decimales === undefined) decimales = 0;
-    return Number(valor || 0).toLocaleString("es-MX", { maximumFractionDigits: decimales });
-}
-
+/* Datos: pide datos al backend y procesa posibles errores. Recibe la URL. */
 async function consultar(url) {
     const respuesta = await fetch(url, { credentials: 'include' });
     const contenido = await respuesta.text();
@@ -36,101 +34,11 @@ async function consultar(url) {
     return datos;
 }
 
-function fechaPronostico(fecha) {
-    const partes = fecha.split("-");
-    const anio = Number(partes[0]);
-    const mes = Number(partes[1]) - 1;
-    const dia = Number(partes[2]);
-    return new Date(anio, mes, dia).toLocaleDateString("es-MX", {
-        weekday: "short",
-        day: "numeric"
-    });
-}
-
-function dibujarPronostico(dias) {
-    const contenedor = document.getElementById("pronostico-semanal");
-    contenedor.replaceChildren();
-
-    if (!dias || dias.length === 0) {
-        mensajeClima.textContent = "El servicio no devolvió el pronóstico diario.";
-        return;
-    }
-
-    mensajeClima.textContent = "Temperatura máxima, probabilidad de lluvia y lluvia esperada.";
-
-    for (let i = 0; i < dias.length; i++) {
-        const dia = dias[i];
-        const tarjeta = document.createElement("article");
-        tarjeta.className = "dia-pronostico";
-
-        const fecha = document.createElement("strong");
-        fecha.textContent = fechaPronostico(dia.fecha);
-
-        const temperatura = document.createElement("span");
-        temperatura.className = "temp-pronostico";
-        temperatura.textContent = numero(dia.temperaturaMaximaCelsius) + " °C";
-
-        const probabilidad = document.createElement("span");
-        probabilidad.textContent = numero(dia.probabilidadLluvia) + "% lluvia";
-
-        const lluvia = document.createElement("span");
-        lluvia.textContent = numero(dia.lluviaEsperadaMm, 1) + " mm";
-
-        tarjeta.append(fecha, temperatura, probabilidad, lluvia);
-        contenedor.append(tarjeta);
-    }
-}
-
-async function cargarClima(terrenos) {
-    let terrenoConCoordenadas = null;
-
-    for (let i = 0; i < terrenos.length; i++) {
-        const terreno = terrenos[i];
-        if (terreno.latitud !== null && terreno.latitud !== undefined
-                && terreno.longitud !== null && terreno.longitud !== undefined) {
-            terrenoConCoordenadas = terreno;
-            break;
-        }
-    }
-
-    const ubicacion = document.getElementById("clima-ubicacion");
-    if (terrenoConCoordenadas === null) {
-        ubicacion.textContent = "Sin terreno con coordenadas registradas";
-        mensajeClima.textContent = "Agrega latitud y longitud a un terreno para consultar el pronóstico.";
-        document.getElementById("pronostico-semanal").replaceChildren();
-        return;
-    }
-
-    ubicacion.textContent = terrenoConCoordenadas.nombre + " · "
-        + (terrenoConCoordenadas.ubicacion || "Ubicación registrada");
-
-    try {
-        const url = API_RESUMEN + "/clima?latitud="
-            + encodeURIComponent(terrenoConCoordenadas.latitud)
-            + "&longitud=" + encodeURIComponent(terrenoConCoordenadas.longitud);
-        const clima = await consultar(url);
-        dibujarPronostico(clima.pronostico);
-
-        if (clima.horaActualizacion) {
-            const hora = new Date(clima.horaActualizacion);
-            document.getElementById("clima-actualizado").textContent =
-                "Datos meteorológicos actualizados: "
-                + hora.toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" }) + ".";
-        }
-    } catch (error) {
-        if (document.getElementById("pronostico-semanal").children.length > 0) {
-            mensajeClima.textContent = "No se pudo actualizar; se conserva el último pronóstico cargado.";
-        } else {
-            mensajeClima.textContent = "No se pudo consultar el clima. Revisa que Spring Boot esté activo.";
-        }
-    }
-}
-
+/* Datos: actualiza los totales del panel. Recibe una indicación de si también debe consultar el clima. */
 async function cargarResumen(actualizarClima) {
     mensajeResumen.textContent = "Cargando información…";
 
     try {
-        // Se consultan los datos uno por uno para que sea más sencillo seguir el proceso.
         const terrenos = await consultar(API_RESUMEN + "/terrenos");
         const productos = await consultar(API_RESUMEN + "/variedades-producto");
         const pedidos = await consultar(API_RESUMEN + "/pedidos");
@@ -218,6 +126,106 @@ async function cargarResumen(actualizarClima) {
     }
 }
 
+/* Datos: consulta el pronóstico con las coordenadas de un terreno. Recibe la lista de terrenos. */
+async function cargarClima(terrenos) {
+    let terrenoConCoordenadas = null;
+
+    for (let i = 0; i < terrenos.length; i++) {
+        const terreno = terrenos[i];
+        if (terreno.latitud !== null && terreno.latitud !== undefined
+                && terreno.longitud !== null && terreno.longitud !== undefined) {
+            terrenoConCoordenadas = terreno;
+            break;
+        }
+    }
+
+    const ubicacion = document.getElementById("clima-ubicacion");
+    if (terrenoConCoordenadas === null) {
+        ubicacion.textContent = "Sin terreno con coordenadas registradas";
+        mensajeClima.textContent = "Agrega latitud y longitud a un terreno para consultar el pronóstico.";
+        document.getElementById("pronostico-semanal").replaceChildren();
+        return;
+    }
+
+    ubicacion.textContent = terrenoConCoordenadas.nombre + " · "
+        + (terrenoConCoordenadas.ubicacion || "Ubicación registrada");
+
+    try {
+        const url = API_RESUMEN + "/clima?latitud="
+            + encodeURIComponent(terrenoConCoordenadas.latitud)
+            + "&longitud=" + encodeURIComponent(terrenoConCoordenadas.longitud);
+        const clima = await consultar(url);
+        dibujarPronostico(clima.pronostico);
+
+        if (clima.horaActualizacion) {
+            const hora = new Date(clima.horaActualizacion);
+            document.getElementById("clima-actualizado").textContent =
+                "Datos meteorológicos actualizados: "
+                + hora.toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" }) + ".";
+        }
+    } catch (error) {
+        if (document.getElementById("pronostico-semanal").children.length > 0) {
+            mensajeClima.textContent = "No se pudo actualizar; se conserva el último pronóstico cargado.";
+        } else {
+            mensajeClima.textContent = "No se pudo consultar el clima. Revisa que Spring Boot esté activo.";
+        }
+    }
+}
+
+/* Datos: da formato a un número para el resumen. Recibe el valor y los decimales. */
+function numero(valor, decimales) {
+    if (decimales === undefined) decimales = 0;
+    return Number(valor || 0).toLocaleString("es-MX", { maximumFractionDigits: decimales });
+}
+
+/* Datos: da formato a la fecha de una tarjeta del pronóstico. Recibe la fecha. */
+function fechaPronostico(fecha) {
+    const partes = fecha.split("-");
+    const anio = Number(partes[0]);
+    const mes = Number(partes[1]) - 1;
+    const dia = Number(partes[2]);
+    return new Date(anio, mes, dia).toLocaleDateString("es-MX", {
+        weekday: "short",
+        day: "numeric"
+    });
+}
+
+/* Datos: muestra las tarjetas del pronóstico semanal. Recibe la lista de días. */
+function dibujarPronostico(dias) {
+    const contenedor = document.getElementById("pronostico-semanal");
+    contenedor.replaceChildren();
+
+    if (!dias || dias.length === 0) {
+        mensajeClima.textContent = "El servicio no devolvió el pronóstico diario.";
+        return;
+    }
+
+    mensajeClima.textContent = "Temperatura máxima, probabilidad de lluvia y lluvia esperada.";
+
+    for (let i = 0; i < dias.length; i++) {
+        const dia = dias[i];
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "dia-pronostico";
+
+        const fecha = document.createElement("strong");
+        fecha.textContent = fechaPronostico(dia.fecha);
+
+        const temperatura = document.createElement("span");
+        temperatura.className = "temp-pronostico";
+        temperatura.textContent = numero(dia.temperaturaMaximaCelsius) + " °C";
+
+        const probabilidad = document.createElement("span");
+        probabilidad.textContent = numero(dia.probabilidadLluvia) + "% lluvia";
+
+        const lluvia = document.createElement("span");
+        lluvia.textContent = numero(dia.lluviaEsperadaMm, 1) + " mm";
+
+        tarjeta.append(fecha, temperatura, probabilidad, lluvia);
+        contenedor.append(tarjeta);
+    }
+}
+
+/* Datos: programa la siguiente consulta de clima a medianoche. No recibe atributos. */
 function programarActualizacionDelClima() {
     const ahora = new Date();
     const medianoche = new Date(
@@ -233,18 +241,21 @@ function programarActualizacionDelClima() {
     }, milisegundosHastaMedianoche);
 }
 
-// Los indicadores cambian cada minuto. El pronóstico se consulta al abrir y a medianoche.
-const usuarioResumen = usuarioActual();
-if (window.location.hostname === "127.0.0.1") {
-    // En WSL, Windows expone el backend por localhost; usa el mismo host que el login para la sesión.
-    window.location.replace(window.location.href.replace("127.0.0.1", "localhost"));
-} else if (usuarioResumen && (usuarioResumen.rol === "administrador_agricultor" || usuarioResumen.rol === "agricultor")) {
-    setInterval(function () {
-        cargarResumen(false);
-    }, 60000);
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarResumen() {
+    const usuarioResumen = usuarioActual();
+    if (window.location.hostname === "127.0.0.1") {
+        window.location.replace(window.location.href.replace("127.0.0.1", "localhost"));
+    } else if (usuarioResumen && (usuarioResumen.rol === "administrador_agricultor" || usuarioResumen.rol === "agricultor")) {
+        setInterval(function () {
+            cargarResumen(false);
+        }, 60000);
 
-    programarActualizacionDelClima();
-    cargarResumen(true);
-} else {
-    window.location.replace("../login.html?motivo=sesion");
+        programarActualizacionDelClima();
+        cargarResumen(true);
+    } else {
+        window.location.replace("../login.html?motivo=sesion");
+    }
 }
+
+iniciarResumen();

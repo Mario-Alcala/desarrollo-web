@@ -1,3 +1,5 @@
+/* Datos: este archivo muestra los cultivos registrados y permite guardar una cosecha. No recibe atributos. */
+
 const API_EMPLEADO = 'http://localhost:8081/api';
 const listaCultivosEmpleado = document.getElementById('lista-cultivos-empleado');
 const mensajeCultivosEmpleado = document.getElementById('mensaje-cultivos-empleado');
@@ -5,46 +7,59 @@ const formularioCosechaEmpleado = document.getElementById('formulario-cosecha-em
 const selectorCosechaEmpleado = document.getElementById('cosecha-cultivo');
 let cultivosEmpleado = [];
 
-function ponerCelda(fila, valor) {
-    const celda = document.createElement('td');
-    celda.textContent = valor == null || valor === '' ? '—' : valor;
-    fila.appendChild(celda);
-}
-
+/* Datos: esta función consulta los cultivos desde la API. No recibe atributos. */
 async function cargarCultivosEmpleado() {
     mensajeCultivosEmpleado.textContent = 'Cargando cultivos…';
     try {
         const respuesta = await fetch(API_EMPLEADO + '/cultivos');
         if (!respuesta.ok) throw new Error('No se pudieron cargar los cultivos desde el API.');
         cultivosEmpleado = await respuesta.json();
-        listaCultivosEmpleado.replaceChildren();
-        selectorCosechaEmpleado.replaceChildren(new Option('Selecciona un cultivo activo', ''));
-        cultivosEmpleado.forEach(function (cultivo) {
-            const fila = document.createElement('tr');
-            ponerCelda(fila, cultivo.nombre);
-            ponerCelda(fila, 'Parcela #' + cultivo.idParcela);
-            ponerCelda(fila, cultivo.familia || cultivo.tipo);
-            ponerCelda(fila, cultivo.etapaFenologica);
-            ponerCelda(fila, cultivo.fechaSiembra || cultivo.fechaRegistro);
-            ponerCelda(fila, cultivo.estado);
-            listaCultivosEmpleado.appendChild(fila);
-            if (cultivo.estado === 'activo') selectorCosechaEmpleado.add(new Option(cultivo.nombre + ' · Parcela #' + cultivo.idParcela, String(cultivo.id)));
-        });
-        mensajeCultivosEmpleado.textContent = cultivosEmpleado.length ? '' : 'No hay cultivos registrados.';
-        if (cultivosEmpleado.length === 0) {
-            const fila = document.createElement('tr');
-            const celda = document.createElement('td');
-            celda.colSpan = 6;
-            celda.textContent = 'No hay cultivos para mostrar.';
-            fila.appendChild(celda);
-            listaCultivosEmpleado.appendChild(fila);
-        }
+        dibujarCultivosEmpleado(cultivosEmpleado);
     } catch (error) {
         mensajeCultivosEmpleado.textContent = error.message;
     }
 }
 
-formularioCosechaEmpleado.addEventListener('submit', async function (evento) {
+/* Datos: esta función muestra cada cultivo y ofrece los activos en el selector de cosecha. Recibe la lista de cultivos. */
+function dibujarCultivosEmpleado(cultivos) {
+    listaCultivosEmpleado.replaceChildren();
+    selectorCosechaEmpleado.replaceChildren(new Option('Selecciona un cultivo activo', ''));
+
+    for (const cultivo of cultivos) {
+        const fila = document.createElement('tr');
+        ponerCelda(fila, cultivo.nombre);
+        ponerCelda(fila, 'Parcela #' + cultivo.idParcela);
+        ponerCelda(fila, cultivo.familia || cultivo.tipo);
+        ponerCelda(fila, cultivo.etapaFenologica);
+        ponerCelda(fila, cultivo.fechaSiembra || cultivo.fechaRegistro);
+        ponerCelda(fila, cultivo.estado);
+        listaCultivosEmpleado.appendChild(fila);
+        if (cultivo.estado === 'activo') {
+            const nombreOpcion = cultivo.nombre + ' · Parcela #' + cultivo.idParcela;
+            selectorCosechaEmpleado.add(new Option(nombreOpcion, String(cultivo.id)));
+        }
+    }
+
+    mensajeCultivosEmpleado.textContent = cultivos.length ? '' : 'No hay cultivos registrados.';
+    if (!cultivos.length) {
+        const fila = document.createElement('tr');
+        const celda = document.createElement('td');
+        celda.colSpan = 6;
+        celda.textContent = 'No hay cultivos para mostrar.';
+        fila.appendChild(celda);
+        listaCultivosEmpleado.appendChild(fila);
+    }
+}
+
+/* Datos: esta función agrega una celda a la tabla de cultivos. Recibe la fila y el valor. */
+function ponerCelda(fila, valor) {
+    const celda = document.createElement('td');
+    celda.textContent = valor == null || valor === '' ? '—' : valor;
+    fila.appendChild(celda);
+}
+
+/* Datos: esta función envía a la API los datos de la cosecha. Recibe el evento del formulario. */
+async function guardarCosechaEmpleado(evento) {
     evento.preventDefault();
     const mensaje = document.getElementById('mensaje-formulario-cosecha');
     const idUsuario = sessionStorage.getItem('usuarioId');
@@ -84,7 +99,13 @@ formularioCosechaEmpleado.addEventListener('submit', async function (evento) {
         mensaje.textContent = error.message;
     }
     boton.disabled = false;
-});
+}
 
-document.getElementById('cosecha-fecha').value = new Date().toISOString().slice(0, 10);
-cargarCultivosEmpleado();
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarCultivosEmpleado() {
+    formularioCosechaEmpleado.addEventListener('submit', guardarCosechaEmpleado);
+    document.getElementById('cosecha-fecha').value = new Date().toISOString().slice(0, 10);
+    cargarCultivosEmpleado();
+}
+
+iniciarCultivosEmpleado();

@@ -1,49 +1,33 @@
+/* Datos: muestra un terreno, sus parcelas y su bitácora, y conecta los formularios de edición. No recibe atributos. */
+
 const API = "http://localhost:8081/api";
 const idTerreno = new URLSearchParams(location.search).get("id");
 let terreno = null;
 let parcelaActual = null;
 let pestana = "cultivo";
+const dialogoBitacora = document.getElementById("dialogo-bitacora");
+const formularioBitacora = document.getElementById("formulario-bitacora");
+const mensajeBitacora = document.getElementById("mensaje-bitacora");
+let registroBitacoraActual = null;
+const dialogoEditarTerreno = document.getElementById("dialogo-editar-terreno");
+const formularioEditarTerreno = document.getElementById("formulario-editar-terreno");
+const mensajeEditarTerreno = document.getElementById("mensaje-editar-terreno");
+const dialogoParcela = document.getElementById("dialogo-parcela");
+const formularioParcela = document.getElementById("formulario-parcela");
+const mensajeParcela = document.getElementById("mensaje-parcela");
+const superficieDisponible = document.getElementById("superficie-disponible");
+const dialogoCultivo = document.getElementById("dialogo-cultivo");
+const formularioCultivo = document.getElementById("formulario-cultivo-parcela");
+const mensajeCultivo = document.getElementById("mensaje-cultivo-parcela");
 
-function crear(etiqueta, texto, clase) {
-    const el = document.createElement(etiqueta);
-    if (texto !== undefined && texto !== null) el.textContent = texto;
-    if (clase) el.className = clase;
-    return el;
-}
-
-function capitalizar(texto) {
-    const valor = String(texto || "");
-    return valor.charAt(0).toUpperCase() + valor.slice(1);
-}
-
-function m2(ha) {
-    return ha == null ? "—" : Math.round(ha * 10000).toLocaleString("es-MX") + " m²";
-}
-
-function fechaCorta(fecha) {
-    if (!fecha) return "Sin registrar";
-    const partes = String(fecha).slice(0, 10).split("-");
-    const anio = Number(partes[0]);
-    const mes = Number(partes[1]);
-    const dia = Number(partes[2]);
-    return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX");
-}
-
-async function mensajeError(respuesta, mensajePredeterminado) {
-    try {
-        const error = await respuesta.json();
-        return error.mensaje || mensajePredeterminado;
-    } catch (noEsJson) {
-        return mensajePredeterminado;
-    }
-}
-
+/* Datos: consulta una ruta de la API del proyecto. Recibe la ruta. */
 async function pedir(ruta) {
     const respuesta = await fetch(`${API}${ruta}`);
     if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
     return respuesta.json();
 }
 
+/* Datos: combina el terreno y sus parcelas con los registros de la bitácora. No recibe atributos. */
 async function cargarTerreno() {
     try {
         const registro = await pedir(`/terrenos/${encodeURIComponent(idTerreno)}`);
@@ -127,6 +111,306 @@ async function cargarTerreno() {
     }
 }
 
+/* Datos: consulta la temperatura y precipitación del terreno con Open-Meteo. No recibe atributos. */
+async function cargarClima() {
+    const detalle = document.getElementById("clima-detalle");
+    const temp = document.getElementById("clima-temp");
+    if (terreno.latitud == null || terreno.longitud == null) {
+        detalle.textContent = "Este terreno no tiene coordenadas registradas.";
+        return;
+    }
+    try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${terreno.latitud}&longitude=${terreno.longitud}&current=temperature_2m,precipitation&timezone=auto`;
+        const d = await (await fetch(url)).json();
+        temp.textContent = `${Math.round(d.current.temperature_2m)} °C`;
+        detalle.textContent = `Precipitación actual: ${d.current.precipitation} mm`;
+    } catch {
+        detalle.textContent = "No se pudo consultar el clima.";
+    }
+}
+
+/* Datos: envía los cambios del terreno a la API. Recibe el evento del formulario. */
+async function guardarTerrenoEditado(evento) {
+    evento.preventDefault();
+    mensajeEditarTerreno.textContent = "";
+    const latitudTexto = document.getElementById("e-latitud").value;
+    const longitudTexto = document.getElementById("e-longitud").value;
+    const datos = {
+        nombre: document.getElementById("e-nombre").value.trim(),
+        ubicacion: document.getElementById("e-ubicacion").value.trim(),
+        superficieHa: Number(document.getElementById("e-superficie").value) / 10000,
+        latitud: latitudTexto === "" ? null : Number(latitudTexto),
+        longitud: longitudTexto === "" ? null : Number(longitudTexto),
+        estado: document.getElementById("e-estado").value
+    };
+    if ((datos.latitud === null) !== (datos.longitud === null)) {
+        mensajeEditarTerreno.textContent = "Ingresa latitud y longitud juntas, o deja ambas vacías.";
+        return;
+    }
+    try {
+        const respuesta = await fetch(`${API}/terrenos/${encodeURIComponent(idTerreno)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo actualizar el terreno."));
+        }
+        const terrenoActualizado = await respuesta.json();
+        for (const propiedad in terrenoActualizado) {
+            terreno[propiedad] = terrenoActualizado[propiedad];
+        }
+        dialogoEditarTerreno.close();
+        dibujarTerreno();
+    } catch (error) {
+        mensajeEditarTerreno.textContent = error.message;
+    }
+}
+
+/* Datos: registra una parcela dentro del terreno. Recibe el evento del formulario. */
+async function guardarParcela(evento) {
+    evento.preventDefault();
+    mensajeParcela.textContent = "";
+    const datos = {
+        idTerreno: Number(idTerreno),
+        nombre: document.getElementById("p-nombre").value.trim(),
+        superficieM2: Number(document.getElementById("p-superficie").value)
+    };
+    try {
+        const respuesta = await fetch(`${API}/parcelas`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo guardar la parcela."));
+        }
+        const parcelaCreada = await respuesta.json();
+        parcelaActual = { idParcela: parcelaCreada.idParcela };
+        await cargarTerreno();
+        pestana = "cultivo";
+        if (parcelaActual) dibujarPanelParcela();
+        dialogoParcela.close();
+    } catch (error) {
+        mensajeParcela.textContent = error.message;
+    }
+}
+
+/* Datos: guarda los datos del cultivo de la parcela elegida. Recibe el evento del formulario. */
+async function guardarCultivo(evento) {
+    evento.preventDefault();
+    if (!parcelaActual) return;
+    mensajeCultivo.textContent = "";
+    const datos = {
+        idParcela: parcelaActual.idParcela,
+        idVariedad: Number(document.getElementById("c-variedad").value),
+        nombre: "",
+        familia: null,
+        etapaFenologica: document.getElementById("c-etapa").value.trim() || null,
+        fechaSiembra: document.getElementById("c-fecha-siembra").value || null,
+        estado: document.getElementById("c-estado").value
+    };
+    const seleccion = document.getElementById("c-variedad");
+    const variedadElegida = seleccion.options[seleccion.selectedIndex];
+    if (!datos.idVariedad || !variedadElegida || !variedadElegida.value) {
+        mensajeCultivo.textContent = "Selecciona un producto existente del catálogo.";
+        return;
+    }
+    datos.familia = variedadElegida.dataset.familia;
+    datos.nombre = datos.familia + " " + variedadElegida.dataset.nombre;
+    const cultivoExistente = parcelaActual.cultivo;
+    const ruta = cultivoExistente
+        ? `${API}/cultivos/${encodeURIComponent(cultivoExistente.id)}`
+        : `${API}/cultivos`;
+    try {
+        const respuesta = await fetch(ruta, {
+            method: cultivoExistente ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo guardar la información del cultivo."));
+        }
+        dialogoCultivo.close();
+        await cargarTerreno();
+        if (parcelaActual) pestana = "cultivo";
+        dibujarPanelParcela();
+    } catch (error) {
+        mensajeCultivo.textContent = error.message;
+    }
+}
+
+/* Datos: guarda una observación, una incidencia o un riego. Recibe el evento del formulario. */
+async function guardarRegistroBitacora(evento) {
+    evento.preventDefault();
+    if (!registroBitacoraActual) return;
+    mensajeBitacora.textContent = "";
+    const entidad = registroBitacoraActual.entidad;
+    const registro = registroBitacoraActual.registro;
+    const fecha = document.getElementById("b-fecha").value;
+    let ruta;
+    let datos;
+
+    if (entidad === "observacion") {
+        ruta = "observaciones-cultivos";
+        datos = {
+            idCultivo: registro.idCultivo,
+            idUsuario: registro.idUsuario,
+            fechaObservacion: fecha,
+            descripcion: document.getElementById("b-descripcion").value.trim()
+        };
+    } else if (entidad === "incidencia") {
+        ruta = "incidencias-cultivo";
+        datos = {
+            idCultivo: registro.idCultivo,
+            idUsuario: registro.idUsuario,
+            fechaIncidencia: fecha,
+            tipoIncidencia: document.getElementById("b-tipo-incidencia").value,
+            nivelGravedad: document.getElementById("b-gravedad").value,
+            descripcion: document.getElementById("b-descripcion-incidencia").value.trim()
+        };
+    } else {
+        ruta = "riegos";
+        datos = {
+            idCultivo: registro.idCultivo,
+            idUsuario: registro.idUsuario,
+            fechaRiego: fecha,
+            cantidadAgua: Number(document.getElementById("b-cantidad-agua").value),
+            unidadMedida: document.getElementById("b-unidad-agua").value.trim(),
+            metodo: document.getElementById("b-metodo-riego").value.trim(),
+            observaciones: document.getElementById("b-observaciones-riego").value.trim()
+        };
+    }
+
+    try {
+        const respuesta = await fetch(`${API}/${ruta}/${encodeURIComponent(registroBitacoraActual.id)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) throw new Error(`No se pudo guardar el cambio (HTTP ${respuesta.status}).`);
+        dialogoBitacora.close();
+        pestana = "bitacora";
+        await cargarTerreno();
+    } catch (error) {
+        mensajeBitacora.textContent = error.message;
+    }
+}
+
+/* Datos: muestra la pestaña elegida de la parcela. Recibe el evento del botón. */
+function cambiarPestanaParcela(e) {
+    if (e.target.dataset.tab && parcelaActual) {
+        pestana = e.target.dataset.tab;
+        dibujarPanelParcela();
+    }
+}
+
+/* Datos: rellena y abre el formulario de edición de terreno. No recibe atributos. */
+function abrirEdicionTerreno() {
+    if (!terreno) return;
+    mensajeEditarTerreno.textContent = "";
+    document.getElementById("e-nombre").value = terreno.nombre || "";
+    document.getElementById("e-ubicacion").value = terreno.ubicacion || "";
+    document.getElementById("e-superficie").value = terreno.superficieHa == null ? "" : terreno.superficieHa * 10000;
+    document.getElementById("e-latitud").value = terreno.latitud == null ? "" : terreno.latitud;
+    document.getElementById("e-longitud").value = terreno.longitud == null ? "" : terreno.longitud;
+    document.getElementById("e-estado").value = terreno.estado || "disponible";
+    dialogoEditarTerreno.showModal();
+}
+
+/* Datos: muestra el formulario y calcula la superficie libre. No recibe atributos. */
+function abrirNuevaParcela() {
+    if (!terreno) return;
+    mensajeParcela.textContent = "";
+    formularioParcela.reset();
+    const total = Number(terreno.superficieHa || 0) * 10000;
+    let ocupada = 0;
+    for (let i = 0; i < terreno.parcelas.length; i++) {
+        ocupada += Number(terreno.parcelas[i].superficieM2 || 0);
+    }
+    const disponible = Math.max(0, total - ocupada);
+    document.getElementById("p-superficie").max = disponible.toFixed(2);
+    superficieDisponible.textContent = `Superficie disponible: ${disponible.toLocaleString("es-MX", { maximumFractionDigits: 2 })} m² de ${total.toLocaleString("es-MX", { maximumFractionDigits: 2 })} m².`;
+    if (disponible <= 0) {
+        mensajeParcela.textContent = "Este terreno ya no tiene superficie disponible para otra parcela.";
+    }
+    dialogoParcela.showModal();
+}
+
+/* Datos: carga las variedades y abre el formulario del cultivo. No recibe atributos. */
+async function abrirFormularioCultivo() {
+    if (!parcelaActual) return;
+    mensajeCultivo.textContent = "";
+    formularioCultivo.reset();
+    document.getElementById("titulo-dialogo-cultivo").textContent = parcelaActual.cultivo
+        ? "Editar cultivo de la parcela"
+        : "Asignar cultivo a la parcela";
+    document.getElementById("guardar-cultivo-parcela").textContent = parcelaActual.cultivo
+        ? "Guardar cambios"
+        : "Guardar cultivo";
+    const cultivo = parcelaActual.cultivo;
+    const selectorVariedad = document.getElementById("c-variedad");
+    selectorVariedad.replaceChildren(new Option("Cargando variedades…", ""));
+    try {
+        const variedades = await pedir("/variedades-producto");
+        selectorVariedad.replaceChildren(new Option("Selecciona un producto del catálogo", ""));
+        variedades.forEach(function (variedad) {
+            const opcion = new Option(variedad.nombreFamilia + " · " + variedad.nombre, String(variedad.idVariedad));
+            opcion.dataset.familia = variedad.nombreFamilia;
+            opcion.dataset.nombre = variedad.nombre;
+            selectorVariedad.add(opcion);
+        });
+        selectorVariedad.value = cultivo && cultivo.idVariedad ? String(cultivo.idVariedad) : "";
+    } catch (error) {
+        selectorVariedad.replaceChildren(new Option("No se pudieron cargar productos", ""));
+        mensajeCultivo.textContent = "No se pudo consultar el catálogo para asignar este cultivo.";
+    }
+    document.getElementById("c-etapa").value = cultivo ? cultivo.etapa || "" : "";
+    document.getElementById("c-fecha-siembra").value = cultivo ? cultivo.fechaSiembra || "" : "";
+    document.getElementById("c-estado").value = cultivo ? cultivo.estado || "activo" : "activo";
+    dialogoCultivo.showModal();
+}
+
+/* Datos: crea un elemento HTML. Recibe etiqueta, texto y clase. */
+function crear(etiqueta, texto, clase) {
+    const el = document.createElement(etiqueta);
+    if (texto !== undefined && texto !== null) el.textContent = texto;
+    if (clase) el.className = clase;
+    return el;
+}
+
+/* Datos: pone en mayúscula la primera letra. Recibe el texto. */
+function capitalizar(texto) {
+    const valor = String(texto || "");
+    return valor.charAt(0).toUpperCase() + valor.slice(1);
+}
+
+/* Datos: convierte una superficie de hectáreas a metros cuadrados. Recibe la superficie en hectáreas. */
+function m2(ha) {
+    return ha == null ? "—" : Math.round(ha * 10000).toLocaleString("es-MX") + " m²";
+}
+
+/* Datos: da formato a una fecha de la parcela. Recibe la fecha. */
+function fechaCorta(fecha) {
+    if (!fecha) return "Sin registrar";
+    const partes = String(fecha).slice(0, 10).split("-");
+    const anio = Number(partes[0]);
+    const mes = Number(partes[1]);
+    const dia = Number(partes[2]);
+    return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX");
+}
+
+/* Datos: lee un mensaje de error devuelto por el backend. Recibe la respuesta y el texto predeterminado. */
+async function mensajeError(respuesta, mensajePredeterminado) {
+    try {
+        const error = await respuesta.json();
+        return error.mensaje || mensajePredeterminado;
+    } catch (noEsJson) {
+        return mensajePredeterminado;
+    }
+}
+
+/* Datos: muestra los datos y conteos del terreno. No recibe atributos. */
 function dibujarTerreno() {
     document.getElementById("miga-terreno").textContent = terreno.nombre;
     document.getElementById("nombre-terreno").textContent = terreno.nombre;
@@ -152,6 +436,7 @@ function dibujarTerreno() {
     cargarClima();
 }
 
+/* Datos: dibuja la lista de parcelas del terreno. No recibe atributos. */
 function dibujarParcelas() {
     const cont = document.getElementById("lista-parcelas");
     cont.replaceChildren();
@@ -182,6 +467,7 @@ function dibujarParcelas() {
     }
 }
 
+/* Datos: muestra el cultivo y la bitácora de la parcela elegida. No recibe atributos. */
 function dibujarPanelParcela() {
     const p = parcelaActual;
     const botonCultivo = document.getElementById("gestionar-cultivo");
@@ -245,11 +531,7 @@ function dibujarPanelParcela() {
     }
 }
 
-const dialogoBitacora = document.getElementById("dialogo-bitacora");
-const formularioBitacora = document.getElementById("formulario-bitacora");
-const mensajeBitacora = document.getElementById("mensaje-bitacora");
-let registroBitacoraActual = null;
-
+/* Datos: prepara el formulario para editar el registro elegido. Recibe la entrada de bitácora. */
 function abrirEdicionBitacora(bitacora) {
     registroBitacoraActual = bitacora;
     const r = bitacora.registro;
@@ -286,276 +568,33 @@ function abrirEdicionBitacora(bitacora) {
     dialogoBitacora.showModal();
 }
 
-document.getElementById("cancelar-bitacora").addEventListener("click", function () { dialogoBitacora.close(); });
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarDetalleTerreno() {
+    document.getElementById("cancelar-bitacora").addEventListener("click", function () { dialogoBitacora.close(); });
 
-formularioBitacora.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    if (!registroBitacoraActual) return;
-    mensajeBitacora.textContent = "";
-    const entidad = registroBitacoraActual.entidad;
-    const registro = registroBitacoraActual.registro;
-    const fecha = document.getElementById("b-fecha").value;
-    let ruta;
-    let datos;
+    formularioBitacora.addEventListener("submit", guardarRegistroBitacora);
 
-    if (entidad === "observacion") {
-        ruta = "observaciones-cultivos";
-        datos = {
-            idCultivo: registro.idCultivo,
-            idUsuario: registro.idUsuario,
-            fechaObservacion: fecha,
-            descripcion: document.getElementById("b-descripcion").value.trim()
-        };
-    } else if (entidad === "incidencia") {
-        ruta = "incidencias-cultivo";
-        datos = {
-            idCultivo: registro.idCultivo,
-            idUsuario: registro.idUsuario,
-            fechaIncidencia: fecha,
-            tipoIncidencia: document.getElementById("b-tipo-incidencia").value,
-            nivelGravedad: document.getElementById("b-gravedad").value,
-            descripcion: document.getElementById("b-descripcion-incidencia").value.trim()
-        };
-    } else {
-        ruta = "riegos";
-        datos = {
-            idCultivo: registro.idCultivo,
-            idUsuario: registro.idUsuario,
-            fechaRiego: fecha,
-            cantidadAgua: Number(document.getElementById("b-cantidad-agua").value),
-            unidadMedida: document.getElementById("b-unidad-agua").value.trim(),
-            metodo: document.getElementById("b-metodo-riego").value.trim(),
-            observaciones: document.getElementById("b-observaciones-riego").value.trim()
-        };
-    }
+    document.getElementById("pestanas-parcela").addEventListener("click", cambiarPestanaParcela);
 
-    try {
-        const respuesta = await fetch(`${API}/${ruta}/${encodeURIComponent(registroBitacoraActual.id)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) throw new Error(`No se pudo guardar el cambio (HTTP ${respuesta.status}).`);
-        dialogoBitacora.close();
-        pestana = "bitacora";
-        await cargarTerreno();
-    } catch (error) {
-        mensajeBitacora.textContent = error.message;
-    }
-});
+    document.getElementById("editar-terreno").addEventListener("click", abrirEdicionTerreno);
 
-async function cargarClima() {
-    const detalle = document.getElementById("clima-detalle");
-    const temp = document.getElementById("clima-temp");
-    if (terreno.latitud == null || terreno.longitud == null) {
-        detalle.textContent = "Este terreno no tiene coordenadas registradas.";
-        return;
-    }
-    try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${terreno.latitud}&longitude=${terreno.longitud}&current=temperature_2m,precipitation&timezone=auto`;
-        const d = await (await fetch(url)).json();
-        temp.textContent = `${Math.round(d.current.temperature_2m)} °C`;
-        detalle.textContent = `Precipitación actual: ${d.current.precipitation} mm`;
-    } catch {
-        detalle.textContent = "No se pudo consultar el clima.";
-    }
+    document.getElementById("cancelar-editar-terreno").addEventListener("click", function () { dialogoEditarTerreno.close(); });
+
+    formularioEditarTerreno.addEventListener("submit", guardarTerrenoEditado);
+
+    document.getElementById("agregar-parcela").addEventListener("click", abrirNuevaParcela);
+
+    document.getElementById("cancelar-parcela").addEventListener("click", function () { dialogoParcela.close(); });
+
+    formularioParcela.addEventListener("submit", guardarParcela);
+
+    document.getElementById("gestionar-cultivo").addEventListener("click", abrirFormularioCultivo);
+
+    document.getElementById("cancelar-cultivo-parcela").addEventListener("click", function () { dialogoCultivo.close(); });
+
+    formularioCultivo.addEventListener("submit", guardarCultivo);
+
+    cargarTerreno();
 }
 
-document.getElementById("pestanas-parcela").addEventListener("click", function (e) {
-    if (e.target.dataset.tab && parcelaActual) {
-        pestana = e.target.dataset.tab;
-        dibujarPanelParcela();
-    }
-});
-
-const dialogoEditarTerreno = document.getElementById("dialogo-editar-terreno");
-const formularioEditarTerreno = document.getElementById("formulario-editar-terreno");
-const mensajeEditarTerreno = document.getElementById("mensaje-editar-terreno");
-
-document.getElementById("editar-terreno").addEventListener("click", function () {
-    if (!terreno) return;
-    mensajeEditarTerreno.textContent = "";
-    document.getElementById("e-nombre").value = terreno.nombre || "";
-    document.getElementById("e-ubicacion").value = terreno.ubicacion || "";
-    document.getElementById("e-superficie").value = terreno.superficieHa == null ? "" : terreno.superficieHa * 10000;
-    document.getElementById("e-latitud").value = terreno.latitud == null ? "" : terreno.latitud;
-    document.getElementById("e-longitud").value = terreno.longitud == null ? "" : terreno.longitud;
-    document.getElementById("e-estado").value = terreno.estado || "disponible";
-    dialogoEditarTerreno.showModal();
-});
-
-document.getElementById("cancelar-editar-terreno").addEventListener("click", function () { dialogoEditarTerreno.close(); });
-
-formularioEditarTerreno.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    mensajeEditarTerreno.textContent = "";
-    const latitudTexto = document.getElementById("e-latitud").value;
-    const longitudTexto = document.getElementById("e-longitud").value;
-    const datos = {
-        nombre: document.getElementById("e-nombre").value.trim(),
-        ubicacion: document.getElementById("e-ubicacion").value.trim(),
-        superficieHa: Number(document.getElementById("e-superficie").value) / 10000,
-        latitud: latitudTexto === "" ? null : Number(latitudTexto),
-        longitud: longitudTexto === "" ? null : Number(longitudTexto),
-        estado: document.getElementById("e-estado").value
-    };
-    if ((datos.latitud === null) !== (datos.longitud === null)) {
-        mensajeEditarTerreno.textContent = "Ingresa latitud y longitud juntas, o deja ambas vacías.";
-        return;
-    }
-    try {
-        const respuesta = await fetch(`${API}/terrenos/${encodeURIComponent(idTerreno)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo actualizar el terreno."));
-        }
-        const terrenoActualizado = await respuesta.json();
-        for (const propiedad in terrenoActualizado) {
-            terreno[propiedad] = terrenoActualizado[propiedad];
-        }
-        dialogoEditarTerreno.close();
-        dibujarTerreno();
-    } catch (error) {
-        mensajeEditarTerreno.textContent = error.message;
-    }
-});
-
-const dialogoParcela = document.getElementById("dialogo-parcela");
-const formularioParcela = document.getElementById("formulario-parcela");
-const mensajeParcela = document.getElementById("mensaje-parcela");
-const superficieDisponible = document.getElementById("superficie-disponible");
-
-document.getElementById("agregar-parcela").addEventListener("click", function () {
-    if (!terreno) return;
-    mensajeParcela.textContent = "";
-    formularioParcela.reset();
-    const total = Number(terreno.superficieHa || 0) * 10000;
-    let ocupada = 0;
-    for (let i = 0; i < terreno.parcelas.length; i++) {
-        ocupada += Number(terreno.parcelas[i].superficieM2 || 0);
-    }
-    const disponible = Math.max(0, total - ocupada);
-    document.getElementById("p-superficie").max = disponible.toFixed(2);
-    superficieDisponible.textContent = `Superficie disponible: ${disponible.toLocaleString("es-MX", { maximumFractionDigits: 2 })} m² de ${total.toLocaleString("es-MX", { maximumFractionDigits: 2 })} m².`;
-    if (disponible <= 0) {
-        mensajeParcela.textContent = "Este terreno ya no tiene superficie disponible para otra parcela.";
-    }
-    dialogoParcela.showModal();
-});
-
-document.getElementById("cancelar-parcela").addEventListener("click", function () { dialogoParcela.close(); });
-
-formularioParcela.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    mensajeParcela.textContent = "";
-    const datos = {
-        idTerreno: Number(idTerreno),
-        nombre: document.getElementById("p-nombre").value.trim(),
-        superficieM2: Number(document.getElementById("p-superficie").value)
-    };
-    try {
-        const respuesta = await fetch(`${API}/parcelas`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo guardar la parcela."));
-        }
-        const parcelaCreada = await respuesta.json();
-        parcelaActual = { idParcela: parcelaCreada.idParcela };
-        await cargarTerreno();
-        pestana = "cultivo";
-        if (parcelaActual) dibujarPanelParcela();
-        dialogoParcela.close();
-    } catch (error) {
-        mensajeParcela.textContent = error.message;
-    }
-});
-
-const dialogoCultivo = document.getElementById("dialogo-cultivo");
-const formularioCultivo = document.getElementById("formulario-cultivo-parcela");
-const mensajeCultivo = document.getElementById("mensaje-cultivo-parcela");
-
-document.getElementById("gestionar-cultivo").addEventListener("click", async function () {
-    if (!parcelaActual) return;
-    mensajeCultivo.textContent = "";
-    formularioCultivo.reset();
-    document.getElementById("titulo-dialogo-cultivo").textContent = parcelaActual.cultivo
-        ? "Editar cultivo de la parcela"
-        : "Asignar cultivo a la parcela";
-    document.getElementById("guardar-cultivo-parcela").textContent = parcelaActual.cultivo
-        ? "Guardar cambios"
-        : "Guardar cultivo";
-    const cultivo = parcelaActual.cultivo;
-    const selectorVariedad = document.getElementById("c-variedad");
-    selectorVariedad.replaceChildren(new Option("Cargando variedades…", ""));
-    try {
-        const variedades = await pedir("/variedades-producto");
-        selectorVariedad.replaceChildren(new Option("Selecciona un producto del catálogo", ""));
-        variedades.forEach(function (variedad) {
-            const opcion = new Option(variedad.nombreFamilia + " · " + variedad.nombre, String(variedad.idVariedad));
-            opcion.dataset.familia = variedad.nombreFamilia;
-            opcion.dataset.nombre = variedad.nombre;
-            selectorVariedad.add(opcion);
-        });
-        selectorVariedad.value = cultivo && cultivo.idVariedad ? String(cultivo.idVariedad) : "";
-    } catch (error) {
-        selectorVariedad.replaceChildren(new Option("No se pudieron cargar productos", ""));
-        mensajeCultivo.textContent = "No se pudo consultar el catálogo para asignar este cultivo.";
-    }
-    document.getElementById("c-etapa").value = cultivo ? cultivo.etapa || "" : "";
-    document.getElementById("c-fecha-siembra").value = cultivo ? cultivo.fechaSiembra || "" : "";
-    document.getElementById("c-estado").value = cultivo ? cultivo.estado || "activo" : "activo";
-    dialogoCultivo.showModal();
-});
-
-document.getElementById("cancelar-cultivo-parcela").addEventListener("click", function () { dialogoCultivo.close(); });
-
-formularioCultivo.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    if (!parcelaActual) return;
-    mensajeCultivo.textContent = "";
-    const datos = {
-        idParcela: parcelaActual.idParcela,
-        idVariedad: Number(document.getElementById("c-variedad").value),
-        nombre: "",
-        familia: null,
-        etapaFenologica: document.getElementById("c-etapa").value.trim() || null,
-        fechaSiembra: document.getElementById("c-fecha-siembra").value || null,
-        estado: document.getElementById("c-estado").value
-    };
-    const seleccion = document.getElementById("c-variedad");
-    const variedadElegida = seleccion.options[seleccion.selectedIndex];
-    if (!datos.idVariedad || !variedadElegida || !variedadElegida.value) {
-        mensajeCultivo.textContent = "Selecciona un producto existente del catálogo.";
-        return;
-    }
-    datos.familia = variedadElegida.dataset.familia;
-    datos.nombre = datos.familia + " " + variedadElegida.dataset.nombre;
-    const cultivoExistente = parcelaActual.cultivo;
-    const ruta = cultivoExistente
-        ? `${API}/cultivos/${encodeURIComponent(cultivoExistente.id)}`
-        : `${API}/cultivos`;
-    try {
-        const respuesta = await fetch(ruta, {
-            method: cultivoExistente ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo guardar la información del cultivo."));
-        }
-        dialogoCultivo.close();
-        await cargarTerreno();
-        if (parcelaActual) pestana = "cultivo";
-        dibujarPanelParcela();
-    } catch (error) {
-        mensajeCultivo.textContent = error.message;
-    }
-});
-
-cargarTerreno();
+iniciarDetalleTerreno();

@@ -1,46 +1,37 @@
-/*
- * ARCHIVO: js/cultivos-actividades.js
- * CAPA: FRONTEND (lógica). Pantalla de cultivos del trabajador: consulta y registro de actividades.
- * QUÉ USA DEL BACKEND (con pedirApi() de js/api.js):
- *   GET /cultivos, GET /terrenos y GET /parcelas/terreno/{id} (para mostrar el nombre de la parcela y
- *   deducir el terreno), POST /observaciones-cultivos y POST /riegos.
- *   NO hace POST a /cultivos: los cultivos los da de alta el administrador. No pide el ID de parcela.
- * SESIÓN: el usuario de la observación sale de usuarioActual() (js/sesion.js); no hay selector de usuario.
- * CONVIVENCIA: va dentro de una función para no chocar con los nombres de js/cosecha-registro.js,
- *   que se carga en la misma página.
- * RIEGO: el usuario sale de la sesión y el terreno se obtiene desde la parcela del cultivo.
- */
+/* Datos: este archivo muestra cultivos y permite registrar riegos y observaciones. No recibe atributos. */
 
-(function () {
-    var mensajeCultivos = document.getElementById('mensaje-operacion');
-    var cuerpoCultivos = document.getElementById('registros-cultivos');
-    var filtroEstado = document.getElementById('filtro-estado');
-    var textoUsuario = document.getElementById('usuario-sesion');
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarCultivosActividades() {
+    const mensajeCultivos = document.getElementById('mensaje-operacion');
+    const cuerpoCultivos = document.getElementById('registros-cultivos');
+    const filtroEstado = document.getElementById('filtro-estado');
+    const textoUsuario = document.getElementById('usuario-sesion');
 
-    var dlgObservacion = document.getElementById('dialogo-observacion');
-    var formObservacion = document.getElementById('formulario-observacion');
-    var textoCultivoObs = document.getElementById('cultivo-observacion');
-    var campoObsFecha = document.getElementById('obs-fecha');
-    var campoObsDescripcion = document.getElementById('obs-descripcion');
-    var mensajeObs = document.getElementById('mensaje-obs');
-    var botonGuardarObs = document.getElementById('guardar-obs');
+    const dlgObservacion = document.getElementById('dialogo-observacion');
+    const formObservacion = document.getElementById('formulario-observacion');
+    const textoCultivoObs = document.getElementById('cultivo-observacion');
+    const campoObsFecha = document.getElementById('obs-fecha');
+    const campoObsDescripcion = document.getElementById('obs-descripcion');
+    const mensajeObs = document.getElementById('mensaje-obs');
+    const botonGuardarObs = document.getElementById('guardar-obs');
 
-    var dlgRiego = document.getElementById('dialogo-riego');
-    var formRiego = document.getElementById('formulario-riego');
-    var textoCultivoRiego = document.getElementById('cultivo-riego');
-    var campoRiegoFecha = document.getElementById('riego-fecha');
-    var campoRiegoCantidad = document.getElementById('riego-cantidad');
-    var campoRiegoUnidad = document.getElementById('riego-unidad');
-    var campoRiegoMetodo = document.getElementById('riego-metodo');
-    var campoRiegoNotas = document.getElementById('riego-notas');
-    var mensajeRiego = document.getElementById('mensaje-riego');
-    var botonGuardarRiego = document.getElementById('guardar-riego');
+    const dlgRiego = document.getElementById('dialogo-riego');
+    const formRiego = document.getElementById('formulario-riego');
+    const textoCultivoRiego = document.getElementById('cultivo-riego');
+    const campoRiegoFecha = document.getElementById('riego-fecha');
+    const campoRiegoCantidad = document.getElementById('riego-cantidad');
+    const campoRiegoUnidad = document.getElementById('riego-unidad');
+    const campoRiegoMetodo = document.getElementById('riego-metodo');
+    const campoRiegoNotas = document.getElementById('riego-notas');
+    const mensajeRiego = document.getElementById('mensaje-riego');
+    const botonGuardarRiego = document.getElementById('guardar-riego');
 
-    var cultivos = [];
-    var parcelas = {};
-    var cultivoElegido = null;
-    var usuario = usuarioActual();
+    let cultivos = [];
+    let parcelas = {};
+    let cultivoElegido = null;
+    const usuario = usuarioActual();
 
+    /* Datos: esta función prepara un mensaje para errores de consulta o guardado. Recibe el error. */
     function textoError(error) {
         if (error instanceof TypeError) {
             return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
@@ -48,26 +39,30 @@
         return error.message || 'No se pudo completar la operación.';
     }
 
+    /* Datos: esta función obtiene la fecha local actual en formato año, mes y día. No recibe atributos. */
     function hoyLocal() {
-        var ahora = new Date();
-        var local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
+        const ahora = new Date();
+        const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
         return local.toISOString().slice(0, 10);
     }
 
+    /* Datos: esta función agrega una celda de texto. Recibe una fila y su texto. */
     function agregarCelda(fila, texto) {
-        var celda = document.createElement('td');
+        const celda = document.createElement('td');
         celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
         fila.appendChild(celda);
         return celda;
     }
 
+    /* Datos: esta función busca el nombre de la parcela y su terreno. Recibe el cultivo. */
     function textoParcela(cultivo) {
-        var parcela = parcelas[cultivo.idParcela];
+        const parcela = parcelas[cultivo.idParcela];
         return parcela ? parcela.nombre + ' · ' + parcela.terreno : '—';
     }
 
+    /* Datos: esta función crea una acción de la tabla de cultivos. Recibe el texto y la función del botón. */
     function crearBotonAccion(texto, alClic) {
-        var boton = document.createElement('button');
+        const boton = document.createElement('button');
         boton.type = 'button';
         boton.className = 'boton boton-secundario';
         boton.textContent = texto;
@@ -75,15 +70,16 @@
         return boton;
     }
 
+    /* Datos: esta función muestra los cultivos que cumplen el filtro de estado. No recibe atributos. */
     function dibujarCultivos() {
-        var estado = filtroEstado.value;
-        var visibles = cultivos.filter(function (cultivo) {
+        const estado = filtroEstado.value;
+        const visibles = cultivos.filter(function (cultivo) {
             return !estado || cultivo.estado === estado;
         });
 
         cuerpoCultivos.innerHTML = '';
         visibles.forEach(function (cultivo) {
-            var fila = document.createElement('tr');
+            const fila = document.createElement('tr');
             agregarCelda(fila, cultivo.nombre);
             agregarCelda(fila, cultivo.familia);
             agregarCelda(fila, textoParcela(cultivo));
@@ -91,7 +87,7 @@
             agregarCelda(fila, cultivo.fechaSiembra);
             agregarCelda(fila, cultivo.estado);
 
-            var acciones = document.createElement('td');
+            const acciones = document.createElement('td');
             if (cultivo.estado === 'activo') {
                 acciones.appendChild(crearBotonAccion('Registrar riego', function () {
                     abrirRiego(cultivo);
@@ -107,8 +103,8 @@
         });
 
         if (!visibles.length) {
-            var filaVacia = document.createElement('tr');
-            var celdaVacia = document.createElement('td');
+            const filaVacia = document.createElement('tr');
+            const celdaVacia = document.createElement('td');
             celdaVacia.colSpan = 7;
             celdaVacia.textContent = 'No hay cultivos para mostrar. Los da de alta el administrador.';
             filaVacia.appendChild(celdaVacia);
@@ -116,6 +112,7 @@
         }
     }
 
+    /* Datos: esta función consulta las parcelas de cada terreno desde la API. No recibe atributos. */
     function cargarParcelas() {
         parcelas = {};
         return pedirApi('/terrenos').then(function (terrenos) {
@@ -133,6 +130,7 @@
         });
     }
 
+    /* Datos: esta función carga los cultivos y sus parcelas. No recibe atributos. */
     function cargarTodo() {
         mensajeCultivos.textContent = 'Cargando...';
         return Promise.all([pedirApi('/cultivos'), cargarParcelas()])
@@ -146,6 +144,7 @@
             });
     }
 
+    /* Datos: esta función envía un riego u observación a la API. Recibe la ruta, datos, diálogo, mensaje, botón y texto de confirmación. */
     function enviarActividad(ruta, datos, dialogo, mensajeError, boton, textoOk) {
         boton.disabled = true;
         pedirApi(ruta, 'POST', datos)
@@ -161,7 +160,7 @@
             });
     }
 
-    /* ---------- Observación ---------- */
+    /* Datos: esta función prepara el formulario de observaciones. Recibe el cultivo. */
     function abrirObservacion(cultivo) {
         cultivoElegido = cultivo;
         formObservacion.reset();
@@ -182,7 +181,7 @@
         if (!formObservacion.reportValidity()) {
             return;
         }
-        var descripcion = campoObsDescripcion.value.trim();
+        const descripcion = campoObsDescripcion.value.trim();
         if (!descripcion) {
             mensajeObs.textContent = 'Escribe la observación.';
             return;
@@ -196,7 +195,7 @@
         }, dlgObservacion, mensajeObs, botonGuardarObs, 'Observación registrada en el servidor.');
     });
 
-    /* ---------- Riego ---------- */
+    /* Datos: esta función prepara el formulario de riegos. Recibe el cultivo. */
     function abrirRiego(cultivo) {
         cultivoElegido = cultivo;
         formRiego.reset();
@@ -213,12 +212,12 @@
         if (!formRiego.reportValidity()) {
             return;
         }
-        var cantidad = Number(campoRiegoCantidad.value);
+        const cantidad = Number(campoRiegoCantidad.value);
         if (!(cantidad > 0)) {
             mensajeRiego.textContent = 'La cantidad de agua debe ser mayor que cero.';
             return;
         }
-        var parcela = parcelas[cultivoElegido.idParcela];
+        const parcela = parcelas[cultivoElegido.idParcela];
         if (!parcela) {
             mensajeRiego.textContent = 'No se encontró el terreno de este cultivo.';
             return;
@@ -235,7 +234,6 @@
         }, dlgRiego, mensajeRiego, botonGuardarRiego, 'Riego registrado en el servidor.');
     });
 
-    /* ---------- Eventos generales ---------- */
     document.getElementById('cancelar-obs').onclick = function () { dlgObservacion.close(); };
     document.getElementById('cancelar-riego').onclick = function () { dlgRiego.close(); };
     document.getElementById('actualizar-operacion').onclick = cargarTodo;
@@ -247,4 +245,6 @@
         textoUsuario.textContent = 'Sin sesión (para registrar observaciones hay que iniciar sesión)';
     }
     cargarTodo();
-})();
+}
+
+iniciarCultivosActividades();

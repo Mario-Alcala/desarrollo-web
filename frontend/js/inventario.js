@@ -1,8 +1,12 @@
-// Las semillas se administran dentro del inventario.
-var seccionInventario = new URLSearchParams(window.location.search).get('seccion');
-if (seccionInventario === 'semillas') {
+/* Datos: prepara los campos del inventario cuando se abre la sección de semillas. No recibe atributos. */
+
+/* Datos: configura la ruta y los campos de semillas. No recibe atributos. */
+function prepararInventarioSemillas() {
+    const seccionInventario = new URLSearchParams(window.location.search).get('seccion');
+    if (seccionInventario !== 'semillas') return;
+
     document.querySelector('h1').textContent = 'Inventario · Semillas';
-    var formularioSemillas = document.getElementById('formulario-operacion');
+    const formularioSemillas = document.getElementById('formulario-operacion');
     formularioSemillas.dataset.ruta = '/semillas';
     formularioSemillas.dataset.id = 'id';
     formularioSemillas.querySelector('.campos-operacion').innerHTML = `
@@ -24,3 +28,5 @@ if (seccionInventario === 'semillas') {
         <th data-campo="idProveedor">Proveedor</th>
         <th>Acciones</th>`;
 }
+
+prepararInventarioSemillas();

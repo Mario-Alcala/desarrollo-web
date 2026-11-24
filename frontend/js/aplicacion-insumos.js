@@ -1,123 +1,23 @@
-/*
- * ARCHIVO: js/aplicacion-insumos.js
- * CAPA: FRONTEND (DOM). Pantallas Fertilizantes y Abono del trabajador (empleado/fertilizantes.html y abonos.html).
- *   La categoría sale de <section id="aplicacion" data-categoria="fertilizante|abono">.
- * BACKEND (Fetch con pedirApi): GET /inventario/categoria/{categoria}, /insumos?categoria=, /proveedores,
- *   /movimientos-inventario, /cultivos (+ parcelas); POST /movimientos-inventario (salida del lote).
- * POR QUÉ ASÍ: las rutas /abonos y /fertilizantes del backend leen tablas que no existen en init.sql
- *   (abonos, fertilizantes); los productos viven en insumos (categoría) y las existencias en inventario,
- *   como pide la descripción. Aplicar un producto a un cultivo es una salida de inventario: el trabajador
- *   no crea productos ni lotes (eso lo hace el administrador).
- * DEPENDE DE: api.js, sesion.js, validacion.js, datos-campo.js
- */
+/* Datos: este archivo consulta lotes de abono o fertilizante y registra su aplicación como salida de inventario. No recibe atributos. */
 
-var panelAplicacion = document.getElementById('aplicacion');
-var categoriaInsumo = panelAplicacion.dataset.categoria;
-var nombreCategoria = panelAplicacion.dataset.nombre;
-var usuarioAplicacion = usuarioActual();
-var formAplicacion = document.getElementById('formulario-aplicacion');
-var selectLoteAp = document.getElementById('ap-lote');
-var selectCultivoAp = document.getElementById('ap-cultivo');
-var campoCantidadAp = document.getElementById('ap-cantidad');
-var campoFechaAp = document.getElementById('ap-fecha');
-var campoNotasAp = document.getElementById('ap-notas');
-var mensajeAp = document.getElementById('mensaje-aplicacion');
-var mensajeInsumos = document.getElementById('mensaje');
-var lotesInsumo = [];
-var insumosPorId = {};
-var proveedoresPorId = {};
-var aplicaciones = [];
+const panelAplicacion = document.getElementById('aplicacion');
+const categoriaInsumo = panelAplicacion.dataset.categoria;
+const nombreCategoria = panelAplicacion.dataset.nombre;
+const usuarioAplicacion = usuarioActual();
+const formAplicacion = document.getElementById('formulario-aplicacion');
+const selectLoteAp = document.getElementById('ap-lote');
+const selectCultivoAp = document.getElementById('ap-cultivo');
+const campoCantidadAp = document.getElementById('ap-cantidad');
+const campoFechaAp = document.getElementById('ap-fecha');
+const campoNotasAp = document.getElementById('ap-notas');
+const mensajeAp = document.getElementById('mensaje-aplicacion');
+const mensajeInsumos = document.getElementById('mensaje');
+let lotesInsumo = [];
+let insumosPorId = {};
+let proveedoresPorId = {};
+let aplicaciones = [];
 
-function loteInsumo(id) {
-    for (var i = 0; i < lotesInsumo.length; i++) {
-        if (String(lotesInsumo[i].idInventario) === String(id)) {
-            return lotesInsumo[i];
-        }
-    }
-    return null;
-}
-
-function estadoLote(lote, hoy) {
-    if (Number(lote.cantidad) <= 0) {
-        return { texto: 'Agotado', clase: 'peligro', usable: false };
-    }
-    if (lote.fechaCaducidad && lote.fechaCaducidad < hoy) {
-        return { texto: 'Caducado', clase: 'peligro', usable: false };
-    }
-    if (lote.fechaCaducidad && Validacion.diasEntre(hoy, lote.fechaCaducidad) <= 30) {
-        return { texto: 'Caduca en ' + Validacion.diasEntre(hoy, lote.fechaCaducidad) + ' día(s)', clase: 'alerta', usable: true };
-    }
-    return { texto: 'Disponible', clase: 'listo', usable: true };
-}
-
-function nombreProveedor(lote) {
-    var insumo = insumosPorId[lote.idInsumo];
-    return insumo && proveedoresPorId[insumo.idProveedor] ? proveedoresPorId[insumo.idProveedor] : '';
-}
-
-function dibujarLotes() {
-    var cuerpo = document.getElementById('lista-lotes');
-    cuerpo.innerHTML = '';
-    var hoy = Validacion.hoy();
-    lotesInsumo.forEach(function (lote) {
-        var estado = estadoLote(lote, hoy);
-        var fila = document.createElement('tr');
-        celda(fila, '#' + lote.idInventario);
-        celda(fila, lote.nombreInsumo);
-        celda(fila, lote.tipoAbono ? (lote.tipoAbono === 'organico' ? 'Orgánico' : 'Inorgánico') : '');
-        celda(fila, nombreProveedor(lote));
-        celda(fila, cantidadTexto(lote.cantidad, lote.unidadMedida));
-        celda(fila, lote.fechaIngreso);
-        celda(fila, lote.fechaCaducidad);
-        var td = celda(fila, '');
-        td.textContent = '';
-        var insignia = document.createElement('span');
-        insignia.className = 'insignia ' + estado.clase;
-        insignia.textContent = estado.texto;
-        td.appendChild(insignia);
-        cuerpo.appendChild(fila);
-    });
-    if (!lotesInsumo.length) {
-        filaSinDatos(cuerpo, 8, 'No hay lotes de ' + nombreCategoria + ' en inventario. Los da de alta el administrador.');
-    }
-
-    var anterior = selectLoteAp.value;
-    selectLoteAp.innerHTML = '<option value="">Selecciona un lote</option>';
-    lotesInsumo.filter(function (l) { return estadoLote(l, hoy).usable; }).forEach(function (lote) {
-        var opcion = document.createElement('option');
-        opcion.value = lote.idInventario;
-        opcion.textContent = '#' + lote.idInventario + ' · ' + lote.nombreInsumo + ' · ' + cantidadTexto(lote.cantidad, lote.unidadMedida);
-        selectLoteAp.appendChild(opcion);
-    });
-    selectLoteAp.value = loteInsumo(anterior) ? anterior : '';
-    mostrarDisponible();
-}
-
-function dibujarAplicaciones() {
-    var cuerpo = document.getElementById('lista-aplicaciones');
-    cuerpo.innerHTML = '';
-    var visibles = aplicaciones.slice(0, 15);
-    visibles.forEach(function (m) {
-        var lote = loteInsumo(m.idInventario);
-        var fila = document.createElement('tr');
-        celda(fila, String(m.fechaMovimiento || '').replace('T', ' ').slice(0, 16));
-        celda(fila, lote ? lote.nombreInsumo : 'Lote #' + m.idInventario);
-        celda(fila, cantidadTexto(m.cantidad, lote && lote.unidadMedida));
-        celda(fila, m.observacion);
-        cuerpo.appendChild(fila);
-    });
-    if (!visibles.length) {
-        filaSinDatos(cuerpo, 4, 'Todavía no hay aplicaciones de ' + nombreCategoria + '.');
-    }
-}
-
-function mostrarDisponible() {
-    var lote = loteInsumo(selectLoteAp.value);
-    document.getElementById('ap-disponible').textContent = lote
-        ? 'Disponible: ' + cantidadTexto(lote.cantidad, lote.unidadMedida) + (lote.fechaCaducidad ? ' · caduca ' + lote.fechaCaducidad : '')
-        : '';
-}
-
+/* Datos: esta función consulta lotes, insumos, proveedores, movimientos y cultivos desde la API. No recibe atributos. */
 function cargarInsumos() {
     mensajeInsumos.textContent = 'Cargando…';
     return Promise.all([
@@ -132,7 +32,7 @@ function cargarInsumos() {
         (r[1] || []).forEach(function (i) { insumosPorId[i.idInsumo] = i; });
         proveedoresPorId = {};
         (r[2] || []).forEach(function (p) { proveedoresPorId[p.idProveedor] = p.nombreEmpresa; });
-        var ids = {};
+        const ids = {};
         lotesInsumo.forEach(function (l) { ids[l.idInventario] = true; });
         aplicaciones = (r[3] || []).filter(function (m) {
             return ids[m.idInventario] && m.tipoMovimiento === 'salida';
@@ -146,17 +46,109 @@ function cargarInsumos() {
     });
 }
 
-formAplicacion.addEventListener('submit', function (evento) {
+/* Datos: esta función muestra los lotes y llena el selector de lotes disponibles. No recibe atributos. */
+function dibujarLotes() {
+    const cuerpo = document.getElementById('lista-lotes');
+    cuerpo.innerHTML = '';
+    const hoy = Validacion.hoy();
+    lotesInsumo.forEach(function (lote) {
+        const estado = estadoLote(lote, hoy);
+        const fila = document.createElement('tr');
+        celda(fila, '#' + lote.idInventario);
+        celda(fila, lote.nombreInsumo);
+        celda(fila, lote.tipoAbono ? (lote.tipoAbono === 'organico' ? 'Orgánico' : 'Inorgánico') : '');
+        celda(fila, nombreProveedor(lote));
+        celda(fila, cantidadTexto(lote.cantidad, lote.unidadMedida));
+        celda(fila, lote.fechaIngreso);
+        celda(fila, lote.fechaCaducidad);
+        const td = celda(fila, '');
+        td.textContent = '';
+        const insignia = document.createElement('span');
+        insignia.className = 'insignia ' + estado.clase;
+        insignia.textContent = estado.texto;
+        td.appendChild(insignia);
+        cuerpo.appendChild(fila);
+    });
+    if (!lotesInsumo.length) {
+        filaSinDatos(cuerpo, 8, 'No hay lotes de ' + nombreCategoria + ' en inventario. Los da de alta el administrador.');
+    }
+
+    const anterior = selectLoteAp.value;
+    selectLoteAp.innerHTML = '<option value="">Selecciona un lote</option>';
+    lotesInsumo.filter(function (l) { return estadoLote(l, hoy).usable; }).forEach(function (lote) {
+        const opcion = document.createElement('option');
+        opcion.value = lote.idInventario;
+        opcion.textContent = '#' + lote.idInventario + ' · ' + lote.nombreInsumo + ' · ' + cantidadTexto(lote.cantidad, lote.unidadMedida);
+        selectLoteAp.appendChild(opcion);
+    });
+    selectLoteAp.value = loteInsumo(anterior) ? anterior : '';
+    mostrarDisponible();
+}
+
+/* Datos: esta función muestra las últimas salidas de los lotes de la categoría. No recibe atributos. */
+function dibujarAplicaciones() {
+    const cuerpo = document.getElementById('lista-aplicaciones');
+    cuerpo.innerHTML = '';
+    const visibles = aplicaciones.slice(0, 15);
+    visibles.forEach(function (m) {
+        const lote = loteInsumo(m.idInventario);
+        const fila = document.createElement('tr');
+        celda(fila, String(m.fechaMovimiento || '').replace('T', ' ').slice(0, 16));
+        celda(fila, lote ? lote.nombreInsumo : 'Lote #' + m.idInventario);
+        celda(fila, cantidadTexto(m.cantidad, lote && lote.unidadMedida));
+        celda(fila, m.observacion);
+        cuerpo.appendChild(fila);
+    });
+    if (!visibles.length) {
+        filaSinDatos(cuerpo, 4, 'Todavía no hay aplicaciones de ' + nombreCategoria + '.');
+    }
+}
+
+/* Datos: esta función busca un lote de insumo en el inventario consultado. Recibe el ID del lote. */
+function loteInsumo(id) {
+    return lotesInsumo.find(lote => String(lote.idInventario) === String(id)) || null;
+}
+
+/* Datos: esta función indica si un lote está disponible, agotado o caducado. Recibe el lote y la fecha de hoy. */
+function estadoLote(lote, hoy) {
+    if (Number(lote.cantidad) <= 0) {
+        return { texto: 'Agotado', clase: 'peligro', usable: false };
+    }
+    if (lote.fechaCaducidad && lote.fechaCaducidad < hoy) {
+        return { texto: 'Caducado', clase: 'peligro', usable: false };
+    }
+    if (lote.fechaCaducidad && Validacion.diasEntre(hoy, lote.fechaCaducidad) <= 30) {
+        return { texto: 'Caduca en ' + Validacion.diasEntre(hoy, lote.fechaCaducidad) + ' día(s)', clase: 'alerta', usable: true };
+    }
+    return { texto: 'Disponible', clase: 'listo', usable: true };
+}
+
+/* Datos: esta función obtiene el proveedor del insumo. Recibe el lote de inventario. */
+function nombreProveedor(lote) {
+    const insumo = insumosPorId[lote.idInsumo];
+    return insumo && proveedoresPorId[insumo.idProveedor] ? proveedoresPorId[insumo.idProveedor] : '';
+}
+
+/* Datos: esta función muestra cuánto queda del lote seleccionado. No recibe atributos. */
+function mostrarDisponible() {
+    const lote = loteInsumo(selectLoteAp.value);
+    document.getElementById('ap-disponible').textContent = lote
+        ? 'Disponible: ' + cantidadTexto(lote.cantidad, lote.unidadMedida) + (lote.fechaCaducidad ? ' · caduca ' + lote.fechaCaducidad : '')
+        : '';
+}
+
+/* Datos: esta función valida el formulario y registra una salida de inventario. Recibe el evento del formulario. */
+function guardarAplicacion(evento) {
     evento.preventDefault();
     mensajeAp.textContent = '';
     if (!usuarioAplicacion) {
         mensajeAp.textContent = 'Inicia sesión para registrar aplicaciones.';
         return;
     }
-    var lote = loteInsumo(selectLoteAp.value);
-    var cultivo = Campo.cultivoPorId(selectCultivoAp.value);
-    var fecha = campoFechaAp.value;
-    var error = Validacion.primerError([
+    const lote = loteInsumo(selectLoteAp.value);
+    const cultivo = Campo.cultivoPorId(selectCultivoAp.value);
+    const fecha = campoFechaAp.value;
+    const error = Validacion.primerError([
         [selectLoteAp, lote ? '' : 'Selecciona un lote con existencias.'],
         [selectCultivoAp, cultivo ? '' : 'Selecciona el cultivo donde se aplicó.'],
         [campoCantidadAp, Validacion.numero(campoCantidadAp.value, {
@@ -170,9 +162,9 @@ formAplicacion.addEventListener('submit', function (evento) {
         mensajeAp.textContent = error;
         return;
     }
-    var detalle = 'Aplicación en ' + Campo.nombreCultivo(cultivo) + ' el ' + fecha
+    const detalle = 'Aplicación en ' + Campo.nombreCultivo(cultivo) + ' el ' + fecha
         + (campoNotasAp.value.trim() ? '. ' + campoNotasAp.value.trim() : '');
-    var boton = document.getElementById('guardar-aplicacion');
+    const boton = document.getElementById('guardar-aplicacion');
     boton.disabled = true;
     pedirApi('/movimientos-inventario', 'POST', {
         idInventario: lote.idInventario,
@@ -192,10 +184,16 @@ formAplicacion.addEventListener('submit', function (evento) {
     }).finally(function () {
         boton.disabled = false;
     });
-});
+}
 
-selectLoteAp.addEventListener('change', mostrarDisponible);
-document.getElementById('actualizar').onclick = cargarInsumos;
-campoFechaAp.value = Validacion.hoy();
-campoFechaAp.max = Validacion.hoy();
-cargarInsumos();
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarAplicacionInsumos() {
+    formAplicacion.addEventListener('submit', guardarAplicacion);
+    selectLoteAp.addEventListener('change', mostrarDisponible);
+    document.getElementById('actualizar').onclick = cargarInsumos;
+    campoFechaAp.value = Validacion.hoy();
+    campoFechaAp.max = Validacion.hoy();
+    cargarInsumos();
+}
+
+iniciarAplicacionInsumos();

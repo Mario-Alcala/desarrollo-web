@@ -1,19 +1,22 @@
-var formularioOperacion = document.getElementById('formulario-operacion');
-var rutaOperacion = formularioOperacion.dataset.ruta;
-var campoId = formularioOperacion.dataset.id;
-var idOperacion = null;
-var registrosOperacion = [];
-var mensajeOperacion = document.getElementById('mensaje-operacion');
-var camposOperacion = formularioOperacion.querySelectorAll('[name]');
+/* Datos: este archivo carga y guarda registros usando la ruta del formulario, incluida la pantalla de riegos. No recibe atributos. */
 
+const formularioOperacion = document.getElementById('formulario-operacion');
+const rutaOperacion = formularioOperacion.dataset.ruta;
+const campoId = formularioOperacion.dataset.id;
+let idOperacion = null;
+let registrosOperacion = [];
+const mensajeOperacion = document.getElementById('mensaje-operacion');
+const camposOperacion = formularioOperacion.querySelectorAll('[name]');
+
+/* Datos: esta función consulta la API para llenar los selectores relacionados con el formulario. No recibe atributos. */
 async function cargarRelaciones() {
-    var selectores = formularioOperacion.querySelectorAll('select[data-ruta]');
-    for (var i = 0; i < selectores.length; i++) {
-        var select = selectores[i];
-        var datos = await pedirApi(select.dataset.ruta);
+    const selectores = formularioOperacion.querySelectorAll('select[data-ruta]');
+    for (let i = 0; i < selectores.length; i++) {
+        const select = selectores[i];
+        const datos = await pedirApi(select.dataset.ruta);
         select.innerHTML = '<option value="">Selecciona una opción</option>';
-        for (var j = 0; j < datos.length; j++) {
-            var opcion = document.createElement('option');
+        for (let j = 0; j < datos.length; j++) {
+            const opcion = document.createElement('option');
             opcion.value = datos[j][select.dataset.id];
             opcion.textContent = datos[j][select.dataset.nombre];
             select.appendChild(opcion);
@@ -24,34 +27,48 @@ async function cargarRelaciones() {
     }
 }
 
+/* Datos: esta función consulta los registros de la ruta que usa el formulario. No recibe atributos. */
 async function cargarRegistros() {
     mensajeOperacion.textContent = '';
-    var datos = await pedirApi(rutaOperacion);
+    const datos = await pedirApi(rutaOperacion);
     registrosOperacion = datos || [];
     dibujarRegistros();
     mensajeOperacion.textContent = '';
 }
 
+/* Datos: esta función actualiza los selectores y la lista de registros. No recibe atributos. */
+async function actualizarOperacion() {
+    document.getElementById('guardar-operacion').disabled = true;
+    try {
+        await cargarRelaciones();
+        await cargarRegistros();
+    } catch (error) {
+        mensajeOperacion.textContent = errorApi(error);
+    }
+    document.getElementById('guardar-operacion').disabled = false;
+}
+
+/* Datos: esta función muestra los registros con sus acciones de edición y eliminación. No recibe atributos. */
 function dibujarRegistros() {
-    var cuerpo = document.getElementById('registros-operacion');
+    const cuerpo = document.getElementById('registros-operacion');
     cuerpo.innerHTML = '';
-    var columnas = document.querySelectorAll('th[data-campo]');
+    const columnas = document.querySelectorAll('th[data-campo]');
 
     for (let i = 0; i < registrosOperacion.length; i++) {
         let registro = registrosOperacion[i];
-        var fila = document.createElement('tr');
+        const fila = document.createElement('tr');
 
-        for (var j = 0; j < columnas.length; j++) {
-            var columna = columnas[j];
-            var celda = document.createElement('td');
-            var valor = registro[columna.dataset.campo];
+        for (let j = 0; j < columnas.length; j++) {
+            const columna = columnas[j];
+            const celda = document.createElement('td');
+            let valor = registro[columna.dataset.campo];
             if (columna.dataset.campo === 'idProveedor' && document.getElementById('proveedorNombre')) {
                 valor = nombreProveedor(registro.idProveedor);
             }
-            var select = formularioOperacion.querySelector('select[name="' + columna.dataset.campo + '"]');
+            const select = formularioOperacion.querySelector('select[name="' + columna.dataset.campo + '"]');
 
             if (select && select.dataset.ruta) {
-                for (var k = 0; k < select.options.length; k++) {
+                for (let k = 0; k < select.options.length; k++) {
                     if (select.options[k].value === String(valor)) {
                         valor = select.options[k].textContent;
                         break;
@@ -63,15 +80,15 @@ function dibujarRegistros() {
             fila.appendChild(celda);
         }
 
-        var acciones = document.createElement('td');
+        const acciones = document.createElement('td');
 
-        var editar = document.createElement('button');
+        const editar = document.createElement('button');
         editar.className = 'boton boton-secundario';
         editar.textContent = 'Editar';
         editar.onclick = function () {
             idOperacion = registro[campoId];
-            for (var i = 0; i < camposOperacion.length; i++) {
-                var campo = camposOperacion[i];
+            for (let i = 0; i < camposOperacion.length; i++) {
+                const campo = camposOperacion[i];
                 if (campo.name === 'proveedorNombre') {
                     campo.value = nombreProveedor(registro.idProveedor);
                 } else {
@@ -82,7 +99,7 @@ function dibujarRegistros() {
             camposOperacion[0].focus();
         };
 
-        var eliminar = document.createElement('button');
+        const eliminar = document.createElement('button');
         eliminar.className = 'boton boton-secundario';
         eliminar.textContent = 'Eliminar';
         eliminar.onclick = async function () {
@@ -107,8 +124,8 @@ function dibujarRegistros() {
     }
 
     if (!registrosOperacion.length) {
-        var fila = document.createElement('tr');
-        var celda = document.createElement('td');
+        const fila = document.createElement('tr');
+        const celda = document.createElement('td');
         celda.colSpan = columnas.length + 1;
         celda.textContent = 'No hay registros.';
         fila.appendChild(celda);
@@ -116,17 +133,19 @@ function dibujarRegistros() {
     }
 }
 
+/* Datos: esta función limpia el formulario y vuelve al modo de registro. No recibe atributos. */
 function limpiarOperacion() {
     idOperacion = null;
     formularioOperacion.reset();
     document.getElementById('guardar-operacion').textContent = 'Guardar';
 }
 
-formularioOperacion.addEventListener('submit', async function (evento) {
+/* Datos: esta función registra o actualiza los datos en la ruta del formulario. Recibe el evento del formulario. */
+async function guardarOperacion(evento) {
     evento.preventDefault();
 
-    for (var i = 0; i < camposOperacion.length; i++) {
-        var campo = camposOperacion[i];
+    for (let i = 0; i < camposOperacion.length; i++) {
+        const campo = camposOperacion[i];
         if (campo.type === 'text' || campo.tagName === 'TEXTAREA') {
             campo.value = campo.value.trim();
         }
@@ -136,22 +155,22 @@ formularioOperacion.addEventListener('submit', async function (evento) {
         return;
     }
 
-    var datos = {};
-    for (var i = 0; i < camposOperacion.length; i++) {
-        var campo = camposOperacion[i];
-        var valor = campo.value;
+    const datos = {};
+    for (let i = 0; i < camposOperacion.length; i++) {
+        const campo = camposOperacion[i];
+        let valor = campo.value;
         datos[campo.name] = valor === ''
             ? null
             : (campo.type === 'number' || campo.dataset.numero ? Number(valor) : valor);
     }
 
     if (['/riegos', '/observaciones-cultivos', '/incidencias-cultivo', '/cosechas', '/movimientos-inventario'].includes(rutaOperacion)) {
-        var usuarioActual = sessionStorage.getItem('usuarioId');
-        if (!usuarioActual) {
+        const idUsuarioSesion = sessionStorage.getItem('usuarioId');
+        if (!idUsuarioSesion) {
             mensajeOperacion.textContent = 'Inicia sesión para registrar esta actividad.';
             return;
         }
-        datos.idUsuario = Number(usuarioActual);
+        datos.idUsuario = Number(idUsuarioSesion);
     }
 
     if (datos.fechaCaducidad && datos.fechaIngreso && datos.fechaCaducidad < datos.fechaIngreso) {
@@ -164,12 +183,12 @@ formularioOperacion.addEventListener('submit', async function (evento) {
         return;
     }
 
-    var boton = document.getElementById('guardar-operacion');
+    const boton = document.getElementById('guardar-operacion');
     boton.disabled = true;
-    var ruta = rutaOperacion + (idOperacion === null ? '' : '/' + idOperacion);
+    const ruta = rutaOperacion + (idOperacion === null ? '' : '/' + idOperacion);
 
     try {
-        var datosListos = datos;
+        let datosListos = datos;
         if (document.getElementById('proveedorNombre')) {
             datosListos = await resolverProveedor(datos);
         }
@@ -181,19 +200,14 @@ formularioOperacion.addEventListener('submit', async function (evento) {
         mensajeOperacion.textContent = errorApi(error);
     }
     boton.disabled = false;
-});
-
-async function actualizarOperacion() {
-    document.getElementById('guardar-operacion').disabled = true;
-    try {
-        await cargarRelaciones();
-        await cargarRegistros();
-    } catch (error) {
-        mensajeOperacion.textContent = errorApi(error);
-    }
-    document.getElementById('guardar-operacion').disabled = false;
 }
 
-document.getElementById('cancelar-operacion').onclick = limpiarOperacion;
-document.getElementById('actualizar-operacion').onclick = actualizarOperacion;
-actualizarOperacion();
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarOperaciones() {
+    formularioOperacion.addEventListener('submit', guardarOperacion);
+    document.getElementById('cancelar-operacion').onclick = limpiarOperacion;
+    document.getElementById('actualizar-operacion').onclick = actualizarOperacion;
+    actualizarOperacion();
+}
+
+iniciarOperaciones();

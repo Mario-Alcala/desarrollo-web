@@ -1,43 +1,87 @@
-/*
- * ARCHIVO: js/distribucion.js
- * CAPA: FRONTEND (DOM). Preparación y entrega de pedidos por el personal.
- * BACKEND (Fetch con pedirApi):
- *   GET  /pedidos, /pedidos/{id}/lotes, /cosechas
- *   POST /pedidos/{id}/lotes     { idCosecha, kilos }              -> agrega productos al pedido
- *   PUT  /pedidos/{id}/entrega   { estado, idUsuario }             -> actualiza la entrega
- *        estados: en_transito (envío), listo_recoleccion (recolección), entregado
- * REGLAS (PedidoService): solo se asignan kilos a pedidos pendientes y sin entrega registrada; no más de lo
- *   disponible del lote; la entrega pasa pendiente -> en_transito/listo_recoleccion -> entregado.
- *   El trabajador que registra cada paso queda como responsable (distribuciones.id_usuario).
- * DEPENDE DE: api.js, sesion.js, validacion.js, datos-campo.js
- */
+/* Datos: este archivo consulta pedidos y cosechas, asigna lotes y actualiza el estado de entrega. No recibe atributos. */
 
-var usuarioDistribucion = usuarioActual();
-var mensajeDistribucion = document.getElementById('mensaje');
-var contenedorPedidos = document.getElementById('lista-pedidos');
-var mostrarEntregados = document.getElementById('mostrar-entregados');
-var pedidosDistribucion = [];
-var lotesPorPedido = {};
-var cosechasDisponibles = [];
+const usuarioDistribucion = usuarioActual();
+const mensajeDistribucion = document.getElementById('mensaje');
+const contenedorPedidos = document.getElementById('lista-pedidos');
+const mostrarEntregados = document.getElementById('mostrar-entregados');
+let pedidosDistribucion = [];
+const lotesPorPedido = {};
+let cosechasDisponibles = [];
 
-var TEXTO_ENTREGA = {
+const TEXTO_ENTREGA = {
     pendiente: 'Por preparar',
     en_transito: 'En camino',
     listo_recoleccion: 'Listo para recoger',
     entregado: 'Entregado'
 };
 
+/* Datos: esta función consulta pedidos, cosechas y lotes asignados desde la API. No recibe atributos. */
+function cargarDistribucion() {
+    avisarDistribucion('Cargando pedidos…');
+    return Promise.all([pedirApi('/pedidos'), pedirApi('/cosechas')]).then(function (r) {
+        pedidosDistribucion = r[0] || [];
+        cosechasDisponibles = (r[1] || []).filter(function (c) { return Number(c.cantidadDisponible) > 0; });
+        const conLotes = pedidosDistribucion.filter(function (p) { return p.cantidadLotes > 0; });
+        return Promise.all(conLotes.map(function (p) {
+            return pedirApi('/pedidos/' + p.idPedido + '/lotes').then(function (lotes) {
+                lotesPorPedido[p.idPedido] = lotes || [];
+            });
+        }));
+    }).then(function () {
+        dibujarPedidos();
+        avisarDistribucion('');
+    }).catch(function (error) {
+        avisarDistribucion(textoErrorApi(error), 'error');
+    });
+}
+
+/* Datos: esta función actualiza la entrega mediante la API. Recibe el pedido, el estado y el texto de confirmación. */
+function cambiarEntrega(pedido, estado, pregunta) {
+    if (!usuarioDistribucion) {
+        avisarDistribucion('Inicia sesión para registrar la entrega.', 'error');
+        return;
+    }
+    if (!confirm(pregunta)) {
+        return;
+    }
+    pedirApi('/pedidos/' + pedido.idPedido + '/entrega', 'PUT', { estado: estado, idUsuario: String(usuarioDistribucion.idUsuario) })
+        .then(function () {
+            return cargarDistribucion();
+        })
+        .then(function () {
+            avisarDistribucion('Pedido #' + pedido.idPedido + ': ' + TEXTO_ENTREGA[estado].toLowerCase() + '.', 'ok');
+        })
+        .catch(function (fallo) {
+            avisarDistribucion(textoErrorApi(fallo), 'error');
+        });
+}
+
+/* Datos: esta función muestra las tarjetas de los pedidos que cumplen el filtro. No recibe atributos. */
+function dibujarPedidos() {
+    contenedorPedidos.innerHTML = '';
+    const visibles = pedidosDistribucion.filter(pedidoVisible);
+    visibles.forEach(function (pedido) {
+        contenedorPedidos.appendChild(tarjetaPedido(pedido));
+    });
+    if (!visibles.length) {
+        contenedorPedidos.appendChild(parrafo('No hay pedidos que mostrar.'));
+    }
+}
+
+/* Datos: esta función muestra el mensaje de distribución. Recibe el texto y el tipo de mensaje. */
 function avisarDistribucion(texto, tipo) {
     mensajeDistribucion.textContent = texto;
     mensajeDistribucion.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
+/* Datos: esta función obtiene el estado de la entrega. Recibe el pedido. */
 function estadoEntrega(pedido) {
     return pedido.estadoEntrega || 'pendiente';
 }
 
+/* Datos: esta función decide si el pedido coincide con el filtro de estado. Recibe el pedido. */
 function pedidoVisible(pedido) {
-    var entrega = estadoEntrega(pedido);
+    const entrega = estadoEntrega(pedido);
     if (pedido.estado === 'cancelado') {
         return false;
     }
@@ -47,8 +91,9 @@ function pedidoVisible(pedido) {
     return true;
 }
 
+/* Datos: esta función crea un botón de pedido. Recibe el texto, la función y si es una acción principal. */
 function boton(texto, alClic, principal) {
-    var b = document.createElement('button');
+    const b = document.createElement('button');
     b.type = 'button';
     b.className = 'boton' + (principal ? '' : ' boton-secundario');
     b.textContent = texto;
@@ -56,21 +101,23 @@ function boton(texto, alClic, principal) {
     return b;
 }
 
+/* Datos: esta función crea un párrafo de la tarjeta. Recibe el texto. */
 function parrafo(texto) {
-    var p = document.createElement('p');
+    const p = document.createElement('p');
     p.textContent = texto;
     return p;
 }
 
+/* Datos: esta función crea el formulario para empacar un lote. Recibe el pedido. */
 function formularioAsignar(pedido) {
-    var form = document.createElement('form');
+    const form = document.createElement('form');
     form.noValidate = true;
-    var idBase = 'pedido-' + pedido.idPedido;
+    const idBase = 'pedido-' + pedido.idPedido;
 
-    var etiquetaLote = document.createElement('label');
+    const etiquetaLote = document.createElement('label');
     etiquetaLote.htmlFor = idBase + '-lote';
     etiquetaLote.textContent = 'Lote de cosecha';
-    var selectLote = document.createElement('select');
+    const selectLote = document.createElement('select');
     selectLote.id = idBase + '-lote';
     selectLote.required = true;
     selectLote.add(new Option(cosechasDisponibles.length ? 'Selecciona un lote' : 'No hay lotes con kilos disponibles', ''));
@@ -79,22 +126,22 @@ function formularioAsignar(pedido) {
             + (c.estadoMaduracion || '') + ' · ' + cantidadTexto(c.cantidadDisponible, 'kg'), c.idCosecha));
     });
 
-    var etiquetaKilos = document.createElement('label');
+    const etiquetaKilos = document.createElement('label');
     etiquetaKilos.htmlFor = idBase + '-kilos';
     etiquetaKilos.textContent = 'Kilos a empacar';
-    var campoKilos = document.createElement('input');
+    const campoKilos = document.createElement('input');
     campoKilos.id = idBase + '-kilos';
     campoKilos.type = 'number';
     campoKilos.min = '0.01';
     campoKilos.step = '0.01';
     campoKilos.required = true;
 
-    var error = document.createElement('p');
+    const error = document.createElement('p');
     error.className = 'mensaje error';
     error.setAttribute('role', 'alert');
-    var acciones = document.createElement('div');
+    const acciones = document.createElement('div');
     acciones.className = 'acciones-operacion';
-    var enviar = document.createElement('button');
+    const enviar = document.createElement('button');
     enviar.type = 'submit';
     enviar.className = 'boton';
     enviar.textContent = 'Agregar al pedido';
@@ -104,8 +151,8 @@ function formularioAsignar(pedido) {
     form.addEventListener('submit', function (evento) {
         evento.preventDefault();
         error.textContent = '';
-        var lote = cosechasDisponibles.filter(function (c) { return String(c.idCosecha) === selectLote.value; })[0];
-        var mensaje = Validacion.primerError([
+        const lote = cosechasDisponibles.filter(function (c) { return String(c.idCosecha) === selectLote.value; })[0];
+        const mensaje = Validacion.primerError([
             [selectLote, lote ? '' : 'Selecciona un lote con kilos disponibles.'],
             [campoKilos, Validacion.numero(campoKilos.value, {
                 nombre: 'los kilos', maximo: lote ? Number(lote.cantidadDisponible) : undefined, unidad: 'kg'
@@ -131,35 +178,16 @@ function formularioAsignar(pedido) {
     return form;
 }
 
-function cambiarEntrega(pedido, estado, pregunta) {
-    if (!usuarioDistribucion) {
-        avisarDistribucion('Inicia sesión para registrar la entrega.', 'error');
-        return;
-    }
-    if (!confirm(pregunta)) {
-        return;
-    }
-    pedirApi('/pedidos/' + pedido.idPedido + '/entrega', 'PUT', { estado: estado, idUsuario: String(usuarioDistribucion.idUsuario) })
-        .then(function () {
-            return cargarDistribucion();
-        })
-        .then(function () {
-            avisarDistribucion('Pedido #' + pedido.idPedido + ': ' + TEXTO_ENTREGA[estado].toLowerCase() + '.', 'ok');
-        })
-        .catch(function (fallo) {
-            avisarDistribucion(textoErrorApi(fallo), 'error');
-        });
-}
-
+/* Datos: esta función muestra los datos y acciones de una entrega. Recibe el pedido. */
 function tarjetaPedido(pedido) {
-    var entrega = estadoEntrega(pedido);
-    var esDomicilio = pedido.tipoEntrega === 'domicilio';
-    var tarjeta = document.createElement('article');
+    const entrega = estadoEntrega(pedido);
+    const esDomicilio = pedido.tipoEntrega === 'domicilio';
+    const tarjeta = document.createElement('article');
     tarjeta.className = 'tarjeta';
 
-    var titulo = document.createElement('h3');
+    const titulo = document.createElement('h3');
     titulo.textContent = 'Pedido #' + pedido.idPedido + ' · ' + (pedido.cliente || 'Cliente');
-    var insignia = document.createElement('span');
+    const insignia = document.createElement('span');
     insignia.className = 'insignia ' + (entrega === 'entregado' ? 'listo' : (entrega === 'pendiente' ? 'alerta' : ''));
     insignia.textContent = TEXTO_ENTREGA[entrega] || entrega;
     tarjeta.append(titulo, insignia);
@@ -178,15 +206,15 @@ function tarjetaPedido(pedido) {
         tarjeta.appendChild(parrafo('Entregado: ' + String(pedido.fechaEntrega).replace('T', ' ').slice(0, 16)));
     }
 
-    var lotes = lotesPorPedido[pedido.idPedido] || [];
-    var subtitulo = document.createElement('strong');
+    const lotes = lotesPorPedido[pedido.idPedido] || [];
+    const subtitulo = document.createElement('strong');
     subtitulo.textContent = 'Producto empacado';
     tarjeta.appendChild(subtitulo);
     if (lotes.length) {
-        var lista = document.createElement('ul');
+        const lista = document.createElement('ul');
         lista.className = 'lista-simple';
         lotes.forEach(function (l) {
-            var item = document.createElement('li');
+            const item = document.createElement('li');
             item.textContent = (l.producto || 'Lote') + ' · lote #' + l.idCosecha + ' · ' + (l.maduracion || '') + ' · ' + cantidadTexto(l.cantidad, 'kg');
             lista.appendChild(item);
         });
@@ -195,7 +223,7 @@ function tarjetaPedido(pedido) {
         tarjeta.appendChild(parrafo('Todavía no se ha empacado producto.'));
     }
 
-    var acciones = document.createElement('div');
+    const acciones = document.createElement('div');
     acciones.className = 'acciones-operacion';
     if (entrega === 'pendiente' && pedido.estado === 'pendiente') {
         tarjeta.appendChild(formularioAsignar(pedido));
@@ -227,36 +255,11 @@ function tarjetaPedido(pedido) {
     return tarjeta;
 }
 
-function dibujarPedidos() {
-    contenedorPedidos.innerHTML = '';
-    var visibles = pedidosDistribucion.filter(pedidoVisible);
-    visibles.forEach(function (pedido) {
-        contenedorPedidos.appendChild(tarjetaPedido(pedido));
-    });
-    if (!visibles.length) {
-        contenedorPedidos.appendChild(parrafo('No hay pedidos que mostrar.'));
-    }
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarDistribucion() {
+    mostrarEntregados.addEventListener('change', dibujarPedidos);
+    document.getElementById('actualizar').onclick = cargarDistribucion;
+    cargarDistribucion();
 }
 
-function cargarDistribucion() {
-    avisarDistribucion('Cargando pedidos…');
-    return Promise.all([pedirApi('/pedidos'), pedirApi('/cosechas')]).then(function (r) {
-        pedidosDistribucion = r[0] || [];
-        cosechasDisponibles = (r[1] || []).filter(function (c) { return Number(c.cantidadDisponible) > 0; });
-        var conLotes = pedidosDistribucion.filter(function (p) { return p.cantidadLotes > 0; });
-        return Promise.all(conLotes.map(function (p) {
-            return pedirApi('/pedidos/' + p.idPedido + '/lotes').then(function (lotes) {
-                lotesPorPedido[p.idPedido] = lotes || [];
-            });
-        }));
-    }).then(function () {
-        dibujarPedidos();
-        avisarDistribucion('');
-    }).catch(function (error) {
-        avisarDistribucion(textoErrorApi(error), 'error');
-    });
-}
-
-mostrarEntregados.addEventListener('change', dibujarPedidos);
-document.getElementById('actualizar').onclick = cargarDistribucion;
-cargarDistribucion();
+iniciarDistribucion();

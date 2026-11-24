@@ -1,3 +1,5 @@
+/* Datos: este archivo consulta el clima del terreno correspondiente al cultivo seleccionado. No recibe atributos. */
+
 const API_CLIMA = "http://localhost:8081/api";
 const selectorCultivoClima = document.getElementById("cultivo-clima");
 const mensajeCultivoClima = document.getElementById("mensaje-clima-cultivo");
@@ -6,6 +8,7 @@ const listaSugerenciasClima = document.getElementById("sugerencias-clima-cultivo
 let cultivosActivosClima = [];
 let terrenosPorParcela = {};
 
+/* Datos: esta función lee una respuesta JSON de la API. Recibe la URL. */
 async function consultarJson(url) {
     const respuesta = await fetch(url);
     if (!respuesta.ok) {
@@ -14,6 +17,7 @@ async function consultarJson(url) {
     return await respuesta.json();
 }
 
+/* Datos: esta función consulta los cultivos, terrenos y parcelas para llenar el selector. No recibe atributos. */
 async function cargarCultivosParaClima() {
     mensajeCultivoClima.textContent = "Cargando cultivos y terrenos…";
     panelDatosClima.hidden = true;
@@ -87,19 +91,7 @@ async function cargarCultivosParaClima() {
     }
 }
 
-function mostrarValor(id, valor) {
-    document.getElementById(id).textContent = valor;
-}
-
-function buscarCultivoSeleccionado() {
-    for (let i = 0; i < cultivosActivosClima.length; i++) {
-        if (String(cultivosActivosClima[i].id) === selectorCultivoClima.value) {
-            return cultivosActivosClima[i];
-        }
-    }
-    return null;
-}
-
+/* Datos: esta función consulta el clima con las coordenadas del terreno del cultivo elegido. No recibe atributos. */
 async function cargarClimaSeleccionado() {
     mensajeCultivoClima.textContent = "";
     panelDatosClima.hidden = true;
@@ -163,6 +155,21 @@ async function cargarClimaSeleccionado() {
     }
 }
 
-selectorCultivoClima.addEventListener("change", cargarClimaSeleccionado);
-document.getElementById("actualizar-clima-cultivo").addEventListener("click", cargarClimaSeleccionado);
-cargarCultivosParaClima();
+/* Datos: esta función muestra un dato del pronóstico. Recibe el ID del elemento y el valor. */
+function mostrarValor(id, valor) {
+    document.getElementById(id).textContent = valor;
+}
+
+/* Datos: esta función busca en la lista el cultivo elegido en el selector. No recibe atributos. */
+function buscarCultivoSeleccionado() {
+    return cultivosActivosClima.find(cultivo => String(cultivo.id) === selectorCultivoClima.value) || null;
+}
+
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarCultivosClima() {
+    selectorCultivoClima.addEventListener("change", cargarClimaSeleccionado);
+    document.getElementById("actualizar-clima-cultivo").addEventListener("click", cargarClimaSeleccionado);
+    cargarCultivosParaClima();
+}
+
+iniciarCultivosClima();

@@ -1,3 +1,5 @@
+/* Datos: muestra el inventario y permite registrar entradas, movimientos y herramientas. No recibe atributos. */
+
 const API_INSUMOS = "http://localhost:8081/api/insumos";
 const API_INVENTARIO = "http://localhost:8081/api/inventario";
 const API_MOVIMIENTOS = "http://localhost:8081/api/movimientos-inventario";
@@ -24,31 +26,7 @@ let categoria = "todos";
 let loteMovimiento = null;
 let herramientaEditando = null;
 
-function formatoFecha(fecha) {
-    if (!fecha) return "—";
-    const partes = String(fecha).slice(0, 10).split("-");
-    const a = Number(partes[0]);
-    const m = Number(partes[1]);
-    const d = Number(partes[2]);
-    return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function buscarInsumo(id) {
-    for (let i = 0; i < insumos.length; i++) {
-        if (insumos[i].idInsumo === id) return insumos[i];
-    }
-    return null;
-}
-
-async function mensajeError(respuesta, mensajePredeterminado) {
-    try {
-        const error = await respuesta.json();
-        return error.mensaje || mensajePredeterminado;
-    } catch (noEsJson) {
-        return mensajePredeterminado;
-    }
-}
-
+/* Datos: consulta los insumos, lotes, usuarios y herramientas. No recibe atributos. */
 async function cargar() {
     mensaje.textContent = "Cargando existencias…";
     try {
@@ -101,6 +79,184 @@ async function cargar() {
     }
 }
 
+/* Datos: registra un lote de insumo con cantidad y fechas. Recibe el evento del formulario. */
+async function guardarEntrada(evento) {
+    evento.preventDefault();
+    msgFormulario.textContent = "";
+    const nombreEscrito = entradaInsumo.value.trim().toLocaleLowerCase();
+    const coincidencias = [];
+    for (let i = 0; i < insumos.length; i++) {
+        if (insumos[i].nombre.trim().toLocaleLowerCase() === nombreEscrito) coincidencias.push(insumos[i]);
+    }
+    if (coincidencias.length !== 1) {
+        msgFormulario.textContent = coincidencias.length > 1
+            ? "Hay más de un producto con ese nombre. Revisa los nombres registrados para distinguirlos."
+            : "No existe un producto con ese nombre. Regístralo primero y luego agrega su existencia.";
+        return;
+    }
+    const datos = {
+        idInsumo: coincidencias[0].idInsumo,
+        cantidad: Number(document.getElementById("entrada-cantidad").value),
+        fechaIngreso: document.getElementById("entrada-ingreso").value,
+        fechaCaducidad: document.getElementById("entrada-caducidad").value || null
+    };
+    try {
+        const respuesta = await fetch(API_INVENTARIO, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo guardar la entrada."));
+        }
+        dialogo.close();
+        await cargar();
+    } catch (error) {
+        msgFormulario.textContent = error.message;
+    }
+}
+
+/* Datos: registra o actualiza una herramienta. Recibe el evento del formulario. */
+async function guardarHerramienta(evento) {
+    evento.preventDefault();
+    msgHerramienta.textContent = "";
+    const fecha = document.getElementById("herramienta-fecha").value;
+    const datos = {
+        nombre: document.getElementById("herramienta-nombre").value.trim(),
+        tipo: document.getElementById("herramienta-tipo").value.trim(),
+        cantidad: Number(document.getElementById("herramienta-cantidad").value),
+        estado: document.getElementById("herramienta-estado").value,
+        fechaAdquisicion: fecha || null
+    };
+    try {
+        const respuesta = await fetch(herramientaEditando ? `${API_HERRAMIENTAS}/${herramientaEditando.id}` : API_HERRAMIENTAS, {
+            method: herramientaEditando ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos)
+        });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo guardar la herramienta."));
+        }
+        dialogoHerramienta.close();
+        herramientaEditando = null;
+        document.getElementById("titulo-herramienta").textContent = "Registrar herramienta";
+        formularioHerramienta.querySelector("button[type=submit]").textContent = "Guardar herramienta";
+        categoria = "herramienta";
+        const botones = document.querySelectorAll("#filtros-categoria button");
+        for (let i = 0; i < botones.length; i++) {
+            botones[i].setAttribute("aria-pressed", String(botones[i].dataset.valor === categoria));
+        }
+        await cargar();
+    } catch (error) {
+        msgHerramienta.textContent = error.message;
+    }
+}
+
+/* Datos: registra una entrada o salida de un lote. Recibe el evento del formulario. */
+async function guardarMovimiento(evento) {
+    evento.preventDefault();
+    msgMovimiento.textContent = "";
+    const datos = {
+        idInventario: loteMovimiento.idInventario,
+        idUsuario: Number(document.getElementById("usuario-movimiento").value),
+        tipoMovimiento: document.getElementById("tipo-movimiento").value,
+        cantidad: Number(document.getElementById("cantidad-movimiento").value),
+        observacion: document.getElementById("nota-movimiento").value.trim()
+    };
+    try {
+        const respuesta = await fetch(API_MOVIMIENTOS, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
+        if (!respuesta.ok) {
+            throw new Error(await mensajeError(respuesta, "No se pudo registrar el movimiento."));
+        }
+        dialogoMovimiento.close();
+        await cargar();
+    } catch (error) {
+        msgMovimiento.textContent = error.message;
+    }
+}
+
+/* Datos: elimina una herramienta mediante la API. Recibe la herramienta. */
+async function eliminarHerramienta(herramienta) {
+    if (!confirm(`¿Eliminar completamente la herramienta “${herramienta.nombre}”?`)) return;
+    await eliminarRegistro(`${API_HERRAMIENTAS}/${herramienta.id}`, "la herramienta");
+}
+
+/* Datos: elimina un lote mediante la API. Recibe el lote. */
+async function eliminarLote(lote) {
+    const nombre = lote.nombreInsumo || "este lote";
+    if (!confirm(`¿Eliminar completamente “${nombre}” de inventario?`)) return;
+    await eliminarRegistro(`${API_INVENTARIO}/${lote.idInventario}`, "el lote");
+}
+
+/* Datos: solicita la eliminación y actualiza el inventario. Recibe la ruta y el nombre del registro. */
+async function eliminarRegistro(url, nombre) {
+    mensaje.textContent = "";
+    try {
+        const respuesta = await fetch(url, { method: "DELETE" });
+        if (!respuesta.ok) {
+            const textoError = `No se pudo eliminar ${nombre}. Si tiene movimientos registrados, conserva ese historial y no se puede borrar directamente.`;
+            throw new Error(await mensajeError(respuesta, textoError));
+        }
+        await cargar();
+    } catch (error) {
+        mensaje.textContent = error.message || `No se pudo eliminar ${nombre}.`;
+    }
+}
+
+/* Datos: filtra el inventario por la categoría elegida. Recibe el evento del botón. */
+function elegirCategoria(evento) {
+    const boton = evento.target.closest("button[data-valor]");
+    if (!boton) return;
+    categoria = boton.dataset.valor;
+    const botones = document.querySelectorAll("#filtros-categoria button");
+    for (let i = 0; i < botones.length; i++) {
+        botones[i].setAttribute("aria-pressed", String(botones[i] === boton));
+    }
+    dibujar();
+}
+
+/* Datos: abre el formulario de entrada de insumos. No recibe atributos. */
+function abrirEntrada() {
+    msgFormulario.textContent = "";
+    formulario.reset();
+    document.getElementById("entrada-ingreso").value = new Date().toISOString().slice(0, 10);
+    dialogo.showModal();
+}
+
+/* Datos: abre el formulario para registrar una herramienta. No recibe atributos. */
+function abrirNuevaHerramienta() {
+    herramientaEditando = null;
+    msgHerramienta.textContent = "";
+    formularioHerramienta.reset();
+    document.getElementById("titulo-herramienta").textContent = "Registrar herramienta";
+    formularioHerramienta.querySelector("button[type=submit]").textContent = "Guardar herramienta";
+    document.getElementById("herramienta-cantidad").value = "1";
+    dialogoHerramienta.showModal();
+}
+
+/* Datos: formatea una fecha de adquisición, ingreso o caducidad. Recibe la fecha. */
+function formatoFecha(fecha) {
+    if (!fecha) return "—";
+    const partes = String(fecha).slice(0, 10).split("-");
+    const a = Number(partes[0]);
+    const m = Number(partes[1]);
+    const d = Number(partes[2]);
+    return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/* Datos: busca un insumo en la lista cargada. Recibe el ID. */
+function buscarInsumo(id) {
+    return insumos.find(insumo => insumo.idInsumo === id) || null;
+}
+
+/* Datos: lee el error devuelto por la API. Recibe la respuesta y el mensaje predeterminado. */
+async function mensajeError(respuesta, mensajePredeterminado) {
+    try {
+        const error = await respuesta.json();
+        return error.mensaje || mensajePredeterminado;
+    } catch (noEsJson) {
+        return mensajePredeterminado;
+    }
+}
+
+/* Datos: muestra los lotes y herramientas según la categoría y la búsqueda. No recibe atributos. */
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const visibles = [];
@@ -180,6 +336,7 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudo conectar")) mensaje.textContent = "No hay existencias para mostrar.";
 }
 
+/* Datos: prepara el nombre de la categoría para la tabla. Recibe el tipo y el tipo de abono. */
 function etiquetaCategoria(tipo, subtipoAbono) {
     if (tipo === "abono") {
         return subtipoAbono === "organico" ? "Abono orgánico"
@@ -189,106 +346,7 @@ function etiquetaCategoria(tipo, subtipoAbono) {
     return { semilla: "Semilla", fertilizante: "Fertilizante" }[tipo] || "Insumo";
 }
 
-document.getElementById("filtros-categoria").addEventListener("click", function (evento) {
-    const boton = evento.target.closest("button[data-valor]");
-    if (!boton) return;
-    categoria = boton.dataset.valor;
-    const botones = document.querySelectorAll("#filtros-categoria button");
-    for (let i = 0; i < botones.length; i++) {
-        botones[i].setAttribute("aria-pressed", String(botones[i] === boton));
-    }
-    dibujar();
-});
-
-document.getElementById("registrar-entrada").addEventListener("click", function () {
-    msgFormulario.textContent = "";
-    formulario.reset();
-    document.getElementById("entrada-ingreso").value = new Date().toISOString().slice(0, 10);
-    dialogo.showModal();
-});
-
-formulario.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    msgFormulario.textContent = "";
-    const nombreEscrito = entradaInsumo.value.trim().toLocaleLowerCase();
-    const coincidencias = [];
-    for (let i = 0; i < insumos.length; i++) {
-        if (insumos[i].nombre.trim().toLocaleLowerCase() === nombreEscrito) coincidencias.push(insumos[i]);
-    }
-    if (coincidencias.length !== 1) {
-        msgFormulario.textContent = coincidencias.length > 1
-            ? "Hay más de un producto con ese nombre. Revisa los nombres registrados para distinguirlos."
-            : "No existe un producto con ese nombre. Regístralo primero y luego agrega su existencia.";
-        return;
-    }
-    const datos = {
-        idInsumo: coincidencias[0].idInsumo,
-        cantidad: Number(document.getElementById("entrada-cantidad").value),
-        fechaIngreso: document.getElementById("entrada-ingreso").value,
-        fechaCaducidad: document.getElementById("entrada-caducidad").value || null
-    };
-    try {
-        const respuesta = await fetch(API_INVENTARIO, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo guardar la entrada."));
-        }
-        dialogo.close();
-        await cargar();
-    } catch (error) {
-        msgFormulario.textContent = error.message;
-    }
-});
-
-document.getElementById("cancelar-entrada").addEventListener("click", function () { dialogo.close(); });
-
-document.getElementById("registrar-herramienta").addEventListener("click", function () {
-    herramientaEditando = null;
-    msgHerramienta.textContent = "";
-    formularioHerramienta.reset();
-    document.getElementById("titulo-herramienta").textContent = "Registrar herramienta";
-    formularioHerramienta.querySelector("button[type=submit]").textContent = "Guardar herramienta";
-    document.getElementById("herramienta-cantidad").value = "1";
-    dialogoHerramienta.showModal();
-});
-
-formularioHerramienta.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    msgHerramienta.textContent = "";
-    const fecha = document.getElementById("herramienta-fecha").value;
-    const datos = {
-        nombre: document.getElementById("herramienta-nombre").value.trim(),
-        tipo: document.getElementById("herramienta-tipo").value.trim(),
-        cantidad: Number(document.getElementById("herramienta-cantidad").value),
-        estado: document.getElementById("herramienta-estado").value,
-        fechaAdquisicion: fecha || null
-    };
-    try {
-        const respuesta = await fetch(herramientaEditando ? `${API_HERRAMIENTAS}/${herramientaEditando.id}` : API_HERRAMIENTAS, {
-            method: herramientaEditando ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos)
-        });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo guardar la herramienta."));
-        }
-        dialogoHerramienta.close();
-        herramientaEditando = null;
-        document.getElementById("titulo-herramienta").textContent = "Registrar herramienta";
-        formularioHerramienta.querySelector("button[type=submit]").textContent = "Guardar herramienta";
-        categoria = "herramienta";
-        const botones = document.querySelectorAll("#filtros-categoria button");
-        for (let i = 0; i < botones.length; i++) {
-            botones[i].setAttribute("aria-pressed", String(botones[i].dataset.valor === categoria));
-        }
-        await cargar();
-    } catch (error) {
-        msgHerramienta.textContent = error.message;
-    }
-});
-
-document.getElementById("cancelar-herramienta").addEventListener("click", function () { dialogoHerramienta.close(); });
-
+/* Datos: rellena el formulario de edición. Recibe la herramienta. */
 function editarHerramienta(herramienta) {
     herramientaEditando = herramienta;
     msgHerramienta.textContent = "";
@@ -302,31 +360,7 @@ function editarHerramienta(herramienta) {
     dialogoHerramienta.showModal();
 }
 
-async function eliminarHerramienta(herramienta) {
-    if (!confirm(`¿Eliminar completamente la herramienta “${herramienta.nombre}”?`)) return;
-    await eliminarRegistro(`${API_HERRAMIENTAS}/${herramienta.id}`, "la herramienta");
-}
-
-async function eliminarLote(lote) {
-    const nombre = lote.nombreInsumo || "este lote";
-    if (!confirm(`¿Eliminar completamente “${nombre}” de inventario?`)) return;
-    await eliminarRegistro(`${API_INVENTARIO}/${lote.idInventario}`, "el lote");
-}
-
-async function eliminarRegistro(url, nombre) {
-    mensaje.textContent = "";
-    try {
-        const respuesta = await fetch(url, { method: "DELETE" });
-        if (!respuesta.ok) {
-            const textoError = `No se pudo eliminar ${nombre}. Si tiene movimientos registrados, conserva ese historial y no se puede borrar directamente.`;
-            throw new Error(await mensajeError(respuesta, textoError));
-        }
-        await cargar();
-    } catch (error) {
-        mensaje.textContent = error.message || `No se pudo eliminar ${nombre}.`;
-    }
-}
-
+/* Datos: prepara el formulario de entrada o salida. Recibe el lote. */
 function abrirMovimiento(lote) {
     loteMovimiento = lote;
     msgMovimiento.textContent = "";
@@ -340,28 +374,27 @@ function abrirMovimiento(lote) {
     dialogoMovimiento.showModal();
 }
 
-formularioMovimiento.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    msgMovimiento.textContent = "";
-    const datos = {
-        idInventario: loteMovimiento.idInventario,
-        idUsuario: Number(document.getElementById("usuario-movimiento").value),
-        tipoMovimiento: document.getElementById("tipo-movimiento").value,
-        cantidad: Number(document.getElementById("cantidad-movimiento").value),
-        observacion: document.getElementById("nota-movimiento").value.trim()
-    };
-    try {
-        const respuesta = await fetch(API_MOVIMIENTOS, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
-        if (!respuesta.ok) {
-            throw new Error(await mensajeError(respuesta, "No se pudo registrar el movimiento."));
-        }
-        dialogoMovimiento.close();
-        await cargar();
-    } catch (error) {
-        msgMovimiento.textContent = error.message;
-    }
-});
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarInventarioAdmin() {
+    document.getElementById("filtros-categoria").addEventListener("click", elegirCategoria);
 
-document.getElementById("cancelar-movimiento-inventario").addEventListener("click", function () { dialogoMovimiento.close(); });
-buscador.addEventListener("input", dibujar);
-cargar();
+    document.getElementById("registrar-entrada").addEventListener("click", abrirEntrada);
+
+    formulario.addEventListener("submit", guardarEntrada);
+
+    document.getElementById("cancelar-entrada").addEventListener("click", function () { dialogo.close(); });
+
+    document.getElementById("registrar-herramienta").addEventListener("click", abrirNuevaHerramienta);
+
+    formularioHerramienta.addEventListener("submit", guardarHerramienta);
+
+    document.getElementById("cancelar-herramienta").addEventListener("click", function () { dialogoHerramienta.close(); });
+
+    formularioMovimiento.addEventListener("submit", guardarMovimiento);
+
+    document.getElementById("cancelar-movimiento-inventario").addEventListener("click", function () { dialogoMovimiento.close(); });
+    buscador.addEventListener("input", dibujar);
+    cargar();
+}
+
+iniciarInventarioAdmin();

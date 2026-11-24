@@ -1,14 +1,17 @@
-var urlApi = 'http://localhost:8081/api';
+/* Datos: contiene las solicitudes compartidas a Spring Boot y sus mensajes de error. No recibe atributos. */
 
+const urlApi = 'http://localhost:8081/api';
+
+/* Datos: envía una solicitud a la API y devuelve su respuesta. Recibe ruta, método y datos opcionales. */
 async function pedirApi(ruta, metodo, datos) {
-    var opciones = { method: metodo || 'GET', credentials: 'include' };
+    const opciones = { method: metodo || 'GET', credentials: 'include' };
     if (datos) {
         opciones.headers = { 'Content-Type': 'application/json' };
         opciones.body = JSON.stringify(datos);
     }
-    var respuesta = await fetch(urlApi + ruta, opciones);
-    var texto = await respuesta.text();
-    var contenido = null;
+    const respuesta = await fetch(urlApi + ruta, opciones);
+    const texto = await respuesta.text();
+    let contenido = null;
     try {
         contenido = texto ? JSON.parse(texto) : null;
     } catch (error) {
@@ -22,6 +25,7 @@ async function pedirApi(ruta, metodo, datos) {
     return contenido;
 }
 
+/* Datos: prepara un mensaje para mostrar cuando falla la solicitud. Recibe el error. */
 function errorApi(error) {
     if (error instanceof TypeError) {
         return 'No se pudo conectar con el API. Verifica que Spring Boot esté iniciado en http://localhost:8081.';

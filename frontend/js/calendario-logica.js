@@ -1,30 +1,26 @@
-/*
- * ARCHIVO: js/calendario-logica.js
- * CAPA: FRONTEND (lógica pura, sin DOM). Reglas del calendario de etapas y armado de eventos.
- * La usan js/calendario.js (calendario.html y etapas.html) y las pruebas:
- *   node --test frontend/pruebas/calendario.test.js
- * Las reglas de orden de fechas son las mismas que valida EtapaCultivoService en el backend.
- */
+/* Datos: este archivo define las etapas de cultivo y calcula fechas y eventos del calendario. No recibe atributos. */
 
-var CalendarioLogica = (function () {
+const CalendarioLogica = crearLogicaCalendario();
 
-    var ETAPAS = ['Germinación', 'Siembra', 'Vegetación/Riego', 'Floración', 'Cosecha'];
+/* Datos: reúne las reglas de fechas y etapas del cultivo. No recibe atributos. */
+function crearLogicaCalendario() {
+    const ETAPAS = ['Germinación', 'Siembra', 'Vegetación/Riego', 'Floración', 'Cosecha'];
 
-    /* Días sugeridos desde la fecha base (inicio de la germinación). Se pueden cambiar en etapas.html. */
-    var DIAS_SUGERIDOS = { 'Germinación': 0, 'Siembra': 15, 'Vegetación/Riego': 30, 'Floración': 60, 'Cosecha': 90 };
+    const DIAS_SUGERIDOS = { 'Germinación': 0, 'Siembra': 15, 'Vegetación/Riego': 30, 'Floración': 60, 'Cosecha': 90 };
 
+    /* Datos: esta función normaliza un texto para comparar nombres de etapas. Recibe el texto. */
     function simplificar(texto) {
         return String(texto || '').trim().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s/g, '');
     }
 
-    /* Índice de la etapa sin importar acentos ni mayúsculas ("floracion" = "Floración", "Vegetación" = "Vegetación/Riego"). */
+    /* Datos: esta función busca la posición de una etapa por su nombre. Recibe el texto de la etapa. */
     function indiceEtapa(texto) {
-        var buscado = simplificar(texto);
+        const buscado = simplificar(texto);
         if (!buscado) {
             return -1;
         }
-        for (var i = 0; i < ETAPAS.length; i++) {
-            var etapa = simplificar(ETAPAS[i]);
+        for (let i = 0; i < ETAPAS.length; i++) {
+            const etapa = simplificar(ETAPAS[i]);
             if (etapa === buscado || etapa.indexOf(buscado + '/') === 0) {
                 return i;
             }
@@ -32,20 +28,17 @@ var CalendarioLogica = (function () {
         return -1;
     }
 
+    /* Datos: esta función elige la clase visual de la etapa. Recibe el nombre de la etapa. */
     function claseEtapa(etapa) {
         return ['germinacion', 'siembra', 'riego', 'floracion', 'cosecha'][indiceEtapa(etapa)] || 'riego';
     }
 
+    /* Datos: esta función obtiene la fecha efectiva de la etapa. Recibe la etapa programada. */
     function fechaDe(etapa) {
         return etapa.fechaReal || etapa.fechaProgramada;
     }
 
-    /*
-     * Revisa una etapa antes de enviarla al API. Devuelve '' o el texto del error.
-     * nueva: { idCultivo, etapa, fechaProgramada, idEtapa? }
-     * existentes: etapas del mismo cultivo (GET /etapas-cultivo?idCultivo=)
-     * cultivo: { estado, fechaSiembra }
-     */
+    /* Datos: esta función revisa que la fecha y el orden sean válidos. Recibe la nueva etapa, las existentes y el cultivo. */
     function validarProgramacion(nueva, existentes, cultivo) {
         if (!cultivo) {
             return 'Selecciona un cultivo.';
@@ -53,24 +46,24 @@ var CalendarioLogica = (function () {
         if (cultivo.estado === 'finalizado') {
             return 'El cultivo está finalizado; no se le pueden programar etapas.';
         }
-        var indice = indiceEtapa(nueva.etapa);
+        const indice = indiceEtapa(nueva.etapa);
         if (indice < 0) {
             return 'Elige la etapa: germinación, siembra, vegetación/riego, floración o cosecha.';
         }
-        var fecha = nueva.fechaProgramada;
+        const fecha = nueva.fechaProgramada;
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) {
             return 'Indica la fecha programada.';
         }
         if (indice > indiceEtapa('Siembra') && cultivo.fechaSiembra && fecha < cultivo.fechaSiembra) {
             return 'La ' + ETAPAS[indice] + ' no puede programarse antes de la siembra (' + cultivo.fechaSiembra + ').';
         }
-        for (var i = 0; i < (existentes || []).length; i++) {
-            var otra = existentes[i];
+        for (let i = 0; i < (existentes || []).length; i++) {
+            const otra = existentes[i];
             if (nueva.idEtapa && otra.idEtapa === nueva.idEtapa) {
                 continue;
             }
-            var indiceOtra = indiceEtapa(otra.etapa);
-            var fechaOtra = fechaDe(otra);
+            const indiceOtra = indiceEtapa(otra.etapa);
+            const fechaOtra = fechaDe(otra);
             if (indiceOtra === indice) {
                 return 'Este cultivo ya tiene programada la etapa ' + ETAPAS[indice] + ' (' + fechaOtra + '); reprográmala en el calendario.';
             }
@@ -84,26 +77,24 @@ var CalendarioLogica = (function () {
         return '';
     }
 
+    /* Datos: esta función calcula una fecha relativa a otra. Recibe una fecha y la cantidad de días. */
     function sumarDias(fecha, dias) {
-        var p = fecha.split('-');
-        var d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + Number(dias)));
-        var mes = d.getUTCMonth() + 1;
-        var dia = d.getUTCDate();
+        const p = fecha.split('-');
+        const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + Number(dias)));
+        const mes = d.getUTCMonth() + 1;
+        const dia = d.getUTCDate();
         return d.getUTCFullYear() + '-' + (mes < 10 ? '0' : '') + mes + '-' + (dia < 10 ? '0' : '') + dia;
     }
 
-    /*
-     * Calendario sugerido a partir de una fecha base. dias: { 'Germinación': 0, ... } (cada valor >= anterior).
-     * Omite las etapas que el cultivo ya tiene programadas.
-     */
+    /* Datos: esta función calcula las fechas sugeridas de las etapas pendientes. Recibe la fecha base, los días y las etapas existentes. */
     function sugerirCalendario(fechaBase, dias, existentes) {
-        var tabla = dias || DIAS_SUGERIDOS;
-        var ya = {};
+        const tabla = dias || DIAS_SUGERIDOS;
+        const ya = {};
         (existentes || []).forEach(function (e) { ya[indiceEtapa(e.etapa)] = true; });
-        var resultado = [];
-        var anterior = -1;
-        for (var i = 0; i < ETAPAS.length; i++) {
-            var n = Number(tabla[ETAPAS[i]]);
+        const resultado = [];
+        let anterior = -1;
+        for (let i = 0; i < ETAPAS.length; i++) {
+            const n = Number(tabla[ETAPAS[i]]);
             if (!Number.isInteger(n) || n < 0) {
                 return { error: 'Los días de ' + ETAPAS[i] + ' deben ser un número entero de 0 en adelante.', etapas: [] };
             }
@@ -118,25 +109,19 @@ var CalendarioLogica = (function () {
         return { error: '', etapas: resultado };
     }
 
-    /*
-     * Junta en una sola lista los eventos del calendario:
-     *  - etapas programadas o completadas (GET /etapas-cultivo)
-     *  - siembra registrada del cultivo (cultivos.fecha_siembra) si no hay etapa Siembra completada
-     *  - riegos (GET /riegos) y cosechas (GET /cosechas) ya registrados
-     * filtro: id de cultivo como texto ('' = todos)
-     */
+    /* Datos: esta función reúne etapas, riegos, cosechas y siembras para el calendario. Recibe las listas de la API y el filtro. */
     function construirEventos(fuentes, filtro) {
-        var eventos = [];
-        var coincide = function (idCultivo) { return !filtro || String(idCultivo) === String(filtro); };
-        var nombres = {};
+        const eventos = [];
+        const coincide = function (idCultivo) { return !filtro || String(idCultivo) === String(filtro); };
+        const nombres = {};
         (fuentes.cultivos || []).forEach(function (c) { nombres[c.id] = c.nombre; });
-        var siembraCompletada = {};
+        const siembraCompletada = {};
 
         (fuentes.etapas || []).forEach(function (e) {
             if (!coincide(e.idCultivo)) {
                 return;
             }
-            var completada = e.estado === 'completada';
+            const completada = e.estado === 'completada';
             if (completada && indiceEtapa(e.etapa) === indiceEtapa('Siembra')) {
                 siembraCompletada[e.idCultivo] = true;
             }
@@ -179,17 +164,17 @@ var CalendarioLogica = (function () {
         return eventos;
     }
 
-    /* Siguiente etapa pendiente de un cultivo y cuántos días faltan (negativo = atrasada). */
+    /* Datos: esta función busca la etapa pendiente más cercana. Recibe las etapas del cultivo y la fecha de hoy. */
     function proximaEtapa(etapasCultivo, hoy) {
-        var pendientes = (etapasCultivo || []).filter(function (e) { return e.estado !== 'completada'; });
+        const pendientes = (etapasCultivo || []).filter(function (e) { return e.estado !== 'completada'; });
         pendientes.sort(function (a, b) { return indiceEtapa(a.etapa) - indiceEtapa(b.etapa); });
         if (!pendientes.length) {
             return null;
         }
-        var e = pendientes[0];
-        var a = hoy.split('-');
-        var b = e.fechaProgramada.split('-');
-        var dias = Math.round((Date.UTC(+b[0], +b[1] - 1, +b[2]) - Date.UTC(+a[0], +a[1] - 1, +a[2])) / 86400000);
+        const e = pendientes[0];
+        const a = hoy.split('-');
+        const b = e.fechaProgramada.split('-');
+        const dias = Math.round((Date.UTC(+b[0], +b[1] - 1, +b[2]) - Date.UTC(+a[0], +a[1] - 1, +a[2])) / 86400000);
         return { etapa: e.etapa, fecha: e.fechaProgramada, dias: dias, atrasada: dias < 0, idEtapa: e.idEtapa };
     }
 
@@ -204,7 +189,7 @@ var CalendarioLogica = (function () {
         proximaEtapa: proximaEtapa,
         sumarDias: sumarDias
     };
-})();
+}
 
 if (typeof module !== 'undefined') {
     module.exports = { CalendarioLogica: CalendarioLogica };

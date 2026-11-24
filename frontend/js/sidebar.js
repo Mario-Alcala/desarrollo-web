@@ -1,21 +1,5 @@
-/*
- * ARCHIVO: js/sidebar.js
- * CAPA: FRONTEND (JavaScript). ¿ES CASCARÓN? NO ESTRICTAMENTE: dibuja con JS el menú lateral y
- *   la barra superior para no repetir el HTML en cada pantalla. Si el cascarón debe ser solo
- *   HTML y CSS, ese menú y esa barra deben escribirse como HTML estático en cada página.
- * BACKEND: no lo usa.
- * LE FALTA: páginas destino para Resumen y Cultivos (sus enlaces son "#");
- *   sesión y roles reales (el rol "Administrador / Agricultor" está escrito fijo);
- *   la opción Usuarios del documento del proyecto.
- * AÑADIDO POR BACKEND INCOMPLETO: nada.
- *
- * BARRA SUPERIOR: <header id="topbar" data-placeholder="..." data-local="true">
- *   - data-placeholder: texto del buscador.
- *   - data-local="true": el buscador lo usa la propia página (no redirige a Terrenos).
- *   El script de cada página escucha el evento "input" de "#topbar input".
- */
+/* Datos: arma el menú y la barra superior según el rol guardado en la sesión. No recibe atributos. */
 
-// Menú del administrador. Para agregar una opción, añade una línea aquí.
 const MENU_ADMIN = [
     { id: "resumen",     texto: "Resumen",     href: "resumen.html" },
     { id: "terrenos",    texto: "Terrenos y cultivos", href: "terrenos-admin.html" },
@@ -27,7 +11,6 @@ const MENU_ADMIN = [
     { id: "usuarios",    texto: "Usuarios",    href: "usuarios-admin.html" }
 ];
 
-// El empleado reutiliza las pantallas de pedidos del administrador, con su menú de trabajo.
 const MENU_EMPLEADO = [
     { id: "cultivos", texto: "Cultivos y cosecha", href: "../empleado/cultivos.html" },
     { id: "terrenos", texto: "Terrenos", href: "../empleado/terrenos.html" },
@@ -43,6 +26,7 @@ const MENU_EMPLEADO = [
     { id: "pedidos", texto: "Preparar pedidos", href: "../administrador-agricultor/pedidos.html" }
 ];
 
+/* Datos: muestra la navegación correspondiente al usuario. No recibe atributos. */
 function dibujarSidebar() {
     const aside = document.getElementById("sidebar");
     if (!aside) return;
@@ -84,6 +68,7 @@ function dibujarSidebar() {
     aside.replaceChildren(marca, seccion, nav, usuario);
 }
 
+/* Datos: muestra el usuario y, cuando corresponde, el buscador. No recibe atributos. */
 function dibujarTopbar() {
     const barra = document.getElementById("topbar");
     if (!barra) return;
@@ -91,11 +76,10 @@ function dibujarTopbar() {
     if (barra.dataset.sinBuscador !== "true") {
         const buscador = document.createElement("input");
         buscador.type = "search";
-        buscador.id = "buscar-terreno"; // se conserva el id para js/terrenos.js
+        buscador.id = "buscar-terreno";
         buscador.placeholder = barra.dataset.placeholder || "Buscar terreno o cultivo";
         buscador.setAttribute("aria-label", buscador.placeholder);
 
-        // En las pantallas sin buscador propio, Enter lleva a Terrenos con la búsqueda aplicada.
         if (barra.dataset.local !== "true") {
             buscador.addEventListener("keydown", function (evento) {
                 if (evento.key === "Enter" && !location.pathname.endsWith("terrenos-admin.html")) {
@@ -114,5 +98,10 @@ function dibujarTopbar() {
     barra.append(rol);
 }
 
-dibujarSidebar();
-dibujarTopbar();
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarNavegacionAdmin() {
+    dibujarSidebar();
+    dibujarTopbar();
+}
+
+iniciarNavegacionAdmin();

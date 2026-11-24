@@ -1,13 +1,6 @@
-/*
- * ARCHIVO: js/admin-comun.js
- * CAPA: FRONTEND (JavaScript de apoyo). ¿ES CASCARÓN? NO: son funciones auxiliares (no diseño).
- * QUÉ HACE: utilidades que comparten Catálogo, Proveedores, Bodega y Pedidos: crear elementos,
- *   dar formato a dinero y kilos, etiquetas de estado y filtros.
- * BACKEND: no lo usa.
- * LE FALTA: nada por ahora; si el equipo prefiere un framework, esto se reemplaza.
- * AÑADIDO POR BACKEND INCOMPLETO: nada.
- */
+/* Datos: reúne utilidades para dibujar controles y dar formato a los datos de administración. No recibe atributos. */
 
+/* Datos: crea un elemento HTML. Recibe la etiqueta, el texto y la clase. */
 function crear(etiqueta, texto, clase) {
     const el = document.createElement(etiqueta);
     if (texto !== undefined && texto !== null) el.textContent = texto;
@@ -15,28 +8,33 @@ function crear(etiqueta, texto, clase) {
     return el;
 }
 
+/* Datos: pone en mayúscula la primera letra. Recibe el texto. */
 function capitalizar(texto) {
     const t = String(texto || "");
     return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+/* Datos: muestra una cantidad en pesos mexicanos. Recibe el número. */
 function fmtMoneda(n) {
     return Number(n).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 }
 
+/* Datos: muestra un número con hasta dos decimales. Recibe el número. */
 function fmtNum(n) {
     return Number(n).toLocaleString("es-MX", { maximumFractionDigits: 2 });
 }
 
+/* Datos: une familia y variedad para mostrar el producto. Recibe el producto. */
 function nombreProducto(p) {
     return capitalizar(p.familia) + " " + p.variedad;
 }
 
-// Etiqueta de color. tipo: "ok", "aviso", "error" o vacío (neutra).
+/* Datos: crea una insignia de estado. Recibe el texto y el tipo. */
 function etiqueta(texto, tipo) {
     return crear("span", texto, "etq" + (tipo ? " etq-" + tipo : ""));
 }
 
+/* Datos: crea un botón listo para usar. Recibe el texto, la clase y la función al dar clic. */
 function crearBoton(texto, clase, alClic) {
     const b = crear("button", texto, clase);
     b.type = "button";
@@ -44,7 +42,7 @@ function crearBoton(texto, clase, alClic) {
     return b;
 }
 
-// Botones de filtro (chips). Llama alElegir(valor) al cambiar.
+/* Datos: conecta los botones de filtro. Recibe el contenedor y la función que aplica el filtro. */
 function iniciarFiltros(contenedor, alElegir) {
     contenedor.addEventListener("click", function (evento) {
         const b = evento.target.closest("button[data-valor]");
@@ -56,5 +54,3 @@ function iniciarFiltros(contenedor, alElegir) {
         alElegir(b.dataset.valor);
     });
 }
-
-const MENSAJE_SESION = "Guardado solo en esta sesión: al recargar la página vuelven los datos de ejemplo.";

@@ -1,39 +1,37 @@
-var proveedores = [];
+/* Datos: consulta proveedores y obtiene su identificador para formularios. No recibe atributos. */
 
+let proveedores = [];
+
+/* Datos: obtiene los proveedores registrados en la API. No recibe atributos. */
 async function cargarProveedores() {
-    var datos = await pedirApi('/proveedores');
+    const datos = await pedirApi('/proveedores');
     proveedores = datos || [];
 }
 
+/* Datos: obtiene el nombre de un proveedor. Recibe su identificador. */
 function nombreProveedor(id) {
-    for (var i = 0; i < proveedores.length; i++) {
-        if (proveedores[i].idProveedor === id) {
-            return proveedores[i].nombreEmpresa;
-        }
-    }
-    return '';
+    const proveedor = proveedores.find(registro => registro.idProveedor === id);
+    return proveedor ? proveedor.nombreEmpresa : '';
 }
 
+/* Datos: busca el identificador de un proveedor. Recibe su nombre. */
 function buscarProveedorNombre(nombre) {
-    for (var i = 0; i < proveedores.length; i++) {
-        if (proveedores[i].nombreEmpresa.trim().toLowerCase() === nombre.toLowerCase()) {
-            return proveedores[i].idProveedor;
-        }
-    }
-    return null;
+    const nombreBuscado = nombre.toLowerCase();
+    const proveedor = proveedores.find(registro => registro.nombreEmpresa.trim().toLowerCase() === nombreBuscado);
+    return proveedor ? proveedor.idProveedor : null;
 }
 
+/* Datos: asigna el identificador de un proveedor existente o lo registra. Recibe los datos del formulario. */
 async function resolverProveedor(datos) {
-    var campo = document.getElementById('proveedorNombre');
+    const campo = document.getElementById('proveedorNombre');
     if (!campo) {
         return datos;
     }
-    var nombre = campo.value.trim();
+    const nombre = campo.value.trim();
     delete datos.proveedorNombre;
     await cargarProveedores();
-    var id = buscarProveedorNombre(nombre);
+    let id = buscarProveedorNombre(nombre);
     if (id === null) {
-        // Registrar el nombre nuevo y recuperar el ID asignado por Java.
         await pedirApi('/proveedores', 'POST', { nombreEmpresa: nombre });
         await cargarProveedores();
         id = buscarProveedorNombre(nombre);

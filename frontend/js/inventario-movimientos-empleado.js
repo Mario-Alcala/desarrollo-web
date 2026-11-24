@@ -1,3 +1,5 @@
+/* Datos: este archivo consulta existencias y permite registrar entradas y salidas de inventario. No recibe atributos. */
+
 const API_MOVIMIENTOS_EMPLEADO = 'http://localhost:8081/api';
 const selectorLoteEmpleado = document.getElementById('lote-movimiento');
 const cuerpoExistenciasEmpleado = document.getElementById('existencias-empleado');
@@ -7,43 +9,7 @@ const formularioMovimientoEmpleado = document.getElementById('formulario-movimie
 let inventarioEmpleado = [];
 let movimientosEmpleado = [];
 
-function ponerCeldaMovimiento(fila, texto) {
-    const celda = document.createElement('td');
-    celda.textContent = texto == null || texto === '' ? '—' : texto;
-    fila.appendChild(celda);
-}
-
-function dibujarInventarioEmpleado() {
-    cuerpoExistenciasEmpleado.replaceChildren();
-    selectorLoteEmpleado.replaceChildren(new Option('Selecciona un lote', ''));
-    inventarioEmpleado.forEach(function (lote) {
-        const nombre = lote.nombreInsumo || ('Insumo #' + lote.idInsumo);
-        selectorLoteEmpleado.add(new Option('#' + lote.idInventario + ' · ' + nombre + ' · ' + lote.cantidad + ' ' + lote.unidadMedida, String(lote.idInventario)));
-        const fila = document.createElement('tr');
-        ponerCeldaMovimiento(fila, '#' + lote.idInventario);
-        ponerCeldaMovimiento(fila, nombre);
-        ponerCeldaMovimiento(fila, lote.categoria);
-        ponerCeldaMovimiento(fila, Number(lote.cantidad || 0).toLocaleString('es-MX'));
-        ponerCeldaMovimiento(fila, lote.unidadMedida);
-        ponerCeldaMovimiento(fila, lote.fechaCaducidad);
-        cuerpoExistenciasEmpleado.appendChild(fila);
-    });
-}
-
-function dibujarMovimientosEmpleado() {
-    cuerpoMovimientosEmpleado.replaceChildren();
-    movimientosEmpleado.forEach(function (movimiento) {
-        const fila = document.createElement('tr');
-        const lote = inventarioEmpleado.find(function (item) { return Number(item.idInventario) === Number(movimiento.idInventario); });
-        ponerCeldaMovimiento(fila, movimiento.fechaMovimiento ? String(movimiento.fechaMovimiento).replace('T', ' ') : '—');
-        ponerCeldaMovimiento(fila, '#' + movimiento.idInventario + (lote ? ' · ' + lote.nombreInsumo : ''));
-        ponerCeldaMovimiento(fila, movimiento.tipoMovimiento);
-        ponerCeldaMovimiento(fila, movimiento.cantidad);
-        ponerCeldaMovimiento(fila, movimiento.observacion);
-        cuerpoMovimientosEmpleado.appendChild(fila);
-    });
-}
-
+/* Datos: esta función consulta existencias y movimientos desde la API. No recibe atributos. */
 async function cargarInventarioEmpleado() {
     mensajeMovimientoEmpleado.textContent = 'Cargando existencias y movimientos…';
     try {
@@ -62,7 +28,55 @@ async function cargarInventarioEmpleado() {
     }
 }
 
-formularioMovimientoEmpleado.addEventListener('submit', async function (evento) {
+/* Datos: esta función muestra las existencias y llena el selector de lotes. No recibe atributos. */
+function dibujarInventarioEmpleado() {
+    cuerpoExistenciasEmpleado.replaceChildren();
+    selectorLoteEmpleado.replaceChildren(new Option('Selecciona un lote', ''));
+    inventarioEmpleado.forEach(function (lote) {
+        const nombre = lote.nombreInsumo || ('Insumo #' + lote.idInsumo);
+        selectorLoteEmpleado.add(new Option('#' + lote.idInventario + ' · ' + nombre + ' · ' + lote.cantidad + ' ' + lote.unidadMedida, String(lote.idInventario)));
+        const fila = document.createElement('tr');
+        ponerCeldaMovimiento(fila, '#' + lote.idInventario);
+        ponerCeldaMovimiento(fila, nombre);
+        ponerCeldaMovimiento(fila, lote.categoria);
+        ponerCeldaMovimiento(fila, Number(lote.cantidad || 0).toLocaleString('es-MX'));
+        ponerCeldaMovimiento(fila, lote.unidadMedida);
+        ponerCeldaMovimiento(fila, lote.fechaCaducidad);
+        cuerpoExistenciasEmpleado.appendChild(fila);
+    });
+}
+
+/* Datos: esta función muestra las entradas y salidas registradas. No recibe atributos. */
+function dibujarMovimientosEmpleado() {
+    cuerpoMovimientosEmpleado.replaceChildren();
+    movimientosEmpleado.forEach(function (movimiento) {
+        const fila = document.createElement('tr');
+        const lote = inventarioEmpleado.find(function (item) { return Number(item.idInventario) === Number(movimiento.idInventario); });
+        ponerCeldaMovimiento(fila, movimiento.fechaMovimiento ? String(movimiento.fechaMovimiento).replace('T', ' ') : '—');
+        ponerCeldaMovimiento(fila, '#' + movimiento.idInventario + (lote ? ' · ' + lote.nombreInsumo : ''));
+        ponerCeldaMovimiento(fila, movimiento.tipoMovimiento);
+        ponerCeldaMovimiento(fila, movimiento.cantidad);
+        ponerCeldaMovimiento(fila, movimiento.observacion);
+        cuerpoMovimientosEmpleado.appendChild(fila);
+    });
+}
+
+/* Datos: esta función agrega una celda a la tabla de inventario. Recibe la fila y el texto. */
+function ponerCeldaMovimiento(fila, texto) {
+    const celda = document.createElement('td');
+    celda.textContent = texto == null || texto === '' ? '—' : texto;
+    fila.appendChild(celda);
+}
+
+/* Datos: esta función coloca la fecha y hora locales en el formulario. No recibe atributos. */
+function establecerFechaMovimiento() {
+    const ahora = new Date();
+    const desfase = ahora.getTimezoneOffset() * 60000;
+    document.getElementById('fecha-movimiento').value = new Date(ahora - desfase).toISOString().slice(0, 16);
+}
+
+/* Datos: esta función envía la entrada o salida de inventario. Recibe el evento del formulario. */
+async function guardarMovimientoEmpleado(evento) {
     evento.preventDefault();
     const error = document.getElementById('error-movimiento-empleado');
     const usuarioId = sessionStorage.getItem('usuarioId');
@@ -93,13 +107,13 @@ formularioMovimientoEmpleado.addEventListener('submit', async function (evento) 
         error.textContent = problema.message;
     }
     boton.disabled = false;
-});
-
-function establecerFechaMovimiento() {
-    const ahora = new Date();
-    const desfase = ahora.getTimezoneOffset() * 60000;
-    document.getElementById('fecha-movimiento').value = new Date(ahora - desfase).toISOString().slice(0, 16);
 }
 
-establecerFechaMovimiento();
-cargarInventarioEmpleado();
+/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+function iniciarMovimientosEmpleado() {
+    formularioMovimientoEmpleado.addEventListener('submit', guardarMovimientoEmpleado);
+    establecerFechaMovimiento();
+    cargarInventarioEmpleado();
+}
+
+iniciarMovimientosEmpleado();

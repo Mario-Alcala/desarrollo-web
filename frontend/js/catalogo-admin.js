@@ -1,3 +1,5 @@
+/* Datos: consulta, filtra y guarda las familias y variedades del catálogo. No recibe atributos. */
+
 const API_CATALOGO = "http://localhost:8081/api";
 const lista = document.getElementById("lista-productos");
 const mensaje = document.getElementById("mensaje-catalogo");
@@ -10,6 +12,7 @@ let variedades = [];
 let idFamiliaEditando = null;
 let idVariedadEditando = null;
 
+/* Datos: envía una solicitud del catálogo. Recibe ruta, método y datos opcionales. */
 async function pedirCatalogo(ruta, metodo, datos) {
     const opciones = { method: metodo || "GET", headers: {} };
     if (datos) {
@@ -39,6 +42,74 @@ async function pedirCatalogo(ruta, metodo, datos) {
     return cuerpo;
 }
 
+/* Datos: consulta las familias y variedades y actualiza la pantalla. No recibe atributos. */
+async function cargarCatalogo() {
+    mensaje.textContent = "Cargando catálogo…";
+    try {
+        familias = await pedirCatalogo("/familias-producto");
+        variedades = await pedirCatalogo("/variedades-producto");
+        actualizarFiltroNombre();
+        dibujarCatalogo();
+    } catch (error) {
+        lista.replaceChildren();
+        mensaje.textContent = error.message;
+    }
+}
+
+/* Datos: busca una familia por nombre o la crea en la API. Recibe el nombre. */
+async function obtenerNombreProducto(nombre) {
+    const nombreNormalizado = nombre.trim().toLowerCase();
+    const existente = familias.find(familia => familia.nombre.trim().toLowerCase() === nombreNormalizado);
+    if (existente) return existente;
+
+    const familia = await pedirCatalogo("/familias-producto", "POST", { nombre: nombre.trim() });
+    familias.push(familia);
+    return familia;
+}
+
+/* Datos: guarda una variedad nueva o editada. Recibe el evento del formulario. */
+async function guardarProducto(evento) {
+    evento.preventDefault();
+    const aviso = document.getElementById("mensaje-producto");
+    aviso.textContent = "";
+
+    const nombre = document.getElementById("producto-nombre").value.trim();
+    const nombreVariedad = document.getElementById("producto-variedad").value.trim();
+    const datosProducto = {
+        nombre: nombreVariedad,
+        descripcion: document.getElementById("producto-descripcion").value.trim(),
+        imagenUrl: document.getElementById("producto-imagen").value.trim(),
+        precioPorKg: Number(document.getElementById("producto-precio").value)
+    };
+
+    try {
+        let familia;
+        if (idVariedadEditando && idFamiliaEditando !== null) {
+            const familiaOriginal = familias.find(familia => familia.idFamilia === idFamiliaEditando);
+            if (familiaOriginal && familiaOriginal.nombre.trim().toLowerCase() === nombre.toLowerCase()) {
+                familia = familiaOriginal;
+            } else {
+                familia = await obtenerNombreProducto(nombre);
+            }
+        } else {
+            familia = await obtenerNombreProducto(nombre);
+        }
+
+        datosProducto.idFamilia = familia.idFamilia;
+        const ruta = idVariedadEditando ? `/variedades-producto/${idVariedadEditando}` : "/variedades-producto";
+        await pedirCatalogo(ruta, idVariedadEditando ? "PUT" : "POST", datosProducto);
+        dialogoProducto.close();
+        formularioProducto.reset();
+        idFamiliaEditando = null;
+        idVariedadEditando = null;
+        await cargarCatalogo();
+        mensaje.textContent = "Producto guardado.";
+    } catch (error) {
+        aviso.textContent = error.message;
+    }
+}
+
+/* Datos: rellena el filtro con los nombres de familia. No recibe atributos. */
 function actualizarFiltroNombre() {
     const valorAnterior = filtroNombre.value;
     const opcionTodos = crear("option", "Todos los nombres");
@@ -50,14 +121,12 @@ function actualizarFiltroNombre() {
         opcion.value = String(familia.idFamilia);
         filtroNombre.append(opcion);
     }
-    for (let i = 0; i < familias.length; i++) {
-        if (String(familias[i].idFamilia) === valorAnterior) {
-            filtroNombre.value = valorAnterior;
-            break;
-        }
+    if (familias.some(familia => String(familia.idFamilia) === valorAnterior)) {
+        filtroNombre.value = valorAnterior;
     }
 }
 
+/* Datos: muestra el catálogo según el texto y la familia elegidos. No recibe atributos. */
 function dibujarCatalogo() {
     const texto = buscador.value.trim().toLowerCase();
     const idFiltro = filtroNombre.value;
@@ -81,6 +150,7 @@ function dibujarCatalogo() {
     mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "producto" : "productos"}`;
 }
 
+/* Datos: arma la tarjeta de un producto. Recibe su variedad, familia, imagen y precio. */
 function crearTarjeta(variedad) {
     const tarjeta = crear("article", undefined, "tarjeta-producto");
     let imagen;
@@ -117,19 +187,7 @@ function crearTarjeta(variedad) {
     return tarjeta;
 }
 
-async function cargarCatalogo() {
-    mensaje.textContent = "Cargando catálogo…";
-    try {
-        familias = await pedirCatalogo("/familias-producto");
-        variedades = await pedirCatalogo("/variedades-producto");
-        actualizarFiltroNombre();
-        dibujarCatalogo();
-    } catch (error) {
-        lista.replaceChildren();
-        mensaje.textContent = error.message;
-    }
-}
-
+/* Datos: abre el formulario del producto. Recibe la variedad o null para crear. */
 function abrirProducto(variedad) {
     idVariedadEditando = variedad ? variedad.idVariedad : null;
     idFamiliaEditando = variedad ? variedad.idFamilia : null;
@@ -143,71 +201,14 @@ function abrirProducto(variedad) {
     dialogoProducto.showModal();
 }
 
-async function obtenerNombreProducto(nombre) {
-    const nombreNormalizado = nombre.trim().toLowerCase();
-    let familia = null;
-    for (let i = 0; i < familias.length; i++) {
-        if (familias[i].nombre.trim().toLowerCase() === nombreNormalizado) {
-            familia = familias[i];
-            break;
-        }
-    }
-    if (familia !== null) return familia;
-
-    familia = await pedirCatalogo("/familias-producto", "POST", { nombre: nombre.trim() });
-    familias.push(familia);
-    return familia;
+/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+function iniciarCatalogo() {
+    formularioProducto.addEventListener("submit", guardarProducto);
+    document.getElementById("agregar-producto").addEventListener("click", function () { abrirProducto(null); });
+    document.getElementById("cancelar-producto").addEventListener("click", function () { dialogoProducto.close(); });
+    filtroNombre.addEventListener("change", dibujarCatalogo);
+    buscador.addEventListener("input", dibujarCatalogo);
+    cargarCatalogo();
 }
 
-formularioProducto.addEventListener("submit", async function (evento) {
-    evento.preventDefault();
-    const aviso = document.getElementById("mensaje-producto");
-    aviso.textContent = "";
-
-    const nombre = document.getElementById("producto-nombre").value.trim();
-    const nombreVariedad = document.getElementById("producto-variedad").value.trim();
-    const datosProducto = {
-        nombre: nombreVariedad,
-        descripcion: document.getElementById("producto-descripcion").value.trim(),
-        imagenUrl: document.getElementById("producto-imagen").value.trim(),
-        precioPorKg: Number(document.getElementById("producto-precio").value)
-    };
-
-    try {
-        let familia;
-        if (idVariedadEditando && idFamiliaEditando !== null) {
-            let familiaOriginal = null;
-            for (let i = 0; i < familias.length; i++) {
-                if (familias[i].idFamilia === idFamiliaEditando) {
-                    familiaOriginal = familias[i];
-                    break;
-                }
-            }
-            if (familiaOriginal && familiaOriginal.nombre.trim().toLowerCase() === nombre.toLowerCase()) {
-                familia = familiaOriginal;
-            } else {
-                familia = await obtenerNombreProducto(nombre);
-            }
-        } else {
-            familia = await obtenerNombreProducto(nombre);
-        }
-
-        datosProducto.idFamilia = familia.idFamilia;
-        const ruta = idVariedadEditando ? `/variedades-producto/${idVariedadEditando}` : "/variedades-producto";
-        await pedirCatalogo(ruta, idVariedadEditando ? "PUT" : "POST", datosProducto);
-        dialogoProducto.close();
-        formularioProducto.reset();
-        idFamiliaEditando = null;
-        idVariedadEditando = null;
-        await cargarCatalogo();
-        mensaje.textContent = "Producto guardado.";
-    } catch (error) {
-        aviso.textContent = error.message;
-    }
-});
-
-document.getElementById("agregar-producto").addEventListener("click", function () { abrirProducto(null); });
-document.getElementById("cancelar-producto").addEventListener("click", function () { dialogoProducto.close(); });
-filtroNombre.addEventListener("change", dibujarCatalogo);
-buscador.addEventListener("input", dibujarCatalogo);
-cargarCatalogo();
+iniciarCatalogo();

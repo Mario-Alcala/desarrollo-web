@@ -1,33 +1,23 @@
-/*
- * ARCHIVO: js/sesion.js
- * CAPA: FRONTEND (lógica compartida). Lee el usuario que inició sesión y protege las páginas por rol.
- * CONTRATO: js/ap.js guarda al iniciar sesión (POST /api/usuarios/login):
- *   sessionStorage.setItem('usuarioSesion', JSON.stringify({ idUsuario: 1, nombre: 'Ana', rol: 'trabajador' }));
- * USO EN UNA PÁGINA: <body data-roles="trabajador,administrador_agricultor"> y cargar este archivo.
- *   Si no hay sesión o el rol no está permitido, manda a login.html.
- *   Si la barra tiene <span id="usuario-barra"> y <button id="cerrar-sesion">, los llena y los conecta.
- */
+/* Datos: revisa la sesión iniciada y conecta el cierre de sesión. No recibe atributos. */
 
-var CLAVE_SESION = 'usuarioSesion';
-var redirigiendoAlHostLocal = window.location.hostname === '127.0.0.1';
+const CLAVE_SESION = 'usuarioSesion';
+const redirigiendoAlHostLocal = window.location.hostname === '127.0.0.1';
 
-if (redirigiendoAlHostLocal) {
-    window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));
-}
-
+/* Datos: lee la cuenta guardada en la sesión del navegador. No recibe atributos. */
 function usuarioActual() {
     try {
-        var texto = sessionStorage.getItem(CLAVE_SESION);
-        var usuario = texto ? JSON.parse(texto) : null;
+        const texto = sessionStorage.getItem(CLAVE_SESION);
+        const usuario = texto ? JSON.parse(texto) : null;
         if (usuario && Number.isInteger(usuario.idUsuario)) {
             return usuario;
         }
     } catch (error) {
-        // sesión ilegible: se trata como si no hubiera sesión
+        return null;
     }
     return null;
 }
 
+/* Datos: guarda el identificador, nombre, correo y rol. Recibe el usuario. */
 function guardarSesion(usuario) {
     sessionStorage.setItem(CLAVE_SESION, JSON.stringify({
         idUsuario: usuario.idUsuario,
@@ -37,9 +27,10 @@ function guardarSesion(usuario) {
     }));
 }
 
+/* Datos: cierra la sesión en la API y en el navegador. Recibe una ruta de regreso opcional. */
 function cerrarSesion(rutaLogin) {
-    var destino = rutaLogin || '../login.html';
-    var host = window.location.hostname || 'localhost';
+    const destino = rutaLogin || '../login.html';
+    const host = window.location.hostname || 'localhost';
     fetch('http://' + host + ':8081/api/usuarios/logout', {
         method: 'POST',
         credentials: 'include'
@@ -52,9 +43,9 @@ function cerrarSesion(rutaLogin) {
     });
 }
 
-/* Devuelve el usuario si su rol está en la lista; si no, redirige al login y devuelve null. */
+/* Datos: revisa si la cuenta tiene acceso a la página. Recibe los roles y una ruta de regreso opcional. */
 function exigirSesion(roles, rutaLogin) {
-    var usuario = usuarioActual();
+    const usuario = usuarioActual();
     if (!usuario || (roles && roles.length && roles.indexOf(usuario.rol) === -1)) {
         window.location.replace((rutaLogin || '../login.html') + '?motivo=sesion');
         return null;
@@ -62,19 +53,29 @@ function exigirSesion(roles, rutaLogin) {
     return usuario;
 }
 
+/* Datos: muestra la cuenta y conecta el botón de salida. Recibe el usuario. */
 function prepararBarraSesion(usuario) {
-    var nombre = document.getElementById('usuario-barra');
+    const nombre = document.getElementById('usuario-barra');
     if (nombre && usuario) {
         nombre.textContent = (usuario.nombre || 'Usuario #' + usuario.idUsuario)
             + (usuario.rol === 'trabajador' ? ' · Trabajador' : ' · Administrador');
     }
-    var boton = document.getElementById('cerrar-sesion');
+    const boton = document.getElementById('cerrar-sesion');
     if (boton) {
         boton.addEventListener('click', function () { cerrarSesion(); });
     }
 }
 
-if (!redirigiendoAlHostLocal && typeof document !== 'undefined' && document.body && document.body.dataset.roles) {
-    var usuarioDePagina = exigirSesion(document.body.dataset.roles.split(','));
-    prepararBarraSesion(usuarioDePagina);
+/* Datos: revisa la sesión y prepara la barra al abrir la página. No recibe atributos. */
+function iniciarSesionPagina() {
+    if (redirigiendoAlHostLocal) {
+        window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));
+        return;
+    }
+    if (typeof document !== 'undefined' && document.body && document.body.dataset.roles) {
+        const usuarioDePagina = exigirSesion(document.body.dataset.roles.split(','));
+        prepararBarraSesion(usuarioDePagina);
+    }
 }
+
+iniciarSesionPagina();

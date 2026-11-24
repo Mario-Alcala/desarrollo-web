@@ -1,22 +1,4 @@
-/*
- * ARCHIVO: js/usuarios-admin.js
- * CAPA: FRONTEND (lógica). ¿ES CASCARÓN? NO: consulta la API, valida el formulario y dibuja la tabla.
- * QUÉ USA DEL BACKEND: /api/usuarios (GET para listar, POST para crear, PUT para editar).
- *   Campos de la API: idUsuario, nombreUsuario, correoElectronico, contrasena (solo de escritura) y rol.
- * REGLAS DEL DOCUMENTO: el administrador registra empleados y les asigna un rol (administrador_agricultor
- *   o trabajador). Los clientes se registran desde su propia pantalla: aquí se ven, pero no se crean ni
- *   se les puede cambiar el rol. El correo no se puede repetir. La contraseña la cifra el backend.
- * LE FALTA: eliminar usuarios; sesión y roles reales; que el backend rechace correos repetidos
- *   (aquí también se valida, pero la regla debe vivir en el backend).
- * PROBLEMAS DEL BACKEND (UsuarioService), por avisar al equipo:
- *   1) validar() acepta los roles "agricultor", "trabajador" y "cliente", pero el documento y la columna
- *      rol (ENUM) dicen "administrador_agricultor": por ahora la API no deja crear administradores.
- *   2) actualizar() exige contraseña siempre y la vuelve a cifrar: no se puede editar sin escribirla.
- *      Por eso EDICION_EXIGE_CONTRASENA vale true; cuando el backend la acepte vacía, ponla en false.
- * AÑADIDO POR BACKEND INCOMPLETO: si la API no responde se usan USUARIOS_EJEMPLO (los cambios entonces
- *   viven solo en memoria y se pierden al recargar). Si la API responde con la lista vacía NO se usan:
- *   la tabla sale vacía y el primer usuario se guarda de verdad en el backend.
- */
+/* Datos: consulta, filtra y guarda usuarios mediante la API. No recibe atributos. */
 
 const API_USUARIOS = "http://localhost:8081/api/usuarios";
 
@@ -27,31 +9,21 @@ const NOMBRE_ROL = {
 };
 const ROLES_ASIGNABLES = ["administrador_agricultor", "trabajador"];
 
-const USUARIOS_EJEMPLO = [
-    { idUsuario: 1, nombreUsuario: "Ana Torres", correoElectronico: "ana@gestioncultivos.example", rol: "administrador_agricultor" },
-    { idUsuario: 2, nombreUsuario: "Luis Martínez", correoElectronico: "luis@gestioncultivos.example", rol: "trabajador" },
-    { idUsuario: 3, nombreUsuario: "Rosa Hernández", correoElectronico: "rosa@gestioncultivos.example", rol: "trabajador" },
-    { idUsuario: 4, nombreUsuario: "Restaurante La Hacienda", correoElectronico: "compras@lahacienda.example", rol: "cliente" }
-];
-
+const ERROR_CARGA_USUARIOS = "No se pudieron consultar los usuarios. Revisa que el backend esté encendido.";
 const tabla = document.getElementById("lista-usuarios");
 const mensajeUsuarios = document.getElementById("mensaje-usuarios");
 const buscadorUsuarios = document.querySelector("#topbar input");
 const dialogoUsuario = document.getElementById("dialogo-usuario");
+const panelUsuario = document.getElementById("panel-formulario");
 const formularioUsuario = document.getElementById("formulario-usuario");
-const mensajeFormularioUsuario = document.getElementById("mensaje-formulario-usuario");
-
-// El backend actual exige contraseña también al editar (ver PROBLEMAS DEL BACKEND arriba).
+const mensajeFormularioUsuario = campo("mensaje-formulario-usuario", "mensaje-formulario");
 let EDICION_EXIGE_CONTRASENA = true;
 
 let usuarios = [];
-let usandoEjemplo = false;
 let rolActivo = "todos";
 let editandoIdUsuario = null;
 
-/* ---------- Lógica pura (sin DOM): es lo que prueban las pruebas automáticas ---------- */
-
-// Devuelve "" si todo está bien o el texto del primer error encontrado.
+/* Datos: valida nombre, correo, contraseña y rol. Recibe los datos, la lista de usuarios y el ID en edición. */
 function validarUsuario(datos, lista, idEditando) {
     const nombre = (datos.nombreUsuario || "").trim();
     const correo = (datos.correoElectronico || "").trim().toLowerCase();
@@ -66,7 +38,7 @@ function validarUsuario(datos, lista, idEditando) {
     if (repetido) return "Ya existe un usuario con ese correo.";
 
     if (contrasena === "" && idEditando == null) return "La contraseña es obligatoria.";
-    if (contrasena === "" && EDICION_EXIGE_CONTRASENA) return "Escribe la contraseña del usuario (la actual o una nueva): el backend la exige al editar.";
+    if (contrasena === "" && dialogoUsuario && EDICION_EXIGE_CONTRASENA) return "Escribe la contraseña del usuario (la actual o una nueva).";
     if (contrasena !== "" && contrasena.length < 8) return "La contraseña debe tener al menos 8 caracteres.";
 
     const rolPermitido = ROLES_ASIGNABLES.includes(datos.rol) || (actual && actual.rol === "cliente" && datos.rol === "cliente");
@@ -74,6 +46,7 @@ function validarUsuario(datos, lista, idEditando) {
     return "";
 }
 
+/* Datos: selecciona usuarios por rol, nombre o correo. Recibe la lista, el rol y el texto de búsqueda. */
 function filtrarUsuarios(lista, rol, texto) {
     const q = (texto || "").trim().toLowerCase();
     return lista.filter(u =>
@@ -82,8 +55,7 @@ function filtrarUsuarios(lista, rol, texto) {
     );
 }
 
-/* ---------- Datos ---------- */
-
+/* Datos: actualiza la tabla con la lista recibida de la API. No recibe atributos. */
 async function cargarUsuarios() {
     try {
         const r = await fetch(API_USUARIOS);
@@ -91,72 +63,108 @@ async function cargarUsuarios() {
         const datos = await r.json();
         if (!Array.isArray(datos)) throw new Error("respuesta inesperada");
         usuarios = datos;
-        usandoEjemplo = false;
-        if (mensajeUsuarios.textContent === MENSAJE_EJEMPLO_USUARIOS) mensajeUsuarios.textContent = "";
+        if (mensajeUsuarios.textContent === ERROR_CARGA_USUARIOS) mensajeUsuarios.textContent = "";
+        dibujarUsuarios();
+        return true;
     } catch (e) {
-        usuarios = USUARIOS_EJEMPLO.map(u => ({ ...u }));
-        usandoEjemplo = true;
-        mensajeUsuarios.textContent = MENSAJE_EJEMPLO_USUARIOS;
+        usuarios = [];
+        mensajeUsuarios.textContent = ERROR_CARGA_USUARIOS;
+        dibujarUsuarios();
+        return false;
     }
-    dibujarUsuarios();
 }
 
-const MENSAJE_EJEMPLO_USUARIOS = "No se pudo leer la API de usuarios: se muestran datos de ejemplo. " + MENSAJE_SESION;
-
-/* ---------- Pantalla ---------- */
-
+/* Datos: arma una fila de la tabla. Recibe un usuario con su ID, nombre, correo y rol. */
 function filaUsuario(u) {
-    const fila = crear("tr");
-    const celdaRol = crear("td");
-    celdaRol.append(etiqueta(NOMBRE_ROL[u.rol] || capitalizar(u.rol), u.rol === "administrador_agricultor" ? "ok" : (u.rol === "trabajador" ? "aviso" : "")));
-    const celdaAccion = crear("td");
-    celdaAccion.append(crearBoton("Editar", "boton boton-secundario boton-chico", () => abrirFormularioUsuario(u)));
-    fila.append(crear("td", u.nombreUsuario), crear("td", u.correoElectronico), celdaRol, celdaAccion);
+    const fila = document.createElement("tr");
+    const nombre = document.createElement("td");
+    nombre.textContent = u.nombreUsuario;
+    const correo = document.createElement("td");
+    correo.textContent = u.correoElectronico;
+    const celdaRol = document.createElement("td");
+    const etiquetaRol = document.createElement("span");
+    const rol = String(u.rol || "");
+    etiquetaRol.textContent = NOMBRE_ROL[rol] || rol.charAt(0).toUpperCase() + rol.slice(1);
+    etiquetaRol.className = "etq";
+    if (rol === "administrador_agricultor") etiquetaRol.className += " etq-ok";
+    if (rol === "trabajador") etiquetaRol.className += " etq-aviso";
+    celdaRol.append(etiquetaRol);
+    const celdaAccion = document.createElement("td");
+    const botonEditar = document.createElement("button");
+    botonEditar.textContent = "Editar";
+    botonEditar.className = "boton boton-secundario boton-chico";
+    botonEditar.type = "button";
+    botonEditar.addEventListener("click", function () {
+        abrirFormularioUsuario(u);
+    });
+    celdaAccion.append(botonEditar);
+    fila.append(nombre, correo, celdaRol, celdaAccion);
     return fila;
 }
 
+/* Datos: dibuja los usuarios visibles según el filtro actual. No recibe atributos. */
 function dibujarUsuarios() {
-    const visibles = filtrarUsuarios(usuarios, rolActivo, buscadorUsuarios.value);
+    const visibles = filtrarUsuarios(usuarios, rolActivo, buscadorUsuarios ? buscadorUsuarios.value : "");
     tabla.replaceChildren(...visibles.map(filaUsuario));
+    if (mensajeUsuarios.textContent === ERROR_CARGA_USUARIOS) return;
     if (!visibles.length) mensajeUsuarios.textContent = "No hay usuarios para mostrar.";
     else if (mensajeUsuarios.textContent === "No hay usuarios para mostrar.") mensajeUsuarios.textContent = "";
 }
 
-function campo(id) {
-    return document.getElementById(id);
+/* Datos: busca un campo en las dos vistas existentes de Usuarios. Recibe el ID y el ID alternativo. */
+function campo(id, alternativo) {
+    return document.getElementById(id) || (alternativo ? document.getElementById(alternativo) : null);
 }
 
+/* Datos: prepara el formulario de alta o edición. Recibe el usuario a editar o null para dar de alta. */
 function abrirFormularioUsuario(usuario) {
     editandoIdUsuario = usuario ? usuario.idUsuario : null;
-    campo("titulo-dialogo-usuario").textContent = usuario ? "Editar usuario" : "Agregar usuario";
+    campo("titulo-dialogo-usuario", "titulo-formulario").textContent = usuario ? "Editar usuario" : "Agregar usuario";
     mensajeFormularioUsuario.textContent = "";
     formularioUsuario.reset();
-    const selector = campo("u-rol");
+    const selector = campo("u-rol", "rol-usuario");
     selector.disabled = false;
     if (usuario) {
-        campo("u-nombre").value = usuario.nombreUsuario;
-        campo("u-correo").value = usuario.correoElectronico;
-        campo("u-rol").value = usuario.rol;
-        // Los clientes se registran solos: no se les cambia el rol desde aquí.
-        if (usuario.rol === "cliente") selector.disabled = true;
+        campo("u-nombre", "nombre-usuario").value = usuario.nombreUsuario;
+        campo("u-correo", "correo-usuario").value = usuario.correoElectronico;
+        if (!dialogoUsuario && usuario.rol === "cliente" && !selector.querySelector('option[value="cliente"]')) {
+            const opcion = document.createElement("option");
+            opcion.value = "cliente";
+            opcion.textContent = NOMBRE_ROL.cliente;
+            opcion.hidden = true;
+            selector.append(opcion);
+        }
+        selector.value = usuario.rol;
+        selector.disabled = usuario.rol === "cliente";
     }
-    campo("ayuda-contrasena").textContent = !usuario
-        ? "Mínimo 8 caracteres. El backend la guarda cifrada."
-        : (EDICION_EXIGE_CONTRASENA
-            ? "Obligatoria al editar: escribe la actual o una nueva (mínimo 8 caracteres)."
-            : "Déjala vacía para conservar la contraseña actual.");
-    dialogoUsuario.showModal();
+    if (dialogoUsuario) {
+        campo("ayuda-contrasena").textContent = !usuario
+            ? "Mínimo 8 caracteres. El backend la guarda cifrada."
+            : (EDICION_EXIGE_CONTRASENA
+                ? "Obligatoria al editar: escribe la actual o una nueva (mínimo 8 caracteres)."
+                : "Déjala vacía para conservar la contraseña actual.");
+        dialogoUsuario.showModal();
+    } else {
+        panelUsuario.hidden = false;
+    }
 }
 
-formularioUsuario.addEventListener("submit", async evento => {
+/* Datos: oculta el formulario de Usuarios. No recibe atributos. */
+function cerrarFormularioUsuario() {
+    if (dialogoUsuario) dialogoUsuario.close();
+    else panelUsuario.hidden = true;
+}
+
+/* Datos: envía el alta o la edición a la API. Recibe el evento de envío del formulario. */
+async function guardarUsuario(evento) {
     evento.preventDefault();
     mensajeFormularioUsuario.textContent = "";
 
     const datos = {
-        nombreUsuario: campo("u-nombre").value.trim(),
-        correoElectronico: campo("u-correo").value.trim().toLowerCase(),
-        contrasena: campo("u-contrasena").value,
-        rol: campo("u-rol").value
+        nombreUsuario: campo("u-nombre", "nombre-usuario").value.trim(),
+        correoElectronico: campo("u-correo", "correo-usuario").value.trim().toLowerCase(),
+        contrasena: campo("u-contrasena", "contrasena-usuario").value,
+        rol: campo("u-rol", "rol-usuario").value
     };
 
     const error = validarUsuario(datos, usuarios, editandoIdUsuario);
@@ -168,19 +176,6 @@ formularioUsuario.addEventListener("submit", async evento => {
     const cuerpo = { nombreUsuario: datos.nombreUsuario, correoElectronico: datos.correoElectronico, rol: datos.rol };
     if (datos.contrasena !== "") cuerpo.contrasena = datos.contrasena;
 
-    if (usandoEjemplo) {
-        // Sin API: solo en memoria.
-        if (editandoIdUsuario === null) {
-            usuarios.push({ idUsuario: Math.max(0, ...usuarios.map(u => u.idUsuario)) + 1, ...cuerpo, contrasena: undefined });
-        } else {
-            Object.assign(usuarios.find(u => u.idUsuario === editandoIdUsuario), { ...cuerpo, contrasena: undefined });
-        }
-        dialogoUsuario.close();
-        mensajeUsuarios.textContent = MENSAJE_EJEMPLO_USUARIOS;
-        dibujarUsuarios();
-        return;
-    }
-
     try {
         const nuevo = editandoIdUsuario === null;
         const r = await fetch(nuevo ? API_USUARIOS : API_USUARIOS + "/" + editandoIdUsuario, {
@@ -189,24 +184,42 @@ formularioUsuario.addEventListener("submit", async evento => {
             body: JSON.stringify(cuerpo)
         });
         if (!r.ok) throw new Error("HTTP " + r.status);
-        dialogoUsuario.close();
+        cerrarFormularioUsuario();
         mensajeUsuarios.textContent = nuevo ? "Usuario registrado." : "Usuario actualizado.";
-        await cargarUsuarios();
-        if (!usandoEjemplo) mensajeUsuarios.textContent = nuevo ? "Usuario registrado." : "Usuario actualizado.";
+        if (await cargarUsuarios()) mensajeUsuarios.textContent = nuevo ? "Usuario registrado." : "Usuario actualizado.";
     } catch (e) {
         const respondio = String(e.message).startsWith("HTTP");
         mensajeFormularioUsuario.textContent = respondio
             ? "El backend rechazó la petición (" + e.message + "). Revisa los datos, la contraseña y el rol."
             : "No se pudo conectar con el backend. Revisa que esté encendido.";
     }
-});
+}
 
-campo("agregar-usuario").addEventListener("click", () => abrirFormularioUsuario(null));
-campo("cancelar-usuario").addEventListener("click", () => dialogoUsuario.close());
-iniciarFiltros(campo("filtros-rol"), valorFiltro => {
+/* Datos: actualiza el rol visible en la tabla. Recibe el valor elegido en el filtro. */
+function elegirRol(valorFiltro) {
     rolActivo = valorFiltro;
     dibujarUsuarios();
-});
-buscadorUsuarios.addEventListener("input", dibujarUsuarios);
+}
 
-cargarUsuarios();
+/* Datos: conecta los controles que ya existen en ambas vistas y carga la tabla. No recibe atributos. */
+function iniciarUsuarios() {
+    formularioUsuario.addEventListener("submit", guardarUsuario);
+    campo("agregar-usuario", "mostrar-formulario").addEventListener("click", function () {
+        abrirFormularioUsuario(null);
+    });
+    campo("cancelar-usuario", "cancelar-formulario").addEventListener("click", cerrarFormularioUsuario);
+    if (dialogoUsuario) {
+        iniciarFiltros(campo("filtros-rol"), elegirRol);
+    } else {
+        const botones = document.querySelectorAll(".filtros-usuario button[data-rol]");
+        for (const boton of botones) {
+            boton.addEventListener("click", function () {
+                elegirRol(boton.dataset.rol);
+            });
+        }
+    }
+    if (buscadorUsuarios) buscadorUsuarios.addEventListener("input", dibujarUsuarios);
+    cargarUsuarios();
+}
+
+iniciarUsuarios();
