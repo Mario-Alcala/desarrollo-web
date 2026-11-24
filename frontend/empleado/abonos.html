@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Abonos - Gestión de Cultivos</title><link rel="stylesheet" href="../css/styles.css"><link rel="stylesheet" href="../css/cultivos.css"><link rel="stylesheet" href="../css/operaciones.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Abono - Gestión de Cultivos</title><link rel="stylesheet" href="../css/styles.css"><link rel="stylesheet" href="../css/cultivos.css"><link rel="stylesheet" href="../css/operaciones.css"><link rel="stylesheet" href="../css/trabajador.css"></head>
 <body data-categoria-insumo="abono">
     <header class="barra"><span class="marca">Gestión de Cultivos · Empleado</span><a href="../index.html">Inicio</a></header>
     <main class="pagina">
-        <nav class="menu-trabajador" aria-label="Secciones del empleado"><a href="cultivos.html">Cultivos</a><a href="terrenos.html">Terrenos</a><a href="inventario.html">Inventario</a><a href="observaciones.html">Observaciones</a><a href="riegos.html">Riegos</a><a href="abonos.html" aria-current="page">Abono</a><a href="fertilizantes.html">Fertilizantes</a><a href="calendario.html">Calendario</a><a href="../administrador-agricultor/pedidos.html">Preparar pedidos</a></nav>
+        <nav class="menu-trabajador" aria-label="Secciones del empleado">
+            <a href="cultivos.html">Cultivos</a>
+            <a href="terrenos.html">Terrenos</a>
+            <a href="inventario.html">Inventario</a>
+            <a href="observaciones.html">Bitácora</a>
+            <a href="riegos.html">Riegos</a>
+            <a href="abonos.html" aria-current="page">Abono</a>
+            <a href="fertilizantes.html">Fertilizantes</a>
+            <a href="semillas.html">Banco de semillas</a>
+            <a href="calendario.html">Calendario</a>
+            <a href="etapas.html">Programar etapas</a>
+            <a href="pedidos.html">Agregar pedido</a>
+            <a href="distribucion.html">Preparar pedidos</a>
+        </nav>
         <h1>Abonos</h1><p>Consulta los abonos registrados en el inventario. Las altas y cambios se realizan desde administración.</p>
         <p id="mensaje-insumos-empleado" class="mensaje" role="status"></p>
         <div class="tabla-contenedor"><table><thead><tr><th>Nombre</th><th>Tipo de abono</th><th>Unidad</th></tr></thead><tbody id="lista-insumos-empleado"></tbody></table></div>

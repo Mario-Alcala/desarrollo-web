@@ -88,11 +88,12 @@ Si prefieres otro usuario o clave, el backend lee las variables de entorno `DB_U
 ```bash
 cd ~/desarrollo-web/backend
 chmod +x mvnw
-./mvnw spring-boot:run
+bash iniciar-api.sh
 ```
 
 La primera vez tarda unos minutos (descarga Maven y las dependencias). Está listo cuando aparece
 `Started GestioncultivosBackendApplication`.
+El script inicia con el perfil `mysql`, que usa la base preparada con `database/init.sql`. Si Spring Boot ya está activo, lo detecta y no intenta iniciar otra instancia en el mismo puerto. Para usar la base local H2, ejecuta `SPRING_PROFILES_ACTIVE=local bash iniciar-api.sh`.
 
 Comprobar que funciona y que está conectado a MySQL:
 
@@ -213,7 +214,7 @@ node --test frontend/pruebas/*.test.js
 | `Permission denied` al ejecutar `./mvnw` | `chmod +x mvnw` |
 | `Communications link failure` / `Connection refused` | MySQL está apagado: `sudo service mysql start` |
 | `Access denied for user 'cultivos_user'` o `Unknown database` | Falta ejecutar `sudo mysql < database/init.sql` (desde la carpeta `backend/`) |
-| `Port 8081 was already in use` | Cierra el otro proceso (ver cuál es con `sudo ss -ltnp \| grep :8081`) |
+| `Port 8081 was already in use` | Usa `bash iniciar-api.sh` desde `backend/`; si ya hay una instancia respondiendo, la reutiliza y no inicia otra. Si el puerto está ocupado sin que responda el API, revisa el proceso con `sudo ss -ltnp \| grep :8081` antes de detenerlo. |
 | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
 | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
 | `./mvnw test` falla | Las pruebas arrancan Spring y se conectan a MySQL: debe estar encendido y con `init.sql` ejecutado |

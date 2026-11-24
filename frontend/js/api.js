@@ -1,7 +1,7 @@
 var urlApi = 'http://localhost:8081/api';
 
 async function pedirApi(ruta, metodo, datos) {
-    var opciones = { method: metodo || 'GET' };
+    var opciones = { method: metodo || 'GET', credentials: 'include' };
     if (datos) {
         opciones.headers = { 'Content-Type': 'application/json' };
         opciones.body = JSON.stringify(datos);

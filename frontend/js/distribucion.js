@@ -1,10 +1,10 @@
 /*
  * ARCHIVO: js/distribucion.js
- * CAPA: FRONTEND (DOM). Distribución del trabajador (empleado/distribucion.html): empacadores, cargadores y choferes.
+ * CAPA: FRONTEND (DOM). Preparación y entrega de pedidos por el personal.
  * BACKEND (Fetch con pedirApi):
  *   GET  /pedidos, /pedidos/{id}/lotes, /cosechas
- *   POST /pedidos/{id}/lotes     { idCosecha, kilos }              -> empacador prepara el pedido (descuenta kilos del lote)
- *   PUT  /pedidos/{id}/entrega   { estado, idUsuario }             -> cargador / chofer actualizan la entrega
+ *   POST /pedidos/{id}/lotes     { idCosecha, kilos }              -> agrega productos al pedido
+ *   PUT  /pedidos/{id}/entrega   { estado, idUsuario }             -> actualiza la entrega
  *        estados: en_transito (envío), listo_recoleccion (recolección), entregado
  * REGLAS (PedidoService): solo se asignan kilos a pedidos pendientes y sin entrega registrada; no más de lo
  *   disponible del lote; la entrega pasa pendiente -> en_transito/listo_recoleccion -> entregado.
@@ -16,11 +16,9 @@ var usuarioDistribucion = usuarioActual();
 var mensajeDistribucion = document.getElementById('mensaje');
 var contenedorPedidos = document.getElementById('lista-pedidos');
 var mostrarEntregados = document.getElementById('mostrar-entregados');
-var CLAVE_TAREA = 'tareaDistribucion';
 var pedidosDistribucion = [];
 var lotesPorPedido = {};
 var cosechasDisponibles = [];
-var tareaActual = sessionStorage.getItem(CLAVE_TAREA) || 'todos';
 
 var TEXTO_ENTREGA = {
     pendiente: 'Por preparar',
@@ -38,23 +36,13 @@ function estadoEntrega(pedido) {
     return pedido.estadoEntrega || 'pendiente';
 }
 
-/* Qué pedidos ve cada tarea. */
-function correspondeATarea(pedido) {
+function pedidoVisible(pedido) {
     var entrega = estadoEntrega(pedido);
     if (pedido.estado === 'cancelado') {
         return false;
     }
     if (entrega === 'entregado') {
         return mostrarEntregados.checked;
-    }
-    if (tareaActual === 'empacador') {
-        return entrega === 'pendiente';
-    }
-    if (tareaActual === 'cargador') {
-        return (entrega === 'pendiente' && pedido.cantidadLotes > 0) || entrega === 'listo_recoleccion';
-    }
-    if (tareaActual === 'chofer') {
-        return entrega === 'en_transito';
     }
     return true;
 }
@@ -175,7 +163,7 @@ function tarjetaPedido(pedido) {
     insignia.className = 'insignia ' + (entrega === 'entregado' ? 'listo' : (entrega === 'pendiente' ? 'alerta' : ''));
     insignia.textContent = TEXTO_ENTREGA[entrega] || entrega;
     tarjeta.append(titulo, insignia);
-    tarjeta.appendChild(parrafo((esDomicilio ? 'Envío a domicilio' : 'Recolección en bodega (7:00 a. m. a 6:00 p. m.)')
+    tarjeta.appendChild(parrafo((esDomicilio ? 'Envío a domicilio' : 'Recolección en bodega (6:00 a. m. a 6:00 p. m.)')
         + ' · Pedido el ' + String(pedido.fechaPedido || '').replace('T', ' ').slice(0, 16)));
     if (pedido.total !== null && pedido.total !== undefined) {
         tarjeta.appendChild(parrafo('Total: $' + Number(pedido.total).toFixed(2)));
@@ -209,10 +197,10 @@ function tarjetaPedido(pedido) {
 
     var acciones = document.createElement('div');
     acciones.className = 'acciones-operacion';
-    if (entrega === 'pendiente' && pedido.estado === 'pendiente' && (tareaActual === 'todos' || tareaActual === 'empacador')) {
+    if (entrega === 'pendiente' && pedido.estado === 'pendiente') {
         tarjeta.appendChild(formularioAsignar(pedido));
     }
-    if (entrega === 'pendiente' && pedido.cantidadLotes > 0 && (tareaActual === 'todos' || tareaActual === 'cargador')) {
+    if (entrega === 'pendiente' && pedido.cantidadLotes > 0) {
         if (esDomicilio) {
             acciones.appendChild(boton('Cargar y registrar salida', function () {
                 cambiarEntrega(pedido, 'en_transito', '¿El pedido #' + pedido.idPedido + ' ya salió a reparto?');
@@ -223,12 +211,12 @@ function tarjetaPedido(pedido) {
             }, true));
         }
     }
-    if (entrega === 'en_transito' && (tareaActual === 'todos' || tareaActual === 'chofer')) {
+    if (entrega === 'en_transito') {
         acciones.appendChild(boton('Marcar entregado', function () {
             cambiarEntrega(pedido, 'entregado', '¿Se entregó el pedido #' + pedido.idPedido + ' al cliente?');
         }, true));
     }
-    if (entrega === 'listo_recoleccion' && (tareaActual === 'todos' || tareaActual === 'cargador')) {
+    if (entrega === 'listo_recoleccion') {
         acciones.appendChild(boton('Cliente lo recogió', function () {
             cambiarEntrega(pedido, 'entregado', '¿El cliente recogió el pedido #' + pedido.idPedido + '?');
         }, true));
@@ -241,16 +229,13 @@ function tarjetaPedido(pedido) {
 
 function dibujarPedidos() {
     contenedorPedidos.innerHTML = '';
-    var visibles = pedidosDistribucion.filter(correspondeATarea);
+    var visibles = pedidosDistribucion.filter(pedidoVisible);
     visibles.forEach(function (pedido) {
         contenedorPedidos.appendChild(tarjetaPedido(pedido));
     });
     if (!visibles.length) {
-        contenedorPedidos.appendChild(parrafo('No hay pedidos para esta tarea.'));
+        contenedorPedidos.appendChild(parrafo('No hay pedidos que mostrar.'));
     }
-    document.querySelectorAll('#pestanas-tarea button').forEach(function (b) {
-        b.setAttribute('aria-pressed', b.dataset.tarea === tareaActual ? 'true' : 'false');
-    });
 }
 
 function cargarDistribucion() {
@@ -272,13 +257,6 @@ function cargarDistribucion() {
     });
 }
 
-document.querySelectorAll('#pestanas-tarea button').forEach(function (b) {
-    b.addEventListener('click', function () {
-        tareaActual = b.dataset.tarea;
-        sessionStorage.setItem(CLAVE_TAREA, tareaActual);
-        dibujarPedidos();
-    });
-});
 mostrarEntregados.addEventListener('change', dibujarPedidos);
 document.getElementById('actualizar').onclick = cargarDistribucion;
 cargarDistribucion();

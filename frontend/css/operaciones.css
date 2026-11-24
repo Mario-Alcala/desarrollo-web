@@ -1,11 +1,15 @@
 .menu-trabajador {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
     margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 6px;
 }
 
 .menu-trabajador a {
+    flex: 0 0 auto;
+    white-space: nowrap;
     color: #2e6b2e;
     background: white;
     border: 1px solid #d4dfcf;

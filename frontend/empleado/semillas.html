@@ -16,26 +16,22 @@
         <link rel="stylesheet" href="../css/trabajador.css">
     </head>
     <body data-roles="trabajador,administrador_agricultor">
-        <header class="barra">
-            <span class="marca">Gestión de Cultivos · Trabajador</span>
-            <div class="sesion-barra">
-                <span id="usuario-barra"></span>
-                <button id="cerrar-sesion" class="boton boton-secundario" type="button">Cerrar sesión</button>
-            </div>
-        </header>
+        <header class="barra"><span class="marca">Gestión de Cultivos · Empleado</span><a href="../index.html">Inicio</a></header>
         <main class="pagina">
-            <nav class="menu-trabajador" aria-label="Secciones del trabajador">
-                <a href="cultivos.html">Cultivos activos</a>
-                <a href="semillas.html" aria-current="page">Banco de semillas</a>
-                <a href="inventario.html">Inventario</a>
-                <a href="observaciones.html">Observaciones</a>
-                <a href="riegos.html">Riego</a>
-                <a href="fertilizantes.html">Fertilizantes</a>
-                <a href="abonos.html">Abono</a>
-                <a href="terrenos.html">Terreno</a>
-                <a href="distribucion.html">Distribución</a>
-                <a href="calendario.html">Calendario</a>
-            </nav>
+            <nav class="menu-trabajador" aria-label="Secciones del empleado">
+            <a href="cultivos.html">Cultivos</a>
+            <a href="terrenos.html">Terrenos</a>
+            <a href="inventario.html">Inventario</a>
+            <a href="observaciones.html">Bitácora</a>
+            <a href="riegos.html">Riegos</a>
+            <a href="abonos.html">Abono</a>
+            <a href="fertilizantes.html">Fertilizantes</a>
+            <a href="semillas.html" aria-current="page">Banco de semillas</a>
+            <a href="calendario.html">Calendario</a>
+            <a href="etapas.html">Programar etapas</a>
+            <a href="pedidos.html">Agregar pedido</a>
+            <a href="distribucion.html">Preparar pedidos</a>
+        </nav>
             <h1>Banco de semillas</h1>
             <p>Consulta las semillas en bodega por lote, su caducidad y su proveedor. Registra lo que usas en una siembra (salida) o lo que regresa al banco (entrada). Las semillas y los lotes nuevos los da de alta el administrador.</p>
             <p id="mensaje" class="mensaje" role="status"></p>
