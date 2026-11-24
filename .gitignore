@@ -2,3 +2,5 @@ target/
 .idea/
 *.iml
 application.yml
+/backend/data/gestion_cultivos.mv.db
+/backend/data/gestion_cultivos.trace.db

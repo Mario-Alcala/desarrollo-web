@@ -28,6 +28,8 @@ class PedidoApiTests {
 
     @BeforeEach
     void preparar() throws Exception {
+        String baseDeDatos = jdbc.sql("SELECT DATABASE()").query(String.class).single();
+        assertEquals("gestion_cultivos_pruebas", baseDeDatos, "Las pruebas solo pueden limpiar su propia base");
         for (String tabla : new String[]{"distribuciones", "detalle_pedido", "pedidos", "cosechas", "cultivos", "variedades_producto", "familias_producto", "parcelas", "terrenos", "usuarios"}) {
             jdbc.sql("DELETE FROM " + tabla).update();
         }
@@ -186,7 +188,9 @@ class PedidoApiTests {
     void rollbackSiFallaElDetalleDespuesDeInsertarPedidoYEntrega() throws Exception {
         jdbc.sql("ALTER TABLE detalle_pedido ADD CONSTRAINT prueba_fallo CHECK (cantidad < 2)").update();
         try {
-            assertEquals(400,enviar(cliente,"/pedidos",pedido("2")).statusCode());
+            // La restricción temporal simula un fallo interno de MySQL al guardar el detalle.
+            var respuesta = enviar(cliente, "/pedidos", pedido("2"));
+            assertEquals(500, respuesta.statusCode(), respuesta.body());
             assertEquals(0,cuenta("pedidos")); assertEquals(0,cuenta("distribuciones"));
             assertEquals(0,cuenta("detalle_pedido"));
             assertEquals(0,disponible().compareTo(new BigDecimal("10")));
