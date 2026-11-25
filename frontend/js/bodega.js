@@ -1,4 +1,8 @@
-/* Datos: consulta las cosechas y muestra los lotes disponibles en bodega. No recibe atributos. */
+/**
+ * @file Consulta las cosechas y muestra los lotes disponibles en bodega.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_BODEGA = 'http://localhost:8081/api';
 const cuerpoBodega = document.getElementById('tabla-cuerpo');
@@ -7,7 +11,9 @@ const buscarBodega = document.querySelector('#topbar input');
 const filtroBodega = document.getElementById('filtro-maduracion');
 let lotesBodega = [];
 
-/* Datos: consulta los lotes de cosecha y muestra el resultado. No recibe atributos. */
+/**
+ * Consulta los lotes de cosecha y muestra el resultado.
+ */
 async function cargarBodega() {
     mensajeBodega.textContent = 'Cargando cosechas…';
     try {
@@ -20,14 +26,21 @@ async function cargarBodega() {
     }
 }
 
-/* Datos: agrega una celda a la tabla. Recibe la fila y el texto. */
+/**
+ * Agrega una celda a la tabla.
+ *
+ * @param fila - Fila de la tabla de bodega.
+ * @param texto - Texto que se muestra.
+ */
 function celdaBodega(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto;
     fila.appendChild(celda);
 }
 
-/* Datos: muestra los lotes que coinciden con la búsqueda y la maduración. No recibe atributos. */
+/**
+ * Muestra los lotes que coinciden con la búsqueda y la maduración.
+ */
 function dibujarBodega() {
     const texto = buscarBodega ? buscarBodega.value.trim().toLowerCase() : '';
     const maduracion = filtroBodega.value;
@@ -50,7 +63,9 @@ function dibujarBodega() {
     mensajeBodega.textContent = visibles.length ? visibles.length + ' lotes disponibles en bodega.' : 'No hay lotes para mostrar.';
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarBodega() {
     if (buscarBodega) buscarBodega.addEventListener('input', dibujarBodega);
     filtroBodega.addEventListener('change', dibujarBodega);

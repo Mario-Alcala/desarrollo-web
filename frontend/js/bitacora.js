@@ -1,4 +1,8 @@
-/* Datos: reúne los registros de campo y prepara los formularios de observaciones, incidencias y seguimientos. No recibe atributos. */
+/**
+ * @file Reúne los registros de campo y prepara los formularios de observaciones, incidencias y seguimientos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const usuarioBitacora = usuarioActual();
 const mensajeBitacora = document.getElementById('mensaje');
@@ -9,7 +13,9 @@ let nombresBitacora = {};
 const ESTADOS_INCIDENCIA = { abierta: 'Abierta', en_seguimiento: 'En seguimiento', erradicada: 'Erradicada' };
 const botonesPestana = document.querySelectorAll('#pestanas-bitacora button');
 
-/* Datos: consulta todos los tipos de registros y actualiza la lista y los filtros. No recibe atributos. */
+/**
+ * Consulta todos los tipos de registros y actualiza la lista y los filtros.
+ */
 function cargarBitacora() {
     avisarBitacora('Cargando bitácora…');
     return Promise.all([
@@ -41,7 +47,16 @@ function cargarBitacora() {
     });
 }
 
-/* Datos: guarda un registro de bitácora y actualiza la tabla. Recibe ruta, datos, botón, mensaje, formulario y aviso de éxito. */
+/**
+ * Guarda un registro de bitácora y actualiza la tabla.
+ *
+ * @param ruta - Ruta del recurso en la API.
+ * @param datos - Datos que se envían como JSON.
+ * @param boton - Botón de envío del formulario.
+ * @param mensaje - Elemento donde aparece el aviso.
+ * @param formulario - Formulario que se actualiza al guardar.
+ * @param textoOk - Aviso que se muestra al guardar correctamente.
+ */
 function enviar(ruta, datos, boton, mensaje, formulario, textoOk) {
     boton.disabled = true;
     return pedirApi(ruta, 'POST', datos).then(function () {
@@ -57,7 +72,11 @@ function enviar(ruta, datos, boton, mensaje, formulario, textoOk) {
     });
 }
 
-/* Datos: valida y envía una observación. Recibe el evento del formulario. */
+/**
+ * Valida y envía una observación.
+ *
+ * @param evento - El evento del formulario.
+ */
 function registrarObservacion(evento) {
     evento.preventDefault();
     const mensaje = document.getElementById('mensaje-observacion');
@@ -86,7 +105,11 @@ function registrarObservacion(evento) {
     }, document.getElementById('guardar-observacion'), mensaje, this, 'Observación registrada.');
 }
 
-/* Datos: valida y envía una plaga o enfermedad. Recibe el evento del formulario. */
+/**
+ * Valida y envía una plaga o enfermedad.
+ *
+ * @param evento - El evento del formulario.
+ */
 function registrarIncidencia(evento) {
     evento.preventDefault();
     const mensaje = document.getElementById('mensaje-incidencia');
@@ -122,7 +145,11 @@ function registrarIncidencia(evento) {
     }, document.getElementById('guardar-incidencia'), mensaje, this, 'Incidencia registrada como abierta.');
 }
 
-/* Datos: valida y envía el seguimiento de una incidencia. Recibe el evento del formulario. */
+/**
+ * Valida y envía el seguimiento de una incidencia.
+ *
+ * @param evento - El evento del formulario.
+ */
 function registrarSeguimiento(evento) {
     evento.preventDefault();
     const mensaje = document.getElementById('mensaje-seguimiento');
@@ -161,30 +188,51 @@ function registrarSeguimiento(evento) {
     estado.value === 'erradicada' ? 'Seguimiento registrado. La incidencia quedó erradicada.' : 'Seguimiento registrado.');
 }
 
-/* Datos: muestra un aviso de estado. Recibe el texto y el tipo. */
+/**
+ * Muestra un aviso de estado.
+ *
+ * @param texto - Texto que se muestra.
+ * @param tipo - Estilo del aviso.
+ */
 function avisarBitacora(texto, tipo) {
     mensajeBitacora.textContent = texto;
     mensajeBitacora.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
-/* Datos: obtiene la fecha de siembra para validar la fecha del registro. Recibe el cultivo. */
+/**
+ * Obtiene la fecha de siembra para validar la fecha del registro.
+ *
+ * @param cultivo - El cultivo.
+ */
 function fechaMinima(cultivo) {
     return cultivo && cultivo.fechaSiembra ? cultivo.fechaSiembra : null;
 }
 
-/* Datos: busca el nombre del usuario que hizo un registro. Recibe el ID del usuario. */
+/**
+ * Busca el nombre del usuario que hizo un registro.
+ *
+ * @param idUsuario - El ID del usuario.
+ */
 function quien(idUsuario) {
     return nombresBitacora[idUsuario] || (idUsuario ? 'Usuario #' + idUsuario : '');
 }
 
-/* Datos: busca una incidencia en la lista cargada. Recibe el ID de la incidencia. */
+/**
+ * Busca una incidencia en la lista cargada.
+ *
+ * @param id - El ID de la incidencia.
+ */
 function incidenciaPorId(id) {
     return registrosBitacora.incidencias.find(function (incidencia) {
         return String(incidencia.idIncidencia) === String(id);
     }) || null;
 }
 
-/* Datos: comprueba si hay una sesión activa. Recibe el elemento para mostrar el aviso. */
+/**
+ * Comprueba si hay una sesión activa.
+ *
+ * @param mensaje - El elemento para mostrar el aviso.
+ */
 function sinSesion(mensaje) {
     if (!usuarioBitacora) {
         mensaje.textContent = 'Inicia sesión para registrar en la bitácora.';
@@ -193,7 +241,9 @@ function sinSesion(mensaje) {
     return false;
 }
 
-/* Datos: rellena el selector con incidencias pendientes. No recibe atributos. */
+/**
+ * Rellena el selector con incidencias pendientes.
+ */
 function llenarIncidenciasAbiertas() {
     const select = document.getElementById('seg-incidencia');
     const anterior = select.value;
@@ -213,7 +263,9 @@ function llenarIncidenciasAbiertas() {
     select.value = incidenciaPorId(anterior) && incidenciaPorId(anterior).estado !== 'erradicada' ? anterior : '';
 }
 
-/* Datos: ordena y combina las entradas por fecha. No recibe atributos. */
+/**
+ * Ordena y combina las entradas por fecha.
+ */
 function entradasBitacora() {
     const r = registrosBitacora;
     const lista = [];
@@ -249,7 +301,9 @@ function entradasBitacora() {
     return lista.sort(function (a, b) { return String(b.fecha).localeCompare(String(a.fecha)); });
 }
 
-/* Datos: muestra los registros que coinciden con el cultivo y el tipo seleccionados. No recibe atributos. */
+/**
+ * Muestra los registros que coinciden con el cultivo y el tipo seleccionados.
+ */
 function dibujarBitacora() {
     const cuerpo = document.getElementById('lista-bitacora');
     cuerpo.innerHTML = '';
@@ -279,7 +333,9 @@ function dibujarBitacora() {
     }
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarBitacora() {
     botonesPestana.forEach(function (boton) {
         boton.addEventListener('click', function () {

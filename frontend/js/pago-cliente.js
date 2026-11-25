@@ -1,11 +1,17 @@
-/* Datos: consulta lotes y registra el pedido del cliente en la API. No recibe atributos. */
+/**
+ * @file Consulta lotes y registra el pedido del cliente en la API.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const API_PAGO_CLIENTE = 'http://' + window.location.hostname + ':8081/api';
 const cuerpoResumenPago = document.getElementById('resumen-pago');
 const mensajePagoCliente = document.getElementById('mensaje-pago');
 const formularioPagoCliente = document.getElementById('formulario-pago');
 let detallesPagoCliente = [];
 
-/* Datos: lee el borrador del cliente y consulta la disponibilidad actual. No recibe atributos. */
+/**
+ * Lee el borrador del cliente y consulta la disponibilidad actual.
+ */
 async function cargarResumenPago() {
     const borrador = sessionStorage.getItem('pedidoGestionCultivos');
     if (!borrador) throw new Error('No hay productos seleccionados. Regresa al catálogo.');
@@ -17,7 +23,11 @@ async function cargarResumenPago() {
     mostrarResumenPago(catalogoPagoCliente);
 }
 
-/* Datos: registra el pedido con sus lotes y datos de entrega. Recibe el evento submit. */
+/**
+ * Registra el pedido con sus lotes y datos de entrega.
+ *
+ * @param evento - Evento de envío del formulario.
+ */
 async function confirmarPagoCliente(evento) {
     evento.preventDefault();
     const usuarioId = sessionStorage.getItem('usuarioId');
@@ -57,7 +67,11 @@ async function confirmarPagoCliente(evento) {
     }
 }
 
-/* Datos: dibuja los renglones y el total del pedido. Recibe el catálogo de lotes de la API. */
+/**
+ * Dibuja los renglones y el total del pedido.
+ *
+ * @param catalogo - Lotes actualizados del catálogo.
+ */
 function mostrarResumenPago(catalogo) {
     cuerpoResumenPago.replaceChildren();
     let total = 0;
@@ -84,7 +98,12 @@ function mostrarResumenPago(catalogo) {
     document.getElementById('total-pago').textContent = formatoDineroPago(total);
 }
 
-/* Datos: muestra número, total y entrega. Recibe la respuesta de la API y la solicitud enviada. */
+/**
+ * Muestra número, total y entrega.
+ *
+ * @param resultado - Confirmación devuelta por la API.
+ * @param solicitud - Datos del pedido enviado, incluida su forma de entrega.
+ */
 function mostrarConfirmacionPago(resultado, solicitud) {
     const entrega = solicitud.tipoEntrega === 'domicilio'
         ? 'Envío a domicilio'
@@ -98,7 +117,9 @@ function mostrarConfirmacionPago(resultado, solicitud) {
     mensajePagoCliente.textContent = 'El pedido se guardó correctamente.';
 }
 
-/* Datos: muestra los campos de la forma de entrega seleccionada. No recibe atributos. */
+/**
+ * Muestra los campos de la forma de entrega seleccionada.
+ */
 function mostrarEntregaPago() {
     const tipo = document.querySelector('input[name="tipo-entrega"]:checked').value;
     const domicilio = tipo === 'domicilio';
@@ -108,7 +129,9 @@ function mostrarEntregaPago() {
     document.getElementById('fecha-recoleccion').required = !domicilio;
 }
 
-/* Datos: muestra las indicaciones del método de pago seleccionado. No recibe atributos. */
+/**
+ * Muestra las indicaciones del método de pago seleccionado.
+ */
 function mostrarMetodoPago() {
     const transferencia = document.getElementById('metodo-pago').value === 'transferencia';
     document.getElementById('datos-transferencia').hidden = !transferencia;
@@ -124,7 +147,9 @@ function fechaLocalPago(fecha) {
     return new Date(fecha - ajuste).toISOString().slice(0, 10);
 }
 
-/* Datos: conecta los controles y carga el borrador al abrir. No recibe atributos. */
+/**
+ * Conecta los controles y carga el borrador al abrir.
+ */
 function iniciarPagoCliente() {
     const radiosEntrega = document.querySelectorAll('input[name="tipo-entrega"]');
     for (const radio of radiosEntrega) {

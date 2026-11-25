@@ -1,4 +1,8 @@
-/* Datos: consulta y registra terrenos y muestra sus parcelas y cultivos. No recibe atributos. */
+/**
+ * @file Consulta y registra terrenos y muestra sus parcelas y cultivos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_TERRENOS = "http://localhost:8081/api/terrenos";
 
@@ -11,7 +15,9 @@ const mensajeFormulario = document.getElementById("mensaje-formulario");
 
 let terrenos = [];
 
-/* Datos: consulta los terrenos y las parcelas de cada terreno. No recibe atributos. */
+/**
+ * Consulta los terrenos y las parcelas de cada terreno.
+ */
 async function cargarTerrenos() {
     mensaje.textContent = "Cargando terrenos y parcelas…";
     try {
@@ -30,7 +36,11 @@ async function cargarTerrenos() {
     dibujar();
 }
 
-/* Datos: registra un terreno y actualiza la lista. Recibe el evento del formulario. */
+/**
+ * Registra un terreno y actualiza la lista.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarTerreno(evento) {
     evento.preventDefault();
     mensajeFormulario.textContent = "";
@@ -73,7 +83,13 @@ async function guardarTerreno(evento) {
     }
 }
 
-/* Datos: crea un elemento HTML. Recibe etiqueta, texto y clase. */
+/**
+ * Crea un elemento HTML.
+ *
+ * @param etiqueta - Nombre de la etiqueta HTML.
+ * @param [texto] - Contenido visible del elemento.
+ * @param [clase] - Clase CSS que se asigna al elemento.
+ */
 function crear(etiqueta, texto, clase) {
     const el = document.createElement(etiqueta);
     if (texto !== undefined) el.textContent = texto;
@@ -81,12 +97,18 @@ function crear(etiqueta, texto, clase) {
     return el;
 }
 
-/* Datos: convierte una superficie de hectáreas a metros cuadrados. Recibe la superficie en hectáreas. */
+/**
+ * Convierte una superficie de hectáreas a metros cuadrados.
+ *
+ * @param ha - La superficie en hectáreas.
+ */
 function m2(ha) {
     return ha == null ? "—" : Math.round(ha * 10000).toLocaleString("es-MX") + " m²";
 }
 
-/* Datos: muestra los terrenos que coinciden con el texto buscado. No recibe atributos. */
+/**
+ * Muestra los terrenos que coinciden con el texto buscado.
+ */
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const visibles = [];
@@ -144,7 +166,9 @@ function dibujar() {
     }
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarTerrenos() {
     document.getElementById("agregar-terreno").addEventListener("click", function () {
         mensajeFormulario.textContent = "";

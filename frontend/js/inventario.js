@@ -1,6 +1,12 @@
-/* Datos: prepara los campos del inventario cuando se abre la sección de semillas. No recibe atributos. */
+/**
+ * @file Prepara los campos del inventario cuando se abre la sección de semillas.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
-/* Datos: configura la ruta y los campos de semillas. No recibe atributos. */
+/**
+ * Configura la ruta y los campos de semillas.
+ */
 function prepararInventarioSemillas() {
     const seccionInventario = new URLSearchParams(window.location.search).get('seccion');
     if (seccionInventario !== 'semillas') return;

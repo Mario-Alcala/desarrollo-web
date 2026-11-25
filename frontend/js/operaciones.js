@@ -1,4 +1,8 @@
-/* Datos: este archivo carga y guarda registros usando la ruta del formulario, incluida la pantalla de riegos. No recibe atributos. */
+/**
+ * @file Carga y guarda registros usando la ruta del formulario, incluida la pantalla de riegos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const formularioOperacion = document.getElementById('formulario-operacion');
 const rutaOperacion = formularioOperacion.dataset.ruta;
@@ -8,7 +12,9 @@ let registrosOperacion = [];
 const mensajeOperacion = document.getElementById('mensaje-operacion');
 const camposOperacion = formularioOperacion.querySelectorAll('[name]');
 
-/* Datos: esta función consulta la API para llenar los selectores relacionados con el formulario. No recibe atributos. */
+/**
+ * Consulta la API para llenar los selectores relacionados con el formulario.
+ */
 async function cargarRelaciones() {
     const selectores = formularioOperacion.querySelectorAll('select[data-ruta]');
     for (let i = 0; i < selectores.length; i++) {
@@ -27,7 +33,9 @@ async function cargarRelaciones() {
     }
 }
 
-/* Datos: esta función consulta los registros de la ruta que usa el formulario. No recibe atributos. */
+/**
+ * Consulta los registros de la ruta que usa el formulario.
+ */
 async function cargarRegistros() {
     mensajeOperacion.textContent = '';
     const datos = await pedirApi(rutaOperacion);
@@ -36,7 +44,9 @@ async function cargarRegistros() {
     mensajeOperacion.textContent = '';
 }
 
-/* Datos: esta función actualiza los selectores y la lista de registros. No recibe atributos. */
+/**
+ * Actualiza los selectores y la lista de registros.
+ */
 async function actualizarOperacion() {
     document.getElementById('guardar-operacion').disabled = true;
     try {
@@ -48,7 +58,9 @@ async function actualizarOperacion() {
     document.getElementById('guardar-operacion').disabled = false;
 }
 
-/* Datos: esta función muestra los registros con sus acciones de edición y eliminación. No recibe atributos. */
+/**
+ * Muestra los registros con sus acciones de edición y eliminación.
+ */
 function dibujarRegistros() {
     const cuerpo = document.getElementById('registros-operacion');
     cuerpo.innerHTML = '';
@@ -133,14 +145,20 @@ function dibujarRegistros() {
     }
 }
 
-/* Datos: esta función limpia el formulario y vuelve al modo de registro. No recibe atributos. */
+/**
+ * Limpia el formulario y vuelve al modo de registro.
+ */
 function limpiarOperacion() {
     idOperacion = null;
     formularioOperacion.reset();
     document.getElementById('guardar-operacion').textContent = 'Guardar';
 }
 
-/* Datos: esta función registra o actualiza los datos en la ruta del formulario. Recibe el evento del formulario. */
+/**
+ * Registra o actualiza los datos en la ruta del formulario.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarOperacion(evento) {
     evento.preventDefault();
 
@@ -202,7 +220,9 @@ async function guardarOperacion(evento) {
     boton.disabled = false;
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarOperaciones() {
     formularioOperacion.addEventListener('submit', guardarOperacion);
     document.getElementById('cancelar-operacion').onclick = limpiarOperacion;

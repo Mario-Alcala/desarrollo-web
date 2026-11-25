@@ -1,11 +1,17 @@
-/* Datos: este archivo consulta abonos o fertilizantes según la categoría de la página. No recibe atributos. */
+/**
+ * @file Consulta abonos o fertilizantes según la categoría de la página.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_INSUMOS_EMPLEADO = 'http://localhost:8081/api/insumos';
 const categoriaInsumoEmpleado = document.body.dataset.categoriaInsumo;
 const cuerpoInsumosEmpleado = document.getElementById('lista-insumos-empleado');
 const mensajeInsumosEmpleado = document.getElementById('mensaje-insumos-empleado');
 
-/* Datos: esta función consulta los insumos de la API. No recibe atributos. */
+/**
+ * Consulta los insumos de la API.
+ */
 async function cargarConsultaInsumos() {
     mensajeInsumosEmpleado.textContent = 'Cargando registros…';
     try {
@@ -17,7 +23,11 @@ async function cargarConsultaInsumos() {
     }
 }
 
-/* Datos: esta función muestra los insumos de la categoría de la página. Recibe la lista de la API. */
+/**
+ * Muestra los insumos de la categoría de la página.
+ *
+ * @param insumos - La lista de la API.
+ */
 function dibujarInsumosEmpleado(insumos) {
     const lista = insumos.filter(item => item.categoria === categoriaInsumoEmpleado);
     cuerpoInsumosEmpleado.replaceChildren();
@@ -33,7 +43,12 @@ function dibujarInsumosEmpleado(insumos) {
     mensajeInsumosEmpleado.textContent = lista.length ? '' : 'No hay registros disponibles.';
 }
 
-/* Datos: esta función agrega una celda a un insumo en la tabla. Recibe la fila y el texto. */
+/**
+ * Agrega una celda a un insumo en la tabla.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function agregarDatoInsumo(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto || '—';

@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta existencias y permite registrar entradas y salidas de inventario. No recibe atributos. */
+/**
+ * @file Consulta existencias y permite registrar entradas y salidas de inventario.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_MOVIMIENTOS_EMPLEADO = 'http://localhost:8081/api';
 const selectorLoteEmpleado = document.getElementById('lote-movimiento');
@@ -9,7 +13,9 @@ const formularioMovimientoEmpleado = document.getElementById('formulario-movimie
 let inventarioEmpleado = [];
 let movimientosEmpleado = [];
 
-/* Datos: esta función consulta existencias y movimientos desde la API. No recibe atributos. */
+/**
+ * Consulta existencias y movimientos desde la API.
+ */
 async function cargarInventarioEmpleado() {
     mensajeMovimientoEmpleado.textContent = 'Cargando existencias y movimientos…';
     try {
@@ -28,7 +34,9 @@ async function cargarInventarioEmpleado() {
     }
 }
 
-/* Datos: esta función muestra las existencias y llena el selector de lotes. No recibe atributos. */
+/**
+ * Muestra las existencias y llena el selector de lotes.
+ */
 function dibujarInventarioEmpleado() {
     cuerpoExistenciasEmpleado.replaceChildren();
     selectorLoteEmpleado.replaceChildren(new Option('Selecciona un lote', ''));
@@ -46,7 +54,9 @@ function dibujarInventarioEmpleado() {
     });
 }
 
-/* Datos: esta función muestra las entradas y salidas registradas. No recibe atributos. */
+/**
+ * Muestra las entradas y salidas registradas.
+ */
 function dibujarMovimientosEmpleado() {
     cuerpoMovimientosEmpleado.replaceChildren();
     movimientosEmpleado.forEach(function (movimiento) {
@@ -61,21 +71,32 @@ function dibujarMovimientosEmpleado() {
     });
 }
 
-/* Datos: esta función agrega una celda a la tabla de inventario. Recibe la fila y el texto. */
+/**
+ * Agrega una celda a la tabla de inventario.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function ponerCeldaMovimiento(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto == null || texto === '' ? '—' : texto;
     fila.appendChild(celda);
 }
 
-/* Datos: esta función coloca la fecha y hora locales en el formulario. No recibe atributos. */
+/**
+ * Coloca la fecha y hora locales en el formulario.
+ */
 function establecerFechaMovimiento() {
     const ahora = new Date();
     const desfase = ahora.getTimezoneOffset() * 60000;
     document.getElementById('fecha-movimiento').value = new Date(ahora - desfase).toISOString().slice(0, 16);
 }
 
-/* Datos: esta función envía la entrada o salida de inventario. Recibe el evento del formulario. */
+/**
+ * Envía la entrada o salida de inventario.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarMovimientoEmpleado(evento) {
     evento.preventDefault();
     const error = document.getElementById('error-movimiento-empleado');
@@ -109,7 +130,9 @@ async function guardarMovimientoEmpleado(evento) {
     boton.disabled = false;
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarMovimientosEmpleado() {
     formularioMovimientoEmpleado.addEventListener('submit', guardarMovimientoEmpleado);
     establecerFechaMovimiento();

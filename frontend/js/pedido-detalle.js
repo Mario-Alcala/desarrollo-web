@@ -1,4 +1,8 @@
-/* Datos: consulta un pedido, asigna lotes y actualiza la entrega desde la API. No recibe atributos. */
+/**
+ * @file Consulta un pedido, asigna lotes y actualiza la entrega desde la API.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const API = "http://" + window.location.hostname + ":8081/api";
 const idPedido = new URLSearchParams(location.search).get("id");
 const filas = document.getElementById("lotes-pedido");
@@ -7,7 +11,12 @@ const selectorLote = document.getElementById("asignacion-lote");
 const selectorEstado = document.getElementById("estado-entrega");
 const formAsignacion = document.getElementById("formulario-asignacion");
 
-/* Datos: envía solicitudes de pedidos o cosechas. Recibe la ruta y las opciones de fetch. */
+/**
+ * Envía solicitudes de pedidos o cosechas.
+ *
+ * @param url - Ruta que se agrega a la dirección base de la API.
+ * @param [opciones] - Opciones de la solicitud.
+ */
 async function pedir(url, opciones) {
     opciones = opciones || {};
     opciones.credentials = 'include';
@@ -25,7 +34,9 @@ async function pedir(url, opciones) {
     return respuesta.status === 204 ? null : respuesta.json();
 }
 
-/* Datos: consulta el pedido de la URL, sus cosechas y lotes. No recibe atributos. */
+/**
+ * Consulta el pedido de la URL, sus cosechas y lotes.
+ */
 async function cargar() {
     mensaje.textContent = "Cargando pedido…";
     try {
@@ -40,7 +51,9 @@ async function cargar() {
     }
 }
 
-/* Datos: consulta los lotes asignados al pedido actual. No recibe atributos. */
+/**
+ * Consulta los lotes asignados al pedido actual.
+ */
 async function actualizarLotes() {
     const lotes = await pedir(`/pedidos/${encodeURIComponent(idPedido)}/lotes`);
     dibujarLotes(lotes);
@@ -60,7 +73,11 @@ function formatoFechaHora(valor) {
     return new Date(valor).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
 }
 
-/* Datos: muestra los renglones con los kilos asignados. Recibe los lotes del pedido. */
+/**
+ * Muestra los renglones con los kilos asignados.
+ *
+ * @param lotes - Lotes ya asignados al pedido.
+ */
 function dibujarLotes(lotes) {
     filas.replaceChildren();
     for (let i = 0; i < lotes.length; i++) {
@@ -82,7 +99,12 @@ function dibujarLotes(lotes) {
     }
 }
 
-/* Datos: muestra las opciones de entrega. Recibe el pedido y los permisos del rol. */
+/**
+ * Muestra las opciones de entrega.
+ *
+ * @param pedido - Registro del pedido.
+ * @param permisos - Acciones y estados que puede usar el rol actual.
+ */
 function prepararEstado(pedido, permisos) {
     const textoPendiente = pedido.cantidadLotes > 0 ? "Asignado · falta entrega" : "Pendiente de asignación";
     let estados;
@@ -120,7 +142,12 @@ function aplicarPermisosPedido(permisos) {
     document.getElementById("aviso-rol").textContent = permisos.aviso;
 }
 
-/* Datos: llena el detalle del pedido. Recibe el pedido y las cosechas que devolvió la API. */
+/**
+ * Llena el detalle del pedido.
+ *
+ * @param pedido - Registro del pedido.
+ * @param cosechas - Lista de cosechas devuelta por la API.
+ */
 function mostrarPedido(pedido, cosechas) {
     const permisos = accionesPedido(rolDeSesion(), pedido.estadoEntrega || pedido.estado);
     document.getElementById("miga-pedido").textContent = `#${pedido.idPedido}`;
@@ -151,7 +178,11 @@ function mostrarPedido(pedido, cosechas) {
     prepararEstado(pedido, permisos);
 }
 
-/* Datos: envía idCosecha y kilos para asignarlos al pedido. Recibe el evento submit. */
+/**
+ * Envía idCosecha y kilos para asignarlos al pedido.
+ *
+ * @param evento - Evento de envío del formulario.
+ */
 async function guardarAsignacion(evento) {
     evento.preventDefault();
     const aviso = document.getElementById("mensaje-asignacion");
@@ -168,7 +199,11 @@ async function guardarAsignacion(evento) {
     }
 }
 
-/* Datos: guarda el estado y número de rastreo. Recibe el evento submit. */
+/**
+ * Guarda el estado y número de rastreo.
+ *
+ * @param evento - Evento de envío del formulario.
+ */
 async function guardarEntrega(evento) {
     evento.preventDefault();
     const aviso = document.getElementById("mensaje-entrega");
@@ -188,7 +223,9 @@ async function guardarEntrega(evento) {
     }
 }
 
-/* Datos: conecta los formularios y abre el pedido. No recibe atributos. */
+/**
+ * Conecta los formularios y abre el pedido.
+ */
 function iniciarDetallePedido() {
     formAsignacion.addEventListener("submit", guardarAsignacion);
     document.getElementById("formulario-entrega").addEventListener("submit", guardarEntrega);

@@ -1,4 +1,8 @@
-/* Datos: muestra el inventario y permite registrar entradas, movimientos y herramientas. No recibe atributos. */
+/**
+ * @file Muestra el inventario y permite registrar entradas, movimientos y herramientas.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_INSUMOS = "http://localhost:8081/api/insumos";
 const API_INVENTARIO = "http://localhost:8081/api/inventario";
@@ -26,7 +30,9 @@ let categoria = "todos";
 let loteMovimiento = null;
 let herramientaEditando = null;
 
-/* Datos: consulta los insumos, lotes, usuarios y herramientas. No recibe atributos. */
+/**
+ * Consulta los insumos, lotes, usuarios y herramientas.
+ */
 async function cargar() {
     mensaje.textContent = "Cargando existencias…";
     try {
@@ -79,7 +85,11 @@ async function cargar() {
     }
 }
 
-/* Datos: registra un lote de insumo con cantidad y fechas. Recibe el evento del formulario. */
+/**
+ * Registra un lote de insumo con cantidad y fechas.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarEntrada(evento) {
     evento.preventDefault();
     msgFormulario.textContent = "";
@@ -114,7 +124,11 @@ async function guardarEntrada(evento) {
     }
 }
 
-/* Datos: registra o actualiza una herramienta. Recibe el evento del formulario. */
+/**
+ * Registra o actualiza una herramienta.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarHerramienta(evento) {
     evento.preventDefault();
     msgHerramienta.textContent = "";
@@ -149,7 +163,11 @@ async function guardarHerramienta(evento) {
     }
 }
 
-/* Datos: registra una entrada o salida de un lote. Recibe el evento del formulario. */
+/**
+ * Registra una entrada o salida de un lote.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarMovimiento(evento) {
     evento.preventDefault();
     msgMovimiento.textContent = "";
@@ -172,20 +190,33 @@ async function guardarMovimiento(evento) {
     }
 }
 
-/* Datos: elimina una herramienta mediante la API. Recibe la herramienta. */
+/**
+ * Elimina una herramienta mediante la API.
+ *
+ * @param herramienta - La herramienta.
+ */
 async function eliminarHerramienta(herramienta) {
     if (!confirm(`¿Eliminar completamente la herramienta “${herramienta.nombre}”?`)) return;
     await eliminarRegistro(`${API_HERRAMIENTAS}/${herramienta.id}`, "la herramienta");
 }
 
-/* Datos: elimina un lote mediante la API. Recibe el lote. */
+/**
+ * Elimina un lote mediante la API.
+ *
+ * @param lote - El lote.
+ */
 async function eliminarLote(lote) {
     const nombre = lote.nombreInsumo || "este lote";
     if (!confirm(`¿Eliminar completamente “${nombre}” de inventario?`)) return;
     await eliminarRegistro(`${API_INVENTARIO}/${lote.idInventario}`, "el lote");
 }
 
-/* Datos: solicita la eliminación y actualiza el inventario. Recibe la ruta y el nombre del registro. */
+/**
+ * Solicita la eliminación y actualiza el inventario.
+ *
+ * @param url - Dirección del recurso en la API.
+ * @param nombre - Nombre visible del registro.
+ */
 async function eliminarRegistro(url, nombre) {
     mensaje.textContent = "";
     try {
@@ -200,7 +231,11 @@ async function eliminarRegistro(url, nombre) {
     }
 }
 
-/* Datos: filtra el inventario por la categoría elegida. Recibe el evento del botón. */
+/**
+ * Filtra el inventario por la categoría elegida.
+ *
+ * @param evento - El evento del botón.
+ */
 function elegirCategoria(evento) {
     const boton = evento.target.closest("button[data-valor]");
     if (!boton) return;
@@ -212,7 +247,9 @@ function elegirCategoria(evento) {
     dibujar();
 }
 
-/* Datos: abre el formulario de entrada de insumos. No recibe atributos. */
+/**
+ * Abre el formulario de entrada de insumos.
+ */
 function abrirEntrada() {
     msgFormulario.textContent = "";
     formulario.reset();
@@ -220,7 +257,9 @@ function abrirEntrada() {
     dialogo.showModal();
 }
 
-/* Datos: abre el formulario para registrar una herramienta. No recibe atributos. */
+/**
+ * Abre el formulario para registrar una herramienta.
+ */
 function abrirNuevaHerramienta() {
     herramientaEditando = null;
     msgHerramienta.textContent = "";
@@ -231,7 +270,11 @@ function abrirNuevaHerramienta() {
     dialogoHerramienta.showModal();
 }
 
-/* Datos: formatea una fecha de adquisición, ingreso o caducidad. Recibe la fecha. */
+/**
+ * Formatea una fecha de adquisición, ingreso o caducidad.
+ *
+ * @param fecha - La fecha.
+ */
 function formatoFecha(fecha) {
     if (!fecha) return "—";
     const partes = String(fecha).slice(0, 10).split("-");
@@ -241,12 +284,21 @@ function formatoFecha(fecha) {
     return new Date(a, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
-/* Datos: busca un insumo en la lista cargada. Recibe el ID. */
+/**
+ * Busca un insumo en la lista cargada.
+ *
+ * @param id - El ID.
+ */
 function buscarInsumo(id) {
     return insumos.find(insumo => insumo.idInsumo === id) || null;
 }
 
-/* Datos: lee el error devuelto por la API. Recibe la respuesta y el mensaje predeterminado. */
+/**
+ * Lee el error devuelto por la API.
+ *
+ * @param respuesta - Respuesta recibida de la API.
+ * @param mensajePredeterminado - Mensaje que se usa si la respuesta no trae un detalle.
+ */
 async function mensajeError(respuesta, mensajePredeterminado) {
     try {
         const error = await respuesta.json();
@@ -256,7 +308,9 @@ async function mensajeError(respuesta, mensajePredeterminado) {
     }
 }
 
-/* Datos: muestra los lotes y herramientas según la categoría y la búsqueda. No recibe atributos. */
+/**
+ * Muestra los lotes y herramientas según la categoría y la búsqueda.
+ */
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const visibles = [];
@@ -336,7 +390,12 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudo conectar")) mensaje.textContent = "No hay existencias para mostrar.";
 }
 
-/* Datos: prepara el nombre de la categoría para la tabla. Recibe el tipo y el tipo de abono. */
+/**
+ * Prepara el nombre de la categoría para la tabla.
+ *
+ * @param tipo - Categoría del insumo.
+ * @param subtipoAbono - Subtipo de abono registrado.
+ */
 function etiquetaCategoria(tipo, subtipoAbono) {
     if (tipo === "abono") {
         return subtipoAbono === "organico" ? "Abono orgánico"
@@ -346,7 +405,11 @@ function etiquetaCategoria(tipo, subtipoAbono) {
     return { semilla: "Semilla", fertilizante: "Fertilizante" }[tipo] || "Insumo";
 }
 
-/* Datos: rellena el formulario de edición. Recibe la herramienta. */
+/**
+ * Rellena el formulario de edición.
+ *
+ * @param herramienta - La herramienta.
+ */
 function editarHerramienta(herramienta) {
     herramientaEditando = herramienta;
     msgHerramienta.textContent = "";
@@ -360,7 +423,11 @@ function editarHerramienta(herramienta) {
     dialogoHerramienta.showModal();
 }
 
-/* Datos: prepara el formulario de entrada o salida. Recibe el lote. */
+/**
+ * Prepara el formulario de entrada o salida.
+ *
+ * @param lote - El lote.
+ */
 function abrirMovimiento(lote) {
     loteMovimiento = lote;
     msgMovimiento.textContent = "";
@@ -374,7 +441,9 @@ function abrirMovimiento(lote) {
     dialogoMovimiento.showModal();
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarInventarioAdmin() {
     document.getElementById("filtros-categoria").addEventListener("click", elegirCategoria);
 

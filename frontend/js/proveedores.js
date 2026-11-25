@@ -1,27 +1,45 @@
-/* Datos: consulta proveedores y obtiene su identificador para formularios. No recibe atributos. */
+/**
+ * @file Consulta proveedores y obtiene su identificador para formularios.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 let proveedores = [];
 
-/* Datos: obtiene los proveedores registrados en la API. No recibe atributos. */
+/**
+ * Obtiene los proveedores registrados en la API.
+ */
 async function cargarProveedores() {
     const datos = await pedirApi('/proveedores');
     proveedores = datos || [];
 }
 
-/* Datos: obtiene el nombre de un proveedor. Recibe su identificador. */
+/**
+ * Obtiene el nombre de un proveedor.
+ *
+ * @param {number} id - Identificador del proveedor.
+ */
 function nombreProveedor(id) {
     const proveedor = proveedores.find(registro => registro.idProveedor === id);
     return proveedor ? proveedor.nombreEmpresa : '';
 }
 
-/* Datos: busca el identificador de un proveedor. Recibe su nombre. */
+/**
+ * Busca el identificador de un proveedor.
+ *
+ * @param {string} nombre - Nombre del proveedor que se busca.
+ */
 function buscarProveedorNombre(nombre) {
     const nombreBuscado = nombre.toLowerCase();
     const proveedor = proveedores.find(registro => registro.nombreEmpresa.trim().toLowerCase() === nombreBuscado);
     return proveedor ? proveedor.idProveedor : null;
 }
 
-/* Datos: asigna el identificador de un proveedor existente o lo registra. Recibe los datos del formulario. */
+/**
+ * Asigna el identificador de un proveedor existente o lo registra.
+ *
+ * @param {Object} datos - Datos que se guardarán en el formulario.
+ */
 async function resolverProveedor(datos) {
     const campo = document.getElementById('proveedorNombre');
     if (!campo) {

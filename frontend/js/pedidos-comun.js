@@ -1,7 +1,15 @@
-/* Datos: contiene cálculos y formatos compartidos de pedidos. No recibe atributos. */
+/**
+ * @file Contiene cálculos y formatos compartidos de pedidos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const HORARIO_RECOLECCION = "7:00 a. m. a 6:00 p. m.";
 
-/* Datos: suma cada cantidad por su precio. Recibe un pedido con detalle, kg y precioPorKg. */
+/**
+ * Suma cada cantidad por su precio.
+ *
+ * @param pedido - Pedido con kilos y precio por kilo en su detalle.
+ */
 function totalPedido(pedido) {
     let total = 0;
     for (let i = 0; i < pedido.detalle.length; i++) {
@@ -10,7 +18,11 @@ function totalPedido(pedido) {
     return total;
 }
 
-/* Datos: suma los kilos de cada partida. Recibe un pedido con detalle y kg. */
+/**
+ * Suma los kilos de cada partida.
+ *
+ * @param pedido - Pedido con los kilos registrados en su detalle.
+ */
 function kilosPedido(pedido) {
     let kilos = 0;
     for (let i = 0; i < pedido.detalle.length; i++) {
@@ -19,7 +31,11 @@ function kilosPedido(pedido) {
     return kilos;
 }
 
-/* Datos: muestra una fecha sin desfase de zona horaria. Recibe una fecha ISO. */
+/**
+ * Muestra una fecha sin desfase de zona horaria.
+ *
+ * @param iso - Fecha en formato ISO.
+ */
 function fmtFecha(iso) {
     if (!iso) return "—";
     const partes = String(iso).slice(0, 10).split("-");
@@ -29,7 +45,11 @@ function fmtFecha(iso) {
     return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
-/* Datos: elige el tipo de etiqueta. Recibe el estado del pedido. */
+/**
+ * Elige el tipo de etiqueta.
+ *
+ * @param estado - Estado actual del pedido.
+ */
 function tipoEstado(estado) {
     if (estado === "entregado" || estado === "entregada") return "ok";
     if (estado === "enviado" || estado === "en camino" || estado === "en preparación") return "aviso";

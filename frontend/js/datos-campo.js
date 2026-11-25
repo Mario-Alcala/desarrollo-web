@@ -1,13 +1,19 @@
-/* Datos: este archivo comparte las consultas de cultivos, terrenos, parcelas y usuarios entre pantallas de campo. No recibe atributos. */
+/**
+ * Comparte las consultas de cultivos, terrenos, parcelas y usuarios entre pantallas de campo.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
+class DatosCampo {
+    /** Inicializa las listas de cultivos, parcelas y terrenos. */
+    constructor() {
+        this.datos = { cultivos: [], parcelas: {}, terrenos: [] };
+    }
 
-const Campo = crearCampo();
-
-/* Datos: prepara el estado y las consultas compartidas de campo. No recibe atributos. */
-function crearCampo() {
-    const datos = { cultivos: [], parcelas: {}, terrenos: [] };
-
-    /* Datos: esta función consulta cultivos, terrenos y parcelas desde la API. No recibe atributos. */
-    function cargar() {
+    /**
+     * Consulta cultivos, terrenos y parcelas desde la API.
+     */
+    cargar() {
+        const datos = this.datos;
         return Promise.all([pedirApi('/cultivos'), pedirApi('/terrenos')]).then(function (r) {
             datos.cultivos = r[0] || [];
             datos.terrenos = r[1] || [];
@@ -28,55 +34,80 @@ function crearCampo() {
         });
     }
 
-    /* Datos: esta función busca un cultivo de la consulta. Recibe el ID del cultivo. */
-    function cultivoPorId(id) {
+    /**
+     * Busca un cultivo de la consulta.
+     *
+     * @param id - El ID del cultivo.
+     */
+    cultivoPorId(id) {
+        const datos = this.datos;
         return datos.cultivos.find(cultivo => String(cultivo.id) === String(id)) || null;
     }
 
-    /* Datos: esta función obtiene el texto con parcela y terreno. Recibe el cultivo. */
-    function ubicacion(cultivo) {
+    /**
+     * Obtiene el texto con parcela y terreno.
+     *
+     * @param cultivo - El cultivo.
+     */
+    ubicacion(cultivo) {
+        const datos = this.datos;
         const parcela = cultivo ? datos.parcelas[cultivo.idParcela] : null;
         return parcela ? parcela.nombre + ' · ' + parcela.terreno : 'Parcela #' + (cultivo ? cultivo.idParcela : '?');
     }
 
-    /* Datos: esta función forma el nombre de un cultivo con su ubicación. Recibe el cultivo o su ID. */
-    function nombreCultivo(cultivoOId) {
-        const cultivo = typeof cultivoOId === 'object' ? cultivoOId : cultivoPorId(cultivoOId);
+    /**
+     * Forma el nombre de un cultivo con su ubicación.
+     *
+     * @param cultivoOId - El cultivo o su ID.
+     */
+    nombreCultivo(cultivoOId) {
+        const cultivo = typeof cultivoOId === 'object' ? cultivoOId : this.cultivoPorId(cultivoOId);
         if (!cultivo) {
             return 'Cultivo #' + cultivoOId;
         }
-        return cultivo.nombre + ' (' + ubicacion(cultivo) + ')';
+        return cultivo.nombre + ' (' + this.ubicacion(cultivo) + ')';
     }
 
-    /* Datos: esta función devuelve los cultivos que no están finalizados. No recibe atributos. */
-    function activos() {
+    /**
+     * Devuelve los cultivos que no están finalizados.
+     */
+    activos() {
+        const datos = this.datos;
         return datos.cultivos.filter(function (c) { return c.estado !== 'finalizado'; });
     }
 
-    /* Datos: esta función carga opciones de cultivo. Recibe el selector y las opciones de filtrado. */
-    function llenarSelectCultivos(select, opciones) {
+    /**
+     * Carga opciones de cultivo.
+     *
+     * @param select - Selector que se llena con los cultivos.
+     * @param [opciones] - Opciones de filtrado y texto inicial del selector.
+     */
+    llenarSelectCultivos(select, opciones) {
+        const datos = this.datos;
         const o = opciones || {};
-        const lista = o.todos ? datos.cultivos : activos();
+        const lista = o.todos ? datos.cultivos : this.activos();
         const anterior = select.value;
         select.innerHTML = '';
         const inicial = document.createElement('option');
         inicial.value = '';
         inicial.textContent = o.textoInicial || (lista.length ? 'Selecciona un cultivo' : 'No hay cultivos activos');
         select.appendChild(inicial);
-        lista.forEach(function (cultivo) {
+        lista.forEach(cultivo => {
             const opcion = document.createElement('option');
             opcion.value = cultivo.id;
-            opcion.textContent = nombreCultivo(cultivo) + (cultivo.etapaFenologica ? ' · ' + cultivo.etapaFenologica : '');
+            opcion.textContent = this.nombreCultivo(cultivo) + (cultivo.etapaFenologica ? ' · ' + cultivo.etapaFenologica : '');
             select.appendChild(opcion);
         });
-        if (anterior && cultivoPorId(anterior)) {
+        if (anterior && this.cultivoPorId(anterior)) {
             select.value = anterior;
         }
         return lista.length;
     }
 
-    /* Datos: esta función consulta la API para relacionar cada usuario con su nombre. No recibe atributos. */
-    function cargarNombresUsuarios() {
+    /**
+     * Consulta la API para relacionar cada usuario con su nombre.
+     */
+    cargarNombresUsuarios() {
         return pedirApi('/usuarios').then(function (lista) {
             const mapa = {};
             (lista || []).forEach(function (u) { mapa[u.idUsuario] = u.nombreUsuario; });
@@ -85,20 +116,17 @@ function crearCampo() {
             return {};
         });
     }
-
-    return {
-        cargar: cargar,
-        datos: datos,
-        cultivoPorId: cultivoPorId,
-        nombreCultivo: nombreCultivo,
-        ubicacion: ubicacion,
-        activos: activos,
-        llenarSelectCultivos: llenarSelectCultivos,
-        cargarNombresUsuarios: cargarNombresUsuarios
-    };
 }
 
-/* Datos: esta función agrega una celda a la tabla. Recibe la fila y el texto. */
+/** Datos que comparten las pantallas de campo. */
+const Campo = new DatosCampo();
+
+/**
+ * Agrega una celda a la tabla.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function celda(fila, texto) {
     const td = document.createElement('td');
     td.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
@@ -106,7 +134,13 @@ function celda(fila, texto) {
     return td;
 }
 
-/* Datos: esta función agrega una fila con un mensaje. Recibe el cuerpo de tabla, número de columnas y texto. */
+/**
+ * Agrega una fila con un mensaje.
+ *
+ * @param cuerpo - Cuerpo de la tabla.
+ * @param columnas - Cantidad de columnas que cubre la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function filaSinDatos(cuerpo, columnas, texto) {
     const fila = document.createElement('tr');
     const td = document.createElement('td');
@@ -116,7 +150,12 @@ function filaSinDatos(cuerpo, columnas, texto) {
     cuerpo.appendChild(fila);
 }
 
-/* Datos: esta función formatea una cantidad con su unidad. Recibe la cantidad y la unidad. */
+/**
+ * Formatea una cantidad con su unidad.
+ *
+ * @param valor - Cantidad que se quiere formatear.
+ * @param unidad - Unidad que se agrega a la cantidad.
+ */
 function cantidadTexto(valor, unidad) {
     if (valor === null || valor === undefined || valor === '') {
         return '—';

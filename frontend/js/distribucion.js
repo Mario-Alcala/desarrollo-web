@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta pedidos y cosechas, asigna lotes y actualiza el estado de entrega. No recibe atributos. */
+/**
+ * @file Consulta pedidos y cosechas, asigna lotes y actualiza el estado de entrega.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const usuarioDistribucion = usuarioActual();
 const mensajeDistribucion = document.getElementById('mensaje');
@@ -15,7 +19,9 @@ const TEXTO_ENTREGA = {
     entregado: 'Entregado'
 };
 
-/* Datos: esta función consulta pedidos, cosechas y lotes asignados desde la API. No recibe atributos. */
+/**
+ * Consulta pedidos, cosechas y lotes asignados desde la API.
+ */
 function cargarDistribucion() {
     avisarDistribucion('Cargando pedidos…');
     return Promise.all([pedirApi('/pedidos'), pedirApi('/cosechas')]).then(function (r) {
@@ -35,7 +41,13 @@ function cargarDistribucion() {
     });
 }
 
-/* Datos: esta función actualiza la entrega mediante la API. Recibe el pedido, el estado y el texto de confirmación. */
+/**
+ * Actualiza la entrega mediante la API.
+ *
+ * @param pedido - Pedido al que se aplica la acción.
+ * @param estado - Estado de entrega solicitado.
+ * @param pregunta - Mensaje de confirmación que se muestra al usuario.
+ */
 function cambiarEntrega(pedido, estado, pregunta) {
     if (!usuarioDistribucion) {
         avisarDistribucion('Inicia sesión para registrar la entrega.', 'error');
@@ -56,7 +68,9 @@ function cambiarEntrega(pedido, estado, pregunta) {
         });
 }
 
-/* Datos: esta función muestra las tarjetas de los pedidos que cumplen el filtro. No recibe atributos. */
+/**
+ * Muestra las tarjetas de los pedidos que cumplen el filtro.
+ */
 function dibujarPedidos() {
     contenedorPedidos.innerHTML = '';
     const visibles = pedidosDistribucion.filter(pedidoVisible);
@@ -68,18 +82,31 @@ function dibujarPedidos() {
     }
 }
 
-/* Datos: esta función muestra el mensaje de distribución. Recibe el texto y el tipo de mensaje. */
+/**
+ * Muestra el mensaje de distribución.
+ *
+ * @param texto - Texto que se quiere mostrar.
+ * @param tipo - Tipo de aviso que se quiere mostrar.
+ */
 function avisarDistribucion(texto, tipo) {
     mensajeDistribucion.textContent = texto;
     mensajeDistribucion.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
-/* Datos: esta función obtiene el estado de la entrega. Recibe el pedido. */
+/**
+ * Obtiene el estado de la entrega.
+ *
+ * @param pedido - El pedido.
+ */
 function estadoEntrega(pedido) {
     return pedido.estadoEntrega || 'pendiente';
 }
 
-/* Datos: esta función decide si el pedido coincide con el filtro de estado. Recibe el pedido. */
+/**
+ * Decide si el pedido coincide con el filtro de estado.
+ *
+ * @param pedido - El pedido.
+ */
 function pedidoVisible(pedido) {
     const entrega = estadoEntrega(pedido);
     if (pedido.estado === 'cancelado') {
@@ -91,7 +118,13 @@ function pedidoVisible(pedido) {
     return true;
 }
 
-/* Datos: esta función crea un botón de pedido. Recibe el texto, la función y si es una acción principal. */
+/**
+ * Crea un botón de pedido.
+ *
+ * @param texto - Texto que se quiere mostrar.
+ * @param alClic - Función que se ejecuta al pulsar el botón.
+ * @param principal - Indica si se aplica el estilo de botón principal.
+ */
 function boton(texto, alClic, principal) {
     const b = document.createElement('button');
     b.type = 'button';
@@ -101,14 +134,22 @@ function boton(texto, alClic, principal) {
     return b;
 }
 
-/* Datos: esta función crea un párrafo de la tarjeta. Recibe el texto. */
+/**
+ * Crea un párrafo de la tarjeta.
+ *
+ * @param texto - El texto.
+ */
 function parrafo(texto) {
     const p = document.createElement('p');
     p.textContent = texto;
     return p;
 }
 
-/* Datos: esta función crea el formulario para empacar un lote. Recibe el pedido. */
+/**
+ * Crea el formulario para empacar un lote.
+ *
+ * @param pedido - El pedido.
+ */
 function formularioAsignar(pedido) {
     const form = document.createElement('form');
     form.noValidate = true;
@@ -178,7 +219,11 @@ function formularioAsignar(pedido) {
     return form;
 }
 
-/* Datos: esta función muestra los datos y acciones de una entrega. Recibe el pedido. */
+/**
+ * Muestra los datos y acciones de una entrega.
+ *
+ * @param pedido - El pedido.
+ */
 function tarjetaPedido(pedido) {
     const entrega = estadoEntrega(pedido);
     const esDomicilio = pedido.tipoEntrega === 'domicilio';
@@ -255,7 +300,9 @@ function tarjetaPedido(pedido) {
     return tarjeta;
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarDistribucion() {
     mostrarEntregados.addEventListener('change', dibujarPedidos);
     document.getElementById('actualizar').onclick = cargarDistribucion;

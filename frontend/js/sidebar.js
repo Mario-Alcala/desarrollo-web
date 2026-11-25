@@ -1,4 +1,8 @@
-/* Datos: arma el menú y la barra superior según el rol guardado en la sesión. No recibe atributos. */
+/**
+ * @file Arma el menú y la barra superior según el rol guardado en la sesión.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const MENU_ADMIN = [
     { id: "resumen",     texto: "Resumen",     href: "resumen.html" },
@@ -26,7 +30,9 @@ const MENU_EMPLEADO = [
     { id: "pedidos", texto: "Preparar pedidos", href: "../administrador-agricultor/pedidos.html" }
 ];
 
-/* Datos: muestra la navegación correspondiente al usuario. No recibe atributos. */
+/**
+ * Muestra la navegación correspondiente al usuario.
+ */
 function dibujarSidebar() {
     const aside = document.getElementById("sidebar");
     if (!aside) return;
@@ -68,7 +74,9 @@ function dibujarSidebar() {
     aside.replaceChildren(marca, seccion, nav, usuario);
 }
 
-/* Datos: muestra el usuario y, cuando corresponde, el buscador. No recibe atributos. */
+/**
+ * Muestra el usuario y, cuando corresponde, el buscador.
+ */
 function dibujarTopbar() {
     const barra = document.getElementById("topbar");
     if (!barra) return;
@@ -98,7 +106,9 @@ function dibujarTopbar() {
     barra.append(rol);
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarNavegacionAdmin() {
     dibujarSidebar();
     dibujarTopbar();

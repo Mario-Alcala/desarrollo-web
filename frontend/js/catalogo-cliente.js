@@ -1,4 +1,8 @@
-/* Datos: carga el catálogo desde la API y prepara los lotes elegidos para el pago. No recibe atributos. */
+/**
+ * @file Carga el catálogo desde la API y prepara los lotes elegidos para el pago.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const API_CATALOGO_CLIENTE = 'http://localhost:8081/api';
 const productosCatalogoCliente = document.getElementById('productos');
 const detalleCatalogoCliente = document.getElementById('detalle-pedido');
@@ -6,7 +10,9 @@ const mensajeCatalogoCliente = document.getElementById('mensaje-catalogo');
 const cantidadesCatalogoCliente = {};
 let lotesCatalogoCliente = [];
 
-/* Datos: consulta los productos y lotes de la API. No recibe atributos. */
+/**
+ * Consulta los productos y lotes de la API.
+ */
 async function cargarCatalogoCliente() {
     mensajeCatalogoCliente.textContent = 'Cargando productos disponibles…';
     try {
@@ -32,7 +38,9 @@ function dineroCliente(valor) {
     return '$' + Number(valor || 0).toFixed(2);
 }
 
-/* Datos: muestra los kilos elegidos y calcula subtotales y total. No recibe atributos. */
+/**
+ * Muestra los kilos elegidos y calcula subtotales y total.
+ */
 function mostrarResumenCliente() {
     detalleCatalogoCliente.replaceChildren();
     let total = 0;
@@ -57,7 +65,9 @@ function mostrarResumenCliente() {
     document.getElementById('finalizar').disabled = total <= 0;
 }
 
-/* Datos: dibuja las tarjetas que coinciden con la búsqueda y la maduración. No recibe atributos. */
+/**
+ * Dibuja las tarjetas que coinciden con la búsqueda y la maduración.
+ */
 function dibujarCatalogoCliente() {
     const texto = document.getElementById('buscar-producto-cliente').value.trim().toLowerCase();
     const maduracion = document.getElementById('filtro-maduracion-cliente').value;
@@ -92,7 +102,11 @@ function dibujarCatalogoCliente() {
     mostrarResumenCliente();
 }
 
-/* Datos: crea el control de cantidad. Recibe un lote con idCosecha, maduracion y kilos. */
+/**
+ * Crea el control de cantidad.
+ *
+ * @param lote - Lote con su identificador, maduración y existencias.
+ */
 function dibujarLoteCliente(lote) {
     const filaLote = crearNodo('div', undefined, 'panel espacio');
     filaLote.appendChild(crearNodo('strong', 'Lote #' + lote.idCosecha + ' · ' + (lote.maduracion || 'Sin clasificar')));
@@ -121,7 +135,11 @@ function dibujarLoteCliente(lote) {
     return filaLote;
 }
 
-/* Datos: agrupa por idVariedad. Recibe las filas del catálogo que devuelve la API. */
+/**
+ * Agrupa por idVariedad.
+ *
+ * @param lotes - Lista de lotes devueltos por la API.
+ */
 function agruparProductos(lotes) {
     const grupos = {};
     for (const lote of lotes) {
@@ -144,7 +162,12 @@ function agruparProductos(lotes) {
     return Object.values(grupos);
 }
 
-/* Datos: elige qué productos mostrar. Recibe el texto de búsqueda y la maduración del filtro. */
+/**
+ * Elige qué productos mostrar.
+ *
+ * @param texto - Texto de búsqueda del catálogo.
+ * @param maduracion - Maduración seleccionada en el filtro.
+ */
 function filtrarProductos(texto, maduracion) {
     return agruparProductos(lotesCatalogoCliente).filter(function (producto) {
         const descripcion = producto.familia + ' ' + producto.variedad + ' ' + (producto.descripcion || '');
@@ -153,7 +176,9 @@ function filtrarProductos(texto, maduracion) {
     });
 }
 
-/* Datos: guarda idCosecha y kilos del carrito para abrir el pago. No recibe atributos. */
+/**
+ * Guarda idCosecha y kilos del carrito para abrir el pago.
+ */
 function finalizarPedidoCliente() {
     const usuarioId = sessionStorage.getItem('usuarioId');
     const rol = sessionStorage.getItem('usuarioRol');
@@ -169,7 +194,9 @@ function finalizarPedidoCliente() {
     window.location.href = 'pago.html';
 }
 
-/* Datos: conecta los controles y carga el catálogo al abrir. No recibe atributos. */
+/**
+ * Conecta los controles y carga el catálogo al abrir.
+ */
 function iniciarCatalogoCliente() {
     document.getElementById('buscar-producto-cliente').addEventListener('input', dibujarCatalogoCliente);
     document.getElementById('filtro-maduracion-cliente').addEventListener('change', dibujarCatalogoCliente);

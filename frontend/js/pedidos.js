@@ -1,4 +1,8 @@
-/* Datos: consulta los pedidos de administración y permite filtrarlos. No recibe atributos. */
+/**
+ * @file Consulta los pedidos de administración y permite filtrarlos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const API_PEDIDOS = "http://" + window.location.hostname + ":8081/api/pedidos";
 const contenedor = document.getElementById("lista-pedidos");
 const mensaje = document.getElementById("mensaje-pedidos");
@@ -6,7 +10,9 @@ const buscador = document.querySelector("#topbar input");
 let pedidos = [];
 let estadoFiltro = "todos";
 
-/* Datos: carga la lista de pedidos desde la API. No recibe atributos. */
+/**
+ * Carga la lista de pedidos desde la API.
+ */
 async function cargarPedidos() {
     mensaje.textContent = "Cargando pedidos…";
     try {
@@ -47,7 +53,11 @@ function fechaPedido(valor) {
     return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
-/* Datos: arma una fila con los datos y el enlace de un pedido. Recibe un pedido de la API. */
+/**
+ * Arma una fila con los datos y el enlace de un pedido.
+ *
+ * @param p - Pedido devuelto por la API.
+ */
 function filaPedido(p) {
     const fila = crear("tr");
     const detalle = crear("td");
@@ -65,7 +75,9 @@ function filaPedido(p) {
     return fila;
 }
 
-/* Datos: dibuja los pedidos que coinciden con los filtros actuales. No recibe atributos. */
+/**
+ * Dibuja los pedidos que coinciden con los filtros actuales.
+ */
 function dibujar() {
     const texto = buscador.value.trim().toLowerCase();
     const visibles = filtrarPedidos(texto);
@@ -77,7 +89,11 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudo")) mensaje.textContent = "No hay pedidos para mostrar.";
 }
 
-/* Datos: filtra por estado, número o cliente. Recibe el texto de búsqueda. */
+/**
+ * Filtra por estado, número o cliente.
+ *
+ * @param texto - Texto para buscar el número o el cliente del pedido.
+ */
 function filtrarPedidos(texto) {
     return pedidos.filter(function (pedido) {
         const coincideEstado = estadoFiltro === "todos" || estadoDe(pedido) === estadoFiltro;
@@ -87,7 +103,11 @@ function filtrarPedidos(texto) {
     });
 }
 
-/* Datos: aplica el estado del botón elegido. Recibe el evento de clic. */
+/**
+ * Aplica el estado del botón elegido.
+ *
+ * @param evento - Evento de clic en el filtro de estado.
+ */
 function cambiarFiltroPedidos(evento) {
     const boton = evento.target.closest("button[data-valor]");
     if (!boton) return;
@@ -99,7 +119,9 @@ function cambiarFiltroPedidos(evento) {
     dibujar();
 }
 
-/* Datos: conecta los filtros y carga los pedidos. No recibe atributos. */
+/**
+ * Conecta los filtros y carga los pedidos.
+ */
 function iniciarPedidos() {
     document.getElementById("filtros-estado").addEventListener("click", cambiarFiltroPedidos);
     buscador.addEventListener("input", dibujar);

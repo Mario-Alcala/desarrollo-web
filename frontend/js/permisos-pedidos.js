@@ -1,4 +1,8 @@
-/* Datos: decide qué acciones muestran las pantallas de pedidos según el rol. No recibe atributos. */
+/**
+ * @file Decide qué acciones muestran las pantallas de pedidos según el rol.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 var SIN_SESION_COMO_ADMIN = true;
 const ROL_ADMIN = 'administrador_agricultor';
 const ROL_TRABAJADOR = 'trabajador';
@@ -6,7 +10,9 @@ const ESTADOS_FINALES = ['entregado', 'cancelado'];
 const ESTADOS_ENTREGA_TRABAJADOR = ['pendiente', 'en_transito', 'listo_recoleccion'];
 const ESTADOS_ENTREGA_ADMIN = ['pendiente', 'en_transito', 'listo_recoleccion', 'entregado'];
 
-/* Datos: recupera el rol de usuarioSesion. No recibe atributos. */
+/**
+ * Recupera el rol de usuarioSesion.
+ */
 function rolDeSesion() {
     try {
         const usuario = JSON.parse(sessionStorage.getItem('usuarioSesion'));
@@ -16,7 +22,12 @@ function rolDeSesion() {
     }
 }
 
-/* Datos: devuelve los controles y estados permitidos. Recibe el rol y el estado del pedido. */
+/**
+ * Devuelve los controles y estados permitidos.
+ *
+ * @param rol - Rol del usuario en la sesión.
+ * @param estado - Estado actual del pedido.
+ */
 function accionesPedido(rol, estado) {
     if (rol === null || rol === undefined) {
         rol = SIN_SESION_COMO_ADMIN ? ROL_ADMIN : null;
@@ -39,7 +50,11 @@ function accionesPedido(rol, estado) {
     return { asignar: true, entrega: true, estadosEntrega: ESTADOS_ENTREGA_ADMIN.slice(), aviso: '' };
 }
 
-/* Datos: devuelve el texto del enlace al pedido. Recibe el rol. */
+/**
+ * Devuelve el texto del enlace al pedido.
+ *
+ * @param rol - Rol del usuario en la sesión.
+ */
 function textoAccionPedido(rol) {
     return rol === ROL_TRABAJADOR ? 'Preparar pedido →' : 'Ver pedido →';
 }

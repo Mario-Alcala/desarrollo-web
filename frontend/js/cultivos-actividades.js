@@ -1,6 +1,12 @@
-/* Datos: este archivo muestra cultivos y permite registrar riegos y observaciones. No recibe atributos. */
+/**
+ * @file Muestra cultivos y permite registrar riegos y observaciones.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarCultivosActividades() {
     const mensajeCultivos = document.getElementById('mensaje-operacion');
     const cuerpoCultivos = document.getElementById('registros-cultivos');
@@ -31,7 +37,11 @@ function iniciarCultivosActividades() {
     let cultivoElegido = null;
     const usuario = usuarioActual();
 
-    /* Datos: esta función prepara un mensaje para errores de consulta o guardado. Recibe el error. */
+    /**
+     * Prepara un mensaje para errores de consulta o guardado.
+     *
+     * @param error - El error.
+     */
     function textoError(error) {
         if (error instanceof TypeError) {
             return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
@@ -39,14 +49,21 @@ function iniciarCultivosActividades() {
         return error.message || 'No se pudo completar la operación.';
     }
 
-    /* Datos: esta función obtiene la fecha local actual en formato año, mes y día. No recibe atributos. */
+    /**
+     * Obtiene la fecha local actual en formato año, mes y día.
+     */
     function hoyLocal() {
         const ahora = new Date();
         const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
         return local.toISOString().slice(0, 10);
     }
 
-    /* Datos: esta función agrega una celda de texto. Recibe una fila y su texto. */
+    /**
+     * Agrega una celda de texto.
+     *
+     * @param fila - Fila de la tabla que recibe la celda.
+     * @param texto - Texto que se quiere mostrar.
+     */
     function agregarCelda(fila, texto) {
         const celda = document.createElement('td');
         celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
@@ -54,13 +71,22 @@ function iniciarCultivosActividades() {
         return celda;
     }
 
-    /* Datos: esta función busca el nombre de la parcela y su terreno. Recibe el cultivo. */
+    /**
+     * Busca el nombre de la parcela y su terreno.
+     *
+     * @param cultivo - El cultivo.
+     */
     function textoParcela(cultivo) {
         const parcela = parcelas[cultivo.idParcela];
         return parcela ? parcela.nombre + ' · ' + parcela.terreno : '—';
     }
 
-    /* Datos: esta función crea una acción de la tabla de cultivos. Recibe el texto y la función del botón. */
+    /**
+     * Crea una acción de la tabla de cultivos.
+     *
+     * @param texto - Texto que se quiere mostrar.
+     * @param alClic - Función que se ejecuta al pulsar el botón.
+     */
     function crearBotonAccion(texto, alClic) {
         const boton = document.createElement('button');
         boton.type = 'button';
@@ -70,7 +96,9 @@ function iniciarCultivosActividades() {
         return boton;
     }
 
-    /* Datos: esta función muestra los cultivos que cumplen el filtro de estado. No recibe atributos. */
+    /**
+     * Muestra los cultivos que cumplen el filtro de estado.
+     */
     function dibujarCultivos() {
         const estado = filtroEstado.value;
         const visibles = cultivos.filter(function (cultivo) {
@@ -112,7 +140,9 @@ function iniciarCultivosActividades() {
         }
     }
 
-    /* Datos: esta función consulta las parcelas de cada terreno desde la API. No recibe atributos. */
+    /**
+     * Consulta las parcelas de cada terreno desde la API.
+     */
     function cargarParcelas() {
         parcelas = {};
         return pedirApi('/terrenos').then(function (terrenos) {
@@ -130,7 +160,9 @@ function iniciarCultivosActividades() {
         });
     }
 
-    /* Datos: esta función carga los cultivos y sus parcelas. No recibe atributos. */
+    /**
+     * Carga los cultivos y sus parcelas.
+     */
     function cargarTodo() {
         mensajeCultivos.textContent = 'Cargando...';
         return Promise.all([pedirApi('/cultivos'), cargarParcelas()])
@@ -144,7 +176,16 @@ function iniciarCultivosActividades() {
             });
     }
 
-    /* Datos: esta función envía un riego u observación a la API. Recibe la ruta, datos, diálogo, mensaje, botón y texto de confirmación. */
+    /**
+     * Envía un riego u observación a la API.
+     *
+     * @param ruta - Ruta de la API que se va a consultar.
+     * @param datos - Datos que se van a validar o guardar.
+     * @param dialogo - Ventana que contiene el formulario.
+     * @param mensajeError - Elemento donde se muestra el error de la solicitud.
+     * @param boton - Botón asociado a la acción.
+     * @param textoOk - Mensaje que se muestra si se guarda el registro.
+     */
     function enviarActividad(ruta, datos, dialogo, mensajeError, boton, textoOk) {
         boton.disabled = true;
         pedirApi(ruta, 'POST', datos)
@@ -160,7 +201,11 @@ function iniciarCultivosActividades() {
             });
     }
 
-    /* Datos: esta función prepara el formulario de observaciones. Recibe el cultivo. */
+    /**
+     * Prepara el formulario de observaciones.
+     *
+     * @param cultivo - El cultivo.
+     */
     function abrirObservacion(cultivo) {
         cultivoElegido = cultivo;
         formObservacion.reset();
@@ -195,7 +240,11 @@ function iniciarCultivosActividades() {
         }, dlgObservacion, mensajeObs, botonGuardarObs, 'Observación registrada en el servidor.');
     });
 
-    /* Datos: esta función prepara el formulario de riegos. Recibe el cultivo. */
+    /**
+     * Prepara el formulario de riegos.
+     *
+     * @param cultivo - El cultivo.
+     */
     function abrirRiego(cultivo) {
         cultivoElegido = cultivo;
         formRiego.reset();

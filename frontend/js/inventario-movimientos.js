@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta lotes de inventario y registra sus movimientos. No recibe atributos. */
+/**
+ * @file Consulta lotes de inventario y registra sus movimientos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const mensajeInventario = document.getElementById('mensaje-operacion');
 const cuerpoExistencias = document.getElementById('registros-existencias');
@@ -17,7 +21,9 @@ let lotes = [];
 let movimientos = [];
 const usuario = usuarioActual();
 
-/* Datos: esta función consulta los lotes y los movimientos desde la API. No recibe atributos. */
+/**
+ * Consulta los lotes y los movimientos desde la API.
+ */
 function cargarDatos() {
     return Promise.all([pedirApi('/inventario'), pedirApi('/movimientos-inventario')])
         .then(function (resultados) {
@@ -29,7 +35,9 @@ function cargarDatos() {
         });
 }
 
-/* Datos: esta función muestra los lotes con sus cantidades. No recibe atributos. */
+/**
+ * Muestra los lotes con sus cantidades.
+ */
 function dibujarExistencias() {
     cuerpoExistencias.innerHTML = '';
     lotes.forEach(function (lote) {
@@ -46,7 +54,9 @@ function dibujarExistencias() {
     }
 }
 
-/* Datos: esta función muestra los movimientos de inventario consultados. No recibe atributos. */
+/**
+ * Muestra los movimientos de inventario consultados.
+ */
 function dibujarMovimientos() {
     cuerpoMovimientos.innerHTML = '';
     const ordenados = movimientos.slice().sort(function (a, b) {
@@ -67,7 +77,11 @@ function dibujarMovimientos() {
     }
 }
 
-/* Datos: esta función prepara un mensaje para errores de consulta o guardado. Recibe el error. */
+/**
+ * Prepara un mensaje para errores de consulta o guardado.
+ *
+ * @param error - El error.
+ */
 function textoError(error) {
     if (error instanceof TypeError) {
         return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
@@ -75,31 +89,52 @@ function textoError(error) {
     return error.message || 'No se pudo completar la operación.';
 }
 
-/* Datos: esta función obtiene la fecha y hora local para el registro. No recibe atributos. */
+/**
+ * Obtiene la fecha y hora local para el registro.
+ */
 function ahoraLocal() {
     const ahora = new Date();
     const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 16);
 }
 
-/* Datos: esta función formatea una cantidad para la tabla. Recibe el valor numérico. */
+/**
+ * Formatea una cantidad para la tabla.
+ *
+ * @param valor - El valor numérico.
+ */
 function formatoNumero(valor) {
     return Number(valor).toLocaleString('es-MX', { maximumFractionDigits: 2 });
 }
 
-/* Datos: esta función formatea la fecha y hora para la tabla. Recibe el valor de la API. */
+/**
+ * Formatea la fecha y hora para la tabla.
+ *
+ * @param valor - El valor de la API.
+ */
 function formatoFechaHora(valor) {
     return valor ? String(valor).replace('T', ' ').slice(0, 16) : '—';
 }
 
-/* Datos: esta función agrega un valor a una fila de inventario. Recibe la fila y el texto. */
+/**
+ * Agrega un valor a una fila de inventario.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function celdaTexto(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
     fila.appendChild(celda);
 }
 
-/* Datos: esta función muestra un mensaje en la tabla. Recibe el cuerpo de tabla, las columnas y el texto. */
+/**
+ * Muestra un mensaje en la tabla.
+ *
+ * @param cuerpo - Cuerpo de la tabla.
+ * @param columnas - Cantidad de columnas que cubre la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function filaVacia(cuerpo, columnas, texto) {
     const fila = document.createElement('tr');
     const celda = document.createElement('td');
@@ -109,17 +144,27 @@ function filaVacia(cuerpo, columnas, texto) {
     cuerpo.appendChild(fila);
 }
 
-/* Datos: esta función busca el lote en el inventario consultado. Recibe el ID del lote. */
+/**
+ * Busca el lote en el inventario consultado.
+ *
+ * @param id - El ID del lote.
+ */
 function loteDe(id) {
     return lotes.find(lote => lote.idInventario === id) || null;
 }
 
-/* Datos: esta función obtiene la unidad de medida. Recibe el lote. */
+/**
+ * Obtiene la unidad de medida.
+ *
+ * @param lote - El lote.
+ */
 function unidadDe(lote) {
     return lote && lote.unidadMedida ? ' ' + lote.unidadMedida : '';
 }
 
-/* Datos: esta función muestra la cantidad disponible del lote seleccionado. No recibe atributos. */
+/**
+ * Muestra la cantidad disponible del lote seleccionado.
+ */
 function actualizarAyuda() {
     const lote = loteDe(Number(selectLote.value));
     ayudaLote.textContent = lote
@@ -127,7 +172,9 @@ function actualizarAyuda() {
         : '';
 }
 
-/* Datos: esta función llena el selector con los lotes consultados. No recibe atributos. */
+/**
+ * Llena el selector con los lotes consultados.
+ */
 function llenarLotes() {
     const elegido = selectLote.value;
     selectLote.innerHTML = '<option value="">Selecciona un lote</option>';
@@ -141,7 +188,11 @@ function llenarLotes() {
     actualizarAyuda();
 }
 
-/* Datos: esta función valida y registra un movimiento de inventario. Recibe el evento del formulario. */
+/**
+ * Valida y registra un movimiento de inventario.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarMovimientoInventario(evento) {
     evento.preventDefault();
     mensajeInventario.textContent = '';
@@ -203,7 +254,9 @@ function guardarMovimientoInventario(evento) {
         });
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarMovimientosInventario() {
     formularioMovimiento.addEventListener('submit', guardarMovimientoInventario);
     selectLote.addEventListener('change', actualizarAyuda);

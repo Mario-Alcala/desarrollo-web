@@ -1,9 +1,15 @@
-/* Datos: revisa la sesión iniciada y conecta el cierre de sesión. No recibe atributos. */
+/**
+ * @file Revisa la sesión iniciada y conecta el cierre de sesión.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const CLAVE_SESION = 'usuarioSesion';
 const redirigiendoAlHostLocal = window.location.hostname === '127.0.0.1';
 
-/* Datos: lee la cuenta guardada en la sesión del navegador. No recibe atributos. */
+/**
+ * Lee la cuenta guardada en la sesión del navegador.
+ */
 function usuarioActual() {
     try {
         const texto = sessionStorage.getItem(CLAVE_SESION);
@@ -17,7 +23,11 @@ function usuarioActual() {
     return null;
 }
 
-/* Datos: guarda el identificador, nombre, correo y rol. Recibe el usuario. */
+/**
+ * Guarda el identificador, nombre, correo y rol.
+ *
+ * @param {Object} usuario - Datos de la cuenta guardada o devuelta por la API.
+ */
 function guardarSesion(usuario) {
     sessionStorage.setItem(CLAVE_SESION, JSON.stringify({
         idUsuario: usuario.idUsuario,
@@ -27,7 +37,11 @@ function guardarSesion(usuario) {
     }));
 }
 
-/* Datos: cierra la sesión en la API y en el navegador. Recibe una ruta de regreso opcional. */
+/**
+ * Cierra la sesión en la API y en el navegador.
+ *
+ * @param {string} [rutaLogin] - Página a la que vuelve el usuario.
+ */
 function cerrarSesion(rutaLogin) {
     const destino = rutaLogin || '../login.html';
     const host = window.location.hostname || 'localhost';
@@ -43,7 +57,12 @@ function cerrarSesion(rutaLogin) {
     });
 }
 
-/* Datos: revisa si la cuenta tiene acceso a la página. Recibe los roles y una ruta de regreso opcional. */
+/**
+ * Revisa si la cuenta tiene acceso a la página.
+ *
+ * @param {string[]} [roles] - Roles que pueden abrir la página.
+ * @param {string} [rutaLogin] - Página a la que vuelve el usuario.
+ */
 function exigirSesion(roles, rutaLogin) {
     const usuario = usuarioActual();
     if (!usuario || (roles && roles.length && roles.indexOf(usuario.rol) === -1)) {
@@ -53,7 +72,11 @@ function exigirSesion(roles, rutaLogin) {
     return usuario;
 }
 
-/* Datos: muestra la cuenta y conecta el botón de salida. Recibe el usuario. */
+/**
+ * Muestra la cuenta y conecta el botón de salida.
+ *
+ * @param {Object} usuario - Datos de la cuenta guardada o devuelta por la API.
+ */
 function prepararBarraSesion(usuario) {
     const nombre = document.getElementById('usuario-barra');
     if (nombre && usuario) {
@@ -66,7 +89,9 @@ function prepararBarraSesion(usuario) {
     }
 }
 
-/* Datos: revisa la sesión y prepara la barra al abrir la página. No recibe atributos. */
+/**
+ * Revisa la sesión y prepara la barra al abrir la página.
+ */
 function iniciarSesionPagina() {
     if (redirigiendoAlHostLocal) {
         window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));

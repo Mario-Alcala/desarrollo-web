@@ -1,4 +1,8 @@
-/* Datos: consulta, filtra y guarda las familias y variedades del catálogo. No recibe atributos. */
+/**
+ * @file Consulta, filtra y guarda las familias y variedades del catálogo.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_CATALOGO = "http://localhost:8081/api";
 const lista = document.getElementById("lista-productos");
@@ -12,7 +16,13 @@ let variedades = [];
 let idFamiliaEditando = null;
 let idVariedadEditando = null;
 
-/* Datos: envía una solicitud del catálogo. Recibe ruta, método y datos opcionales. */
+/**
+ * Envía una solicitud del catálogo.
+ *
+ * @param ruta - Ruta del recurso en la API.
+ * @param [metodo] - Método HTTP.
+ * @param [datos] - Datos que se envían como JSON.
+ */
 async function pedirCatalogo(ruta, metodo, datos) {
     const opciones = { method: metodo || "GET", headers: {} };
     if (datos) {
@@ -42,7 +52,9 @@ async function pedirCatalogo(ruta, metodo, datos) {
     return cuerpo;
 }
 
-/* Datos: consulta las familias y variedades y actualiza la pantalla. No recibe atributos. */
+/**
+ * Consulta las familias y variedades y actualiza la pantalla.
+ */
 async function cargarCatalogo() {
     mensaje.textContent = "Cargando catálogo…";
     try {
@@ -56,7 +68,11 @@ async function cargarCatalogo() {
     }
 }
 
-/* Datos: busca una familia por nombre o la crea en la API. Recibe el nombre. */
+/**
+ * Busca una familia por nombre o la crea en la API.
+ *
+ * @param nombre - El nombre.
+ */
 async function obtenerNombreProducto(nombre) {
     const nombreNormalizado = nombre.trim().toLowerCase();
     const existente = familias.find(familia => familia.nombre.trim().toLowerCase() === nombreNormalizado);
@@ -67,7 +83,11 @@ async function obtenerNombreProducto(nombre) {
     return familia;
 }
 
-/* Datos: guarda una variedad nueva o editada. Recibe el evento del formulario. */
+/**
+ * Guarda una variedad nueva o editada.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarProducto(evento) {
     evento.preventDefault();
     const aviso = document.getElementById("mensaje-producto");
@@ -109,7 +129,9 @@ async function guardarProducto(evento) {
     }
 }
 
-/* Datos: rellena el filtro con los nombres de familia. No recibe atributos. */
+/**
+ * Rellena el filtro con los nombres de familia.
+ */
 function actualizarFiltroNombre() {
     const valorAnterior = filtroNombre.value;
     const opcionTodos = crear("option", "Todos los nombres");
@@ -126,7 +148,9 @@ function actualizarFiltroNombre() {
     }
 }
 
-/* Datos: muestra el catálogo según el texto y la familia elegidos. No recibe atributos. */
+/**
+ * Muestra el catálogo según el texto y la familia elegidos.
+ */
 function dibujarCatalogo() {
     const texto = buscador.value.trim().toLowerCase();
     const idFiltro = filtroNombre.value;
@@ -150,7 +174,11 @@ function dibujarCatalogo() {
     mensaje.textContent = `${visibles.length} ${visibles.length === 1 ? "producto" : "productos"}`;
 }
 
-/* Datos: arma la tarjeta de un producto. Recibe su variedad, familia, imagen y precio. */
+/**
+ * Arma la tarjeta de un producto.
+ *
+ * @param variedad - Su variedad, familia, imagen y precio.
+ */
 function crearTarjeta(variedad) {
     const tarjeta = crear("article", undefined, "tarjeta-producto");
     let imagen;
@@ -187,7 +215,11 @@ function crearTarjeta(variedad) {
     return tarjeta;
 }
 
-/* Datos: abre el formulario del producto. Recibe la variedad o null para crear. */
+/**
+ * Abre el formulario del producto.
+ *
+ * @param variedad - La variedad o null para crear.
+ */
 function abrirProducto(variedad) {
     idVariedadEditando = variedad ? variedad.idVariedad : null;
     idFamiliaEditando = variedad ? variedad.idFamilia : null;
@@ -201,7 +233,9 @@ function abrirProducto(variedad) {
     dialogoProducto.showModal();
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarCatalogo() {
     formularioProducto.addEventListener("submit", guardarProducto);
     document.getElementById("agregar-producto").addEventListener("click", function () { abrirProducto(null); });

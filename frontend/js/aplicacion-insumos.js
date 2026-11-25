@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta lotes de abono o fertilizante y registra su aplicación como salida de inventario. No recibe atributos. */
+/**
+ * @file Consulta lotes de abono o fertilizante y registra su aplicación como salida de inventario.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const panelAplicacion = document.getElementById('aplicacion');
 const categoriaInsumo = panelAplicacion.dataset.categoria;
@@ -17,7 +21,9 @@ let insumosPorId = {};
 let proveedoresPorId = {};
 let aplicaciones = [];
 
-/* Datos: esta función consulta lotes, insumos, proveedores, movimientos y cultivos desde la API. No recibe atributos. */
+/**
+ * Consulta lotes, insumos, proveedores, movimientos y cultivos desde la API.
+ */
 function cargarInsumos() {
     mensajeInsumos.textContent = 'Cargando…';
     return Promise.all([
@@ -46,7 +52,9 @@ function cargarInsumos() {
     });
 }
 
-/* Datos: esta función muestra los lotes y llena el selector de lotes disponibles. No recibe atributos. */
+/**
+ * Muestra los lotes y llena el selector de lotes disponibles.
+ */
 function dibujarLotes() {
     const cuerpo = document.getElementById('lista-lotes');
     cuerpo.innerHTML = '';
@@ -85,7 +93,9 @@ function dibujarLotes() {
     mostrarDisponible();
 }
 
-/* Datos: esta función muestra las últimas salidas de los lotes de la categoría. No recibe atributos. */
+/**
+ * Muestra las últimas salidas de los lotes de la categoría.
+ */
 function dibujarAplicaciones() {
     const cuerpo = document.getElementById('lista-aplicaciones');
     cuerpo.innerHTML = '';
@@ -104,12 +114,21 @@ function dibujarAplicaciones() {
     }
 }
 
-/* Datos: esta función busca un lote de insumo en el inventario consultado. Recibe el ID del lote. */
+/**
+ * Busca un lote de insumo en el inventario consultado.
+ *
+ * @param id - El ID del lote.
+ */
 function loteInsumo(id) {
     return lotesInsumo.find(lote => String(lote.idInventario) === String(id)) || null;
 }
 
-/* Datos: esta función indica si un lote está disponible, agotado o caducado. Recibe el lote y la fecha de hoy. */
+/**
+ * Indica si un lote está disponible, agotado o caducado.
+ *
+ * @param lote - Lote de inventario que se está consultando.
+ * @param hoy - Fecha actual en formato AAAA-MM-DD.
+ */
 function estadoLote(lote, hoy) {
     if (Number(lote.cantidad) <= 0) {
         return { texto: 'Agotado', clase: 'peligro', usable: false };
@@ -123,13 +142,19 @@ function estadoLote(lote, hoy) {
     return { texto: 'Disponible', clase: 'listo', usable: true };
 }
 
-/* Datos: esta función obtiene el proveedor del insumo. Recibe el lote de inventario. */
+/**
+ * Obtiene el proveedor del insumo.
+ *
+ * @param lote - El lote de inventario.
+ */
 function nombreProveedor(lote) {
     const insumo = insumosPorId[lote.idInsumo];
     return insumo && proveedoresPorId[insumo.idProveedor] ? proveedoresPorId[insumo.idProveedor] : '';
 }
 
-/* Datos: esta función muestra cuánto queda del lote seleccionado. No recibe atributos. */
+/**
+ * Muestra cuánto queda del lote seleccionado.
+ */
 function mostrarDisponible() {
     const lote = loteInsumo(selectLoteAp.value);
     document.getElementById('ap-disponible').textContent = lote
@@ -137,7 +162,11 @@ function mostrarDisponible() {
         : '';
 }
 
-/* Datos: esta función valida el formulario y registra una salida de inventario. Recibe el evento del formulario. */
+/**
+ * Valida el formulario y registra una salida de inventario.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarAplicacion(evento) {
     evento.preventDefault();
     mensajeAp.textContent = '';
@@ -186,7 +215,9 @@ function guardarAplicacion(evento) {
     });
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarAplicacionInsumos() {
     formAplicacion.addEventListener('submit', guardarAplicacion);
     selectLoteAp.addEventListener('change', mostrarDisponible);

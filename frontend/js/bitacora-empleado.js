@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta y registra observaciones e incidencias de cultivos. No recibe atributos. */
+/**
+ * @file Consulta y registra observaciones e incidencias de cultivos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_BITACORA = 'http://localhost:8081/api';
 const tipoRegistroBitacora = document.getElementById('tipo-registro-bitacora');
@@ -6,7 +10,9 @@ const selectorCultivoBitacora = document.getElementById('cultivo-bitacora');
 const listaBitacoraEmpleado = document.getElementById('lista-bitacora-empleado');
 const mensajeBitacoraEmpleado = document.getElementById('mensaje-bitacora-empleado');
 
-/* Datos: esta función consulta los cultivos, observaciones e incidencias desde la API. No recibe atributos. */
+/**
+ * Consulta los cultivos, observaciones e incidencias desde la API.
+ */
 async function cargarBitacoraEmpleado() {
     mensajeBitacoraEmpleado.textContent = 'Cargando cultivos y bitácora…';
     try {
@@ -27,7 +33,13 @@ async function cargarBitacoraEmpleado() {
     }
 }
 
-/* Datos: esta función llena el selector y muestra los registros por fecha. Recibe cultivos, observaciones e incidencias de la API. */
+/**
+ * Llena el selector y muestra los registros por fecha.
+ *
+ * @param cultivos - Cultivos devueltos por la API.
+ * @param observaciones - Observaciones devueltas por la API.
+ * @param incidencias - Incidencias devueltas por la API.
+ */
 function dibujarBitacoraEmpleado(cultivos, observaciones, incidencias) {
     selectorCultivoBitacora.replaceChildren(new Option('Selecciona un cultivo', ''));
     for (const cultivo of cultivos) {
@@ -68,21 +80,32 @@ function dibujarBitacoraEmpleado(cultivos, observaciones, incidencias) {
     mensajeBitacoraEmpleado.textContent = registros.length ? '' : 'Todavía no hay registros de campo.';
 }
 
-/* Datos: esta función agrega una celda de texto a la tabla. Recibe la fila y el texto. */
+/**
+ * Agrega una celda de texto a la tabla.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function celdaBitacora(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto || '—';
     fila.appendChild(celda);
 }
 
-/* Datos: esta función muestra el tipo y la gravedad cuando se elige registrar una incidencia. No recibe atributos. */
+/**
+ * Muestra el tipo y la gravedad cuando se elige registrar una incidencia.
+ */
 function mostrarCamposIncidencia() {
     const incidencia = tipoRegistroBitacora.value === 'incidencia';
     document.getElementById('campo-tipo-incidencia').hidden = !incidencia;
     document.getElementById('campo-gravedad-incidencia').hidden = !incidencia;
 }
 
-/* Datos: esta función guarda una observación o incidencia. Recibe el evento del formulario. */
+/**
+ * Guarda una observación o incidencia.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarBitacoraEmpleado(evento) {
     evento.preventDefault();
     const error = document.getElementById('error-bitacora-empleado');
@@ -126,7 +149,9 @@ async function guardarBitacoraEmpleado(evento) {
     }
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarBitacoraEmpleado() {
     tipoRegistroBitacora.addEventListener('change', mostrarCamposIncidencia);
     document.getElementById('formulario-bitacora-empleado').addEventListener('submit', guardarBitacoraEmpleado);

@@ -1,4 +1,8 @@
-/* Datos: este archivo muestra las etapas, riegos y cosechas del calendario y permite gestionar las etapas. No recibe atributos. */
+/**
+ * @file Muestra las etapas, riegos y cosechas del calendario y permite gestionar las etapas.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const usuarioCalendario = usuarioActual();
 const fuentesCalendario = { cultivos: [], etapas: [], riegos: [], cosechas: [] };
@@ -16,7 +20,9 @@ const bloqueDialogoNotas = document.getElementById('bloque-dialogo-notas');
 const mensajeDialogo = document.getElementById('mensaje-dialogo-etapa');
 let accionDialogo = null;
 
-/* Datos: esta función consulta cultivos, etapas, riegos y cosechas desde la API. No recibe atributos. */
+/**
+ * Consulta cultivos, etapas, riegos y cosechas desde la API.
+ */
 function cargarCalendario() {
     avisar('Cargando calendario…');
     return Promise.all([Campo.cargar(), pedirApi('/etapas-cultivo'), pedirApi('/riegos'), pedirApi('/cosechas')])
@@ -35,7 +41,9 @@ function cargarCalendario() {
         });
 }
 
-/* Datos: esta función muestra los días y eventos del mes elegido. No recibe atributos. */
+/**
+ * Muestra los días y eventos del mes elegido.
+ */
 function dibujarCalendario() {
     const eventos = eventosActuales();
     const contenedor = document.getElementById('dias-calendario');
@@ -96,7 +104,9 @@ function dibujarCalendario() {
     mostrarTareas(eventos);
 }
 
-/* Datos: esta función muestra el estado de cada cultivo y su próxima etapa. No recibe atributos. */
+/**
+ * Muestra el estado de cada cultivo y su próxima etapa.
+ */
 function dibujarSeguimiento() {
     const lista = document.getElementById('cultivos-seguimiento');
     lista.innerHTML = '';
@@ -138,7 +148,11 @@ function dibujarSeguimiento() {
     }
 }
 
-/* Datos: esta función muestra las actividades del día elegido. Recibe los eventos del calendario. */
+/**
+ * Muestra las actividades del día elegido.
+ *
+ * @param eventos - Los eventos del calendario.
+ */
 function mostrarTareas(eventos) {
     const lista = document.getElementById('tareas-calendario');
     const titulo = document.getElementById('titulo-tareas');
@@ -194,7 +208,9 @@ function mostrarTareas(eventos) {
     });
 }
 
-/* Datos: esta función lee la fecha indicada en la URL para abrir el mes correspondiente. No recibe atributos. */
+/**
+ * Lee la fecha indicada en la URL para abrir el mes correspondiente.
+ */
 function leerParametros() {
     const fecha = parametrosCalendario.get('fecha');
     if (fecha && Validacion.fechaExiste(fecha)) {
@@ -204,28 +220,47 @@ function leerParametros() {
     }
 }
 
-/* Datos: esta función formatea la fecha como año, mes y día. Recibe una fecha. */
+/**
+ * Formatea la fecha como año, mes y día.
+ *
+ * @param fecha - Una fecha.
+ */
 function fechaTexto(fecha) {
     return fecha.getFullYear() + '-' + String(fecha.getMonth() + 1).padStart(2, '0') + '-' + String(fecha.getDate()).padStart(2, '0');
 }
 
-/* Datos: esta función muestra el mensaje del calendario. Recibe el texto y el tipo de mensaje. */
+/**
+ * Muestra el mensaje del calendario.
+ *
+ * @param texto - Texto que se quiere mostrar.
+ * @param tipo - Tipo de aviso que se quiere mostrar.
+ */
 function avisar(texto, tipo) {
     mensajeEtapa.textContent = texto;
     mensajeEtapa.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
-/* Datos: esta función busca una etapa programada. Recibe el ID de la etapa. */
+/**
+ * Busca una etapa programada.
+ *
+ * @param id - El ID de la etapa.
+ */
 function etapaPorId(id) {
     return fuentesCalendario.etapas.find(etapa => etapa.idEtapa === id) || null;
 }
 
-/* Datos: esta función filtra las etapas programadas de un cultivo. Recibe el ID del cultivo. */
+/**
+ * Filtra las etapas programadas de un cultivo.
+ *
+ * @param idCultivo - El ID del cultivo.
+ */
 function etapasDeCultivo(idCultivo) {
     return fuentesCalendario.etapas.filter(function (e) { return String(e.idCultivo) === String(idCultivo); });
 }
 
-/* Datos: esta función llena el selector de cultivos a partir de la consulta. No recibe atributos. */
+/**
+ * Llena el selector de cultivos a partir de la consulta.
+ */
 function llenarFiltro() {
     const anterior = filtroCultivo.value || parametrosCalendario.get('cultivo') || '';
     filtroCultivo.innerHTML = '<option value="">Todos los cultivos</option>';
@@ -238,12 +273,20 @@ function llenarFiltro() {
     filtroCultivo.value = Campo.cultivoPorId(anterior) ? String(anterior) : '';
 }
 
-/* Datos: esta función prepara los eventos visibles con el filtro de cultivo. No recibe atributos. */
+/**
+ * Prepara los eventos visibles con el filtro de cultivo.
+ */
 function eventosActuales() {
     return CalendarioLogica.construirEventos(fuentesCalendario, filtroCultivo.value);
 }
 
-/* Datos: esta función crea un botón del calendario. Recibe el texto, la acción y si usa estilo secundario. */
+/**
+ * Crea un botón del calendario.
+ *
+ * @param texto - Texto que se quiere mostrar.
+ * @param alClic - Función que se ejecuta al pulsar el botón.
+ * @param secundario - Indica si se aplica el estilo de botón secundario.
+ */
 function crearBoton(texto, alClic, secundario) {
     const boton = document.createElement('button');
     boton.type = 'button';
@@ -253,7 +296,12 @@ function crearBoton(texto, alClic, secundario) {
     return boton;
 }
 
-/* Datos: esta función abre el formulario para completar o reprogramar una etapa. Recibe el modo y la etapa. */
+/**
+ * Abre el formulario para completar o reprogramar una etapa.
+ *
+ * @param modo - Acción que se realiza con la etapa, completar o reprogramar.
+ * @param etapa - Etapa del cultivo seleccionada.
+ */
 function abrirDialogo(modo, etapa) {
     accionDialogo = { modo: modo, etapa: etapa };
     mensajeDialogo.textContent = '';
@@ -276,7 +324,11 @@ function abrirDialogo(modo, etapa) {
     dialogoEtapa.showModal();
 }
 
-/* Datos: esta función pide confirmación y elimina una etapa mediante la API. Recibe la etapa. */
+/**
+ * Pide confirmación y elimina una etapa mediante la API.
+ *
+ * @param etapa - La etapa.
+ */
 function eliminarEtapa(etapa) {
     if (!confirm('¿Eliminar la etapa ' + etapa.etapa + ' de ' + Campo.nombreCultivo(etapa.idCultivo) + '?')) {
         return;
@@ -288,7 +340,11 @@ function eliminarEtapa(etapa) {
     });
 }
 
-/* Datos: esta función valida y guarda una etapa completada o reprogramada. Recibe el evento del formulario. */
+/**
+ * Valida y guarda una etapa completada o reprogramada.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarCambioEtapa(evento) {
     evento.preventDefault();
     const etapa = accionDialogo.etapa;
@@ -338,7 +394,9 @@ function guardarCambioEtapa(evento) {
     });
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarCalendario() {
     leerParametros();
     formularioDialogo.addEventListener('submit', guardarCambioEtapa);

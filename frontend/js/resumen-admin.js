@@ -1,11 +1,19 @@
-/* Datos: consulta los registros de administración y el pronóstico del tiempo para el resumen. No recibe atributos. */
+/**
+ * @file Consulta los registros de administración y el pronóstico del tiempo para el resumen.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_RESUMEN = "http://" + window.location.hostname + ":8081/api";
 const mensajeResumen = document.getElementById("mensaje-resumen");
 const mensajeClima = document.getElementById("mensaje-clima");
 let terrenosResumen = [];
 
-/* Datos: pide datos al backend y procesa posibles errores. Recibe la URL. */
+/**
+ * Pide datos al backend y procesa posibles errores.
+ *
+ * @param url - La URL.
+ */
 async function consultar(url) {
     const respuesta = await fetch(url, { credentials: 'include' });
     const contenido = await respuesta.text();
@@ -34,7 +42,11 @@ async function consultar(url) {
     return datos;
 }
 
-/* Datos: actualiza los totales del panel. Recibe una indicación de si también debe consultar el clima. */
+/**
+ * Actualiza los totales del panel.
+ *
+ * @param actualizarClima - Una indicación de si también debe consultar el clima.
+ */
 async function cargarResumen(actualizarClima) {
     mensajeResumen.textContent = "Cargando información…";
 
@@ -126,7 +138,11 @@ async function cargarResumen(actualizarClima) {
     }
 }
 
-/* Datos: consulta el pronóstico con las coordenadas de un terreno. Recibe la lista de terrenos. */
+/**
+ * Consulta el pronóstico con las coordenadas de un terreno.
+ *
+ * @param terrenos - La lista de terrenos.
+ */
 async function cargarClima(terrenos) {
     let terrenoConCoordenadas = null;
 
@@ -172,13 +188,22 @@ async function cargarClima(terrenos) {
     }
 }
 
-/* Datos: da formato a un número para el resumen. Recibe el valor y los decimales. */
+/**
+ * Da formato a un número para el resumen.
+ *
+ * @param valor - Valor numérico que se muestra.
+ * @param decimales - Cantidad máxima de decimales.
+ */
 function numero(valor, decimales) {
     if (decimales === undefined) decimales = 0;
     return Number(valor || 0).toLocaleString("es-MX", { maximumFractionDigits: decimales });
 }
 
-/* Datos: da formato a la fecha de una tarjeta del pronóstico. Recibe la fecha. */
+/**
+ * Da formato a la fecha de una tarjeta del pronóstico.
+ *
+ * @param fecha - La fecha.
+ */
 function fechaPronostico(fecha) {
     const partes = fecha.split("-");
     const anio = Number(partes[0]);
@@ -190,7 +215,11 @@ function fechaPronostico(fecha) {
     });
 }
 
-/* Datos: muestra las tarjetas del pronóstico semanal. Recibe la lista de días. */
+/**
+ * Muestra las tarjetas del pronóstico semanal.
+ *
+ * @param dias - La lista de días.
+ */
 function dibujarPronostico(dias) {
     const contenedor = document.getElementById("pronostico-semanal");
     contenedor.replaceChildren();
@@ -225,7 +254,9 @@ function dibujarPronostico(dias) {
     }
 }
 
-/* Datos: programa la siguiente consulta de clima a medianoche. No recibe atributos. */
+/**
+ * Programa la siguiente consulta de clima a medianoche.
+ */
 function programarActualizacionDelClima() {
     const ahora = new Date();
     const medianoche = new Date(
@@ -241,7 +272,9 @@ function programarActualizacionDelClima() {
     }, milisegundosHastaMedianoche);
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarResumen() {
     const usuarioResumen = usuarioActual();
     if (window.location.hostname === "127.0.0.1") {

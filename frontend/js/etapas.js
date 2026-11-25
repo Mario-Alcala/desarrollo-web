@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta y programa etapas individuales o un calendario sugerido para el cultivo elegido. No recibe atributos. */
+/**
+ * @file Consulta y programa etapas individuales o un calendario sugerido para el cultivo elegido.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const parametrosEtapas = new URLSearchParams(window.location.search);
 const selectCultivoEtapa = document.getElementById('cultivo');
@@ -11,7 +15,9 @@ const mensajeSugerido = document.getElementById('mensaje-sugerido');
 const campoFechaBase = document.getElementById('fecha-base');
 let etapasCultivoElegido = [];
 
-/* Datos: esta función consulta las etapas del cultivo seleccionado desde la API. No recibe atributos. */
+/**
+ * Consulta las etapas del cultivo seleccionado desde la API.
+ */
 function cargarEtapasDelCultivo() {
     const cultivo = cultivoElegido();
     etapasCultivoElegido = [];
@@ -33,7 +39,11 @@ function cargarEtapasDelCultivo() {
     });
 }
 
-/* Datos: esta función registra una etapa en la API. Recibe los datos de la etapa. */
+/**
+ * Registra una etapa en la API.
+ *
+ * @param datos - Los datos de la etapa.
+ */
 function enviarEtapa(datos) {
     return pedirApi('/etapas-cultivo', 'POST', datos).then(function (creada) {
         etapasCultivoElegido.push(creada);
@@ -41,7 +51,9 @@ function enviarEtapa(datos) {
     });
 }
 
-/* Datos: esta función muestra las etapas que ya están programadas. No recibe atributos. */
+/**
+ * Muestra las etapas que ya están programadas.
+ */
 function dibujarProgramadas() {
     const cuerpo = document.getElementById('etapas-programadas');
     cuerpo.innerHTML = '';
@@ -61,7 +73,9 @@ function dibujarProgramadas() {
     }
 }
 
-/* Datos: esta función calcula y muestra las fechas propuestas para las etapas. No recibe atributos. */
+/**
+ * Calcula y muestra las fechas propuestas para las etapas.
+ */
 function dibujarSugerido() {
     const cuerpo = document.getElementById('vista-sugerida');
     cuerpo.innerHTML = '';
@@ -87,18 +101,27 @@ function dibujarSugerido() {
     return sugerido.etapas;
 }
 
-/* Datos: esta función muestra el mensaje de etapas. Recibe el texto y el tipo de mensaje. */
+/**
+ * Muestra el mensaje de etapas.
+ *
+ * @param texto - Texto que se quiere mostrar.
+ * @param tipo - Tipo de aviso que se quiere mostrar.
+ */
 function avisarEtapas(texto, tipo) {
     mensajeEtapas.textContent = texto;
     mensajeEtapas.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
-/* Datos: esta función busca el cultivo que se eligió en el formulario. No recibe atributos. */
+/**
+ * Busca el cultivo que se eligió en el formulario.
+ */
 function cultivoElegido() {
     return Campo.cultivoPorId(selectCultivoEtapa.value);
 }
 
-/* Datos: esta función lee los días indicados en el formulario de sugerencias. No recibe atributos. */
+/**
+ * Lee los días indicados en el formulario de sugerencias.
+ */
 function diasSugeridosDelFormulario() {
     const dias = {};
     CalendarioLogica.ETAPAS.forEach(function (etapa, i) {
@@ -107,7 +130,9 @@ function diasSugeridosDelFormulario() {
     return dias;
 }
 
-/* Datos: esta función propone una fecha inicial a partir de las fechas del cultivo. No recibe atributos. */
+/**
+ * Propone una fecha inicial a partir de las fechas del cultivo.
+ */
 function proponerFechaBase() {
     const cultivo = cultivoElegido();
     const dias = diasSugeridosDelFormulario();
@@ -124,7 +149,11 @@ function proponerFechaBase() {
     }
 }
 
-/* Datos: esta función valida y guarda la etapa elegida. Recibe el evento del formulario. */
+/**
+ * Valida y guarda la etapa elegida.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarEtapa(evento) {
     evento.preventDefault();
     mensajeFormEtapa.textContent = '';
@@ -156,7 +185,11 @@ function guardarEtapa(evento) {
     });
 }
 
-/* Datos: esta función valida y guarda las etapas sugeridas en orden. Recibe el evento del botón. */
+/**
+ * Valida y guarda las etapas sugeridas en orden.
+ *
+ * @param evento - El evento del botón.
+ */
 async function guardarEtapasSugeridas(evento) {
     const cultivo = cultivoElegido();
     const etapas = dibujarSugerido();
@@ -196,7 +229,9 @@ async function guardarEtapasSugeridas(evento) {
     }
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarEtapas() {
     document.getElementById('formulario-etapa').addEventListener('submit', guardarEtapa);
     document.getElementById('programar-sugerido').addEventListener('click', guardarEtapasSugeridas);

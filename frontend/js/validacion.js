@@ -1,31 +1,55 @@
-/* Datos: valida los campos de formularios y maneja fechas locales. Devuelve un mensaje vacío para los campos válidos. No recibe atributos. */
+/**
+ * @file Valida los campos de formularios y maneja fechas locales. Devuelve un mensaje vacío para los campos válidos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const Validacion = (function () {
 
-    /* Datos: pone en mayúscula la primera letra. Recibe el texto. */
+    /**
+     * Pone en mayúscula la primera letra.
+     *
+     * @param {string} texto - Texto que se muestra.
+     */
     function capitalizar(texto) {
         return texto.charAt(0).toUpperCase() + texto.slice(1);
     }
 
-    /* Datos: completa un número con cero. Recibe el número. */
+    /**
+     * Completa un número con cero.
+     *
+     * @param {number} n - Número que se formatea.
+     */
     function dosDigitos(n) {
         return (n < 10 ? '0' : '') + n;
     }
 
-        /* Datos: devuelve la fecha local de hoy con formato AAAA-MM-DD. No recibe atributos. */
+        /**
+         * Devuelve la fecha local de hoy con formato AAAA-MM-DD.
+         */
         function hoy() {
         const d = new Date();
         return d.getFullYear() + '-' + dosDigitos(d.getMonth() + 1) + '-' + dosDigitos(d.getDate());
     }
 
-    /* Datos: calcula una fecha desplazada. Recibe la fecha y los días. */
+    /**
+     * Calcula una fecha desplazada.
+     *
+     * @param {string} fecha - Fecha inicial en formato AAAA-MM-DD.
+     * @param {number} dias - Días que se agregan.
+     */
     function sumarDias(fecha, dias) {
         const p = fecha.split('-');
         const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + dias));
         return d.getUTCFullYear() + '-' + dosDigitos(d.getUTCMonth() + 1) + '-' + dosDigitos(d.getUTCDate());
     }
 
-    /* Datos: calcula los días entre dos fechas. Recibe las dos fechas. */
+    /**
+     * Calcula los días entre dos fechas.
+     *
+     * @param {string} desde - Fecha inicial en formato AAAA-MM-DD.
+     * @param {string} hasta - Fecha final en formato AAAA-MM-DD.
+     */
     function diasEntre(desde, hasta) {
         const a = desde.split('-');
         const b = hasta.split('-');
@@ -33,7 +57,11 @@ const Validacion = (function () {
         return Math.round(ms / 86400000);
     }
 
-    /* Datos: comprueba que la fecha exista. Recibe el texto de la fecha. */
+    /**
+     * Comprueba que la fecha exista.
+     *
+     * @param {string} texto - Fecha que se comprueba.
+     */
     function fechaExiste(texto) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(texto || '')) {
             return false;
@@ -46,7 +74,12 @@ const Validacion = (function () {
         return anio >= 1900 && d.getUTCFullYear() === anio && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
     }
 
-        /* Datos: valida una fecha y sus límites. Recibe el texto y las opciones. */
+        /**
+         * Valida una fecha y sus límites.
+         *
+         * @param {string} texto - Fecha en formato AAAA-MM-DD.
+         * @param {Object} [opciones] - Nombre del campo y reglas de fecha.
+         */
         function fecha(texto, opciones) {
         const o = opciones || {};
         const nombre = o.nombre || 'la fecha';
@@ -65,7 +98,12 @@ const Validacion = (function () {
         return '';
     }
 
-        /* Datos: valida cantidades y decimales. Recibe el valor y las opciones. */
+        /**
+         * Valida cantidades y decimales.
+         *
+         * @param {number|string} valor - Cantidad que se revisa.
+         * @param {Object} [opciones] - Nombre, máximo y decimales permitidos.
+         */
         function numero(valor, opciones) {
         const o = opciones || {};
         const nombre = o.nombre || 'la cantidad';
@@ -92,7 +130,12 @@ const Validacion = (function () {
         return '';
     }
 
-        /* Datos: valida si el texto está completo y cumple su longitud. Recibe el valor y las opciones. */
+        /**
+         * Valida si el texto está completo y cumple su longitud.
+         *
+         * @param {string} valor - Texto del campo.
+         * @param {Object} [opciones] - Nombre, longitud máxima y obligatoriedad.
+         */
         function texto(valor, opciones) {
         const o = opciones || {};
         const limpio = String(valor || '').trim();
@@ -105,18 +148,33 @@ const Validacion = (function () {
         return '';
     }
 
-    /* Datos: comprueba si la opción está permitida. Recibe el valor, la lista y su nombre. */
+    /**
+     * Comprueba si la opción está permitida.
+     *
+     * @param {string} valor - Valor elegido.
+     * @param {string[]} permitidas - Opciones válidas.
+     * @param {string} [nombre] - Nombre del campo.
+     */
     function opcion(valor, permitidas, nombre) {
         return permitidas.indexOf(valor) === -1 ? 'Elige ' + (nombre || 'una opción') + '.' : '';
     }
 
-    /* Datos: comprueba que el identificador sea un entero positivo. Recibe el valor y el nombre del registro. */
+    /**
+     * Comprueba que el identificador sea un entero positivo.
+     *
+     * @param {number|string} valor - Identificador que se revisa.
+     * @param {string} [nombre] - Nombre del registro.
+     */
     function idValido(valor, nombre) {
         const n = Number(valor);
         return valor && Number.isInteger(n) && n > 0 ? '' : 'Selecciona ' + (nombre || 'un registro') + '.';
     }
 
-        /* Datos: marca los campos inválidos y enfoca el primero. Recibe pares de campo y mensaje. */
+        /**
+         * Marca los campos inválidos y enfoca el primero.
+         *
+         * @param {Array} pares - Pares de campo y mensaje de error.
+         */
         function primerError(pares) {
         for (let i = 0; i < pares.length; i++) {
             const campo = pares[i][0];
@@ -154,7 +212,11 @@ const Validacion = (function () {
     };
 })();
 
-/* Datos: elige el mensaje que se muestra al fallar una solicitud. Recibe el error. */
+/**
+ * Elige el mensaje que se muestra al fallar una solicitud.
+ *
+ * @param {Error} error - Error que ocurrió al realizar la solicitud.
+ */
 function textoErrorApi(error) {
     if (error instanceof TypeError) {
         return 'No hay conexión con el servidor. Revisa que Spring Boot esté corriendo en el puerto 8081.';

@@ -1,4 +1,8 @@
-/* Datos: registra pedidos del empleado con usuarios y lotes de la API. No recibe atributos. */
+/**
+ * @file Registra pedidos del empleado con usuarios y lotes de la API.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const formularioPedidoEmpleado = document.getElementById('formulario-pedido-empleado');
 const selectorClienteEmpleado = document.getElementById('cliente-pedido-empleado');
 const selectorEntregaEmpleado = document.getElementById('tipo-entrega-pedido-empleado');
@@ -7,7 +11,9 @@ const mensajePedidoEmpleado = document.getElementById('mensaje-pedido-empleado')
 const errorPedidoEmpleado = document.getElementById('error-pedido-empleado');
 let lotesPedidoEmpleado = [];
 
-/* Datos: consulta clientes y catálogo disponibles. No recibe atributos. */
+/**
+ * Consulta clientes y catálogo disponibles.
+ */
 async function cargarDatosPedidoEmpleado() {
     selectorClienteEmpleado.innerHTML = '<option value="">Cargando clientes…</option>';
     try {
@@ -34,7 +40,11 @@ async function cargarDatosPedidoEmpleado() {
     }
 }
 
-/* Datos: envía el cliente, los lotes y la forma de entrega. Recibe el evento submit. */
+/**
+ * Envía el cliente, los lotes y la forma de entrega.
+ *
+ * @param evento - Evento de envío del formulario.
+ */
 async function guardarPedidoEmpleado(evento) {
     evento.preventDefault();
     errorPedidoEmpleado.textContent = '';
@@ -89,7 +99,9 @@ async function guardarPedidoEmpleado(evento) {
     }
 }
 
-/* Datos: actualiza la disponibilidad de las opciones. No recibe atributos. */
+/**
+ * Actualiza la disponibilidad de las opciones.
+ */
 async function cargarLotesActualizados() {
     try {
         lotesPedidoEmpleado = await pedirApi('/catalogo');
@@ -124,7 +136,9 @@ function lotesDisponiblesPedido() {
     });
 }
 
-/* Datos: suma precio por kilo por cantidad elegida. No recibe atributos. */
+/**
+ * Suma precio por kilo por cantidad elegida.
+ */
 function actualizarTotalPedido() {
     let total = 0;
     cajaDetallesEmpleado.querySelectorAll('.detalle-pedido-empleado').forEach(function (fila) {
@@ -140,7 +154,9 @@ function actualizarTotalPedido() {
     document.getElementById('total-pedido-empleado').textContent = '$' + total.toFixed(2);
 }
 
-/* Datos: crea un renglón para elegir lote y kilos. No recibe atributos. */
+/**
+ * Crea un renglón para elegir lote y kilos.
+ */
 function agregarDetallePedido() {
     const fila = document.createElement('div');
     fila.className = 'campos-operacion detalle-pedido-empleado espacio';
@@ -196,7 +212,9 @@ function agregarDetallePedido() {
     cajaDetallesEmpleado.appendChild(fila);
 }
 
-/* Datos: muestra los campos de la entrega elegida. No recibe atributos. */
+/**
+ * Muestra los campos de la entrega elegida.
+ */
 function mostrarCamposEntregaPedido() {
     const recoger = selectorEntregaEmpleado.value === 'recoleccion';
     document.getElementById('fecha-recoleccion-pedido-empleado').hidden = !recoger;
@@ -205,7 +223,9 @@ function mostrarCamposEntregaPedido() {
     document.getElementById('direccion-entrega-pedido-empleado').required = !recoger;
 }
 
-/* Datos: conecta los controles y carga los datos iniciales. No recibe atributos. */
+/**
+ * Conecta los controles y carga los datos iniciales.
+ */
 function iniciarPedidoEmpleado() {
     document.getElementById('agregar-producto-pedido-empleado').addEventListener('click', agregarDetallePedido);
     selectorEntregaEmpleado.addEventListener('change', mostrarCamposEntregaPedido);

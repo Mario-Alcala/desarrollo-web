@@ -1,4 +1,8 @@
-/* Datos: conecta el inicio de sesión y el registro de clientes con la API de usuarios. No recibe atributos. */
+/**
+ * @file Conecta el inicio de sesión y el registro de clientes con la API de usuarios.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const botonCrearCuenta = document.getElementById('crear-cuenta');
 const formularioLogin = document.getElementById('formulario-login');
@@ -6,7 +10,11 @@ const formularioRegistro = document.getElementById('formulario-registro');
 const hostAcceso = window.location.hostname || 'localhost';
 const urlUsuarios = 'http://' + (hostAcceso === '127.0.0.1' ? 'localhost' : hostAcceso) + ':8081/api/usuarios';
 
-/* Datos: valida el formulario, autentica al usuario y abre la pantalla de su rol. Recibe el evento de envío. */
+/**
+ * Valida el formulario, autentica al usuario y abre la pantalla de su rol.
+ *
+ * @param {SubmitEvent} evento - Evento de envío del formulario.
+ */
 async function iniciarSesionDesdeFormulario(evento) {
     evento.preventDefault();
 
@@ -67,7 +75,11 @@ async function iniciarSesionDesdeFormulario(evento) {
     }
 }
 
-/* Datos: valida y registra una cuenta de cliente en la API. Recibe el evento de envío. */
+/**
+ * Valida y registra una cuenta de cliente en la API.
+ *
+ * @param {SubmitEvent} evento - Evento de envío del formulario.
+ */
 async function registrarClienteDesdeFormulario(evento) {
     evento.preventDefault();
 
@@ -116,12 +128,16 @@ async function registrarClienteDesdeFormulario(evento) {
     }
 }
 
-/* Datos: abre el formulario de registro. No recibe atributos. */
+/**
+ * Abre el formulario de registro.
+ */
 function abrirRegistro() {
     window.location.href = 'crear-cuenta.html';
 }
 
-/* Datos: prepara los controles de acceso disponibles en esta página. No recibe atributos. */
+/**
+ * Prepara los controles de acceso disponibles en esta página.
+ */
 function iniciarAcceso() {
     if (hostAcceso === '127.0.0.1') {
         window.location.replace(window.location.href.replace('127.0.0.1', 'localhost'));

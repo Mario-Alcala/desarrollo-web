@@ -1,9 +1,15 @@
-/* Datos: consulta y muestra los pedidos de la cuenta del cliente. No recibe atributos. */
+/**
+ * @file Consulta y muestra los pedidos de la cuenta del cliente.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 const API_HISTORIAL_CLIENTE = 'http://' + window.location.hostname + ':8081/api';
 const cuerpoHistorialCliente = document.getElementById('historial-pedidos');
 const mensajeHistorialCliente = document.getElementById('mensaje-historial');
 
-/* Datos: pide el historial por id de la cuenta en sesión. No recibe atributos. */
+/**
+ * Pide el historial por id de la cuenta en sesión.
+ */
 async function cargarHistorialCliente() {
     const idUsuario = sessionStorage.getItem('usuarioId');
     if (!idUsuario || sessionStorage.getItem('usuarioRol') !== 'cliente') {
@@ -22,7 +28,11 @@ async function cargarHistorialCliente() {
     }
 }
 
-/* Datos: muestra una fila por pedido. Recibe los pedidos que devolvió la API. */
+/**
+ * Muestra una fila por pedido.
+ *
+ * @param pedidos - Registros de pedidos devueltos por la API.
+ */
 function mostrarHistorialCliente(pedidos) {
     cuerpoHistorialCliente.replaceChildren();
     for (const pedido of agruparHistorialCliente(pedidos)) {
@@ -50,7 +60,11 @@ function ponerCeldaHistorial(fila, texto) {
     fila.appendChild(celda);
 }
 
-/* Datos: reúne los productos de cada compra. Recibe filas con idPedido, idCosecha y kilos. */
+/**
+ * Reúne los productos de cada compra.
+ *
+ * @param pedidos - Registros de pedidos devueltos por la API.
+ */
 function agruparHistorialCliente(pedidos) {
     const porPedido = {};
     for (const pedido of pedidos) {

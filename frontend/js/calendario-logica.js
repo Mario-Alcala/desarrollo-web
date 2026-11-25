@@ -1,19 +1,33 @@
-/* Datos: este archivo define las etapas de cultivo y calcula fechas y eventos del calendario. No recibe atributos. */
+/**
+ * @file Define las etapas de cultivo y calcula fechas y eventos del calendario.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const CalendarioLogica = crearLogicaCalendario();
 
-/* Datos: reúne las reglas de fechas y etapas del cultivo. No recibe atributos. */
+/**
+ * Reúne las reglas de fechas y etapas del cultivo.
+ */
 function crearLogicaCalendario() {
     const ETAPAS = ['Germinación', 'Siembra', 'Vegetación/Riego', 'Floración', 'Cosecha'];
 
     const DIAS_SUGERIDOS = { 'Germinación': 0, 'Siembra': 15, 'Vegetación/Riego': 30, 'Floración': 60, 'Cosecha': 90 };
 
-    /* Datos: esta función normaliza un texto para comparar nombres de etapas. Recibe el texto. */
+    /**
+     * Normaliza un texto para comparar nombres de etapas.
+     *
+     * @param texto - El texto.
+     */
     function simplificar(texto) {
         return String(texto || '').trim().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s/g, '');
     }
 
-    /* Datos: esta función busca la posición de una etapa por su nombre. Recibe el texto de la etapa. */
+    /**
+     * Busca la posición de una etapa por su nombre.
+     *
+     * @param texto - El texto de la etapa.
+     */
     function indiceEtapa(texto) {
         const buscado = simplificar(texto);
         if (!buscado) {
@@ -28,17 +42,31 @@ function crearLogicaCalendario() {
         return -1;
     }
 
-    /* Datos: esta función elige la clase visual de la etapa. Recibe el nombre de la etapa. */
+    /**
+     * Elige la clase visual de la etapa.
+     *
+     * @param etapa - El nombre de la etapa.
+     */
     function claseEtapa(etapa) {
         return ['germinacion', 'siembra', 'riego', 'floracion', 'cosecha'][indiceEtapa(etapa)] || 'riego';
     }
 
-    /* Datos: esta función obtiene la fecha efectiva de la etapa. Recibe la etapa programada. */
+    /**
+     * Obtiene la fecha efectiva de la etapa.
+     *
+     * @param etapa - La etapa programada.
+     */
     function fechaDe(etapa) {
         return etapa.fechaReal || etapa.fechaProgramada;
     }
 
-    /* Datos: esta función revisa que la fecha y el orden sean válidos. Recibe la nueva etapa, las existentes y el cultivo. */
+    /**
+     * Revisa que la fecha y el orden sean válidos.
+     *
+     * @param nueva - Etapa que se quiere programar.
+     * @param [existentes] - Etapas que ya están programadas para el cultivo.
+     * @param cultivo - Cultivo al que corresponde el registro.
+     */
     function validarProgramacion(nueva, existentes, cultivo) {
         if (!cultivo) {
             return 'Selecciona un cultivo.';
@@ -77,7 +105,12 @@ function crearLogicaCalendario() {
         return '';
     }
 
-    /* Datos: esta función calcula una fecha relativa a otra. Recibe una fecha y la cantidad de días. */
+    /**
+     * Calcula una fecha relativa a otra.
+     *
+     * @param fecha - Fecha que se usa para calcular o mostrar el dato.
+     * @param dias - Cantidad de días que se suman a la fecha.
+     */
     function sumarDias(fecha, dias) {
         const p = fecha.split('-');
         const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + Number(dias)));
@@ -86,7 +119,13 @@ function crearLogicaCalendario() {
         return d.getUTCFullYear() + '-' + (mes < 10 ? '0' : '') + mes + '-' + (dia < 10 ? '0' : '') + dia;
     }
 
-    /* Datos: esta función calcula las fechas sugeridas de las etapas pendientes. Recibe la fecha base, los días y las etapas existentes. */
+    /**
+     * Calcula las fechas sugeridas de las etapas pendientes.
+     *
+     * @param fechaBase - Fecha desde la que se cuentan los días de cada etapa.
+     * @param [dias] - Días desde la fecha base asignados a cada etapa.
+     * @param [existentes] - Etapas que ya están programadas para el cultivo.
+     */
     function sugerirCalendario(fechaBase, dias, existentes) {
         const tabla = dias || DIAS_SUGERIDOS;
         const ya = {};
@@ -109,7 +148,12 @@ function crearLogicaCalendario() {
         return { error: '', etapas: resultado };
     }
 
-    /* Datos: esta función reúne etapas, riegos, cosechas y siembras para el calendario. Recibe las listas de la API y el filtro. */
+    /**
+     * Reúne etapas, riegos, cosechas y siembras para el calendario.
+     *
+     * @param fuentes - Listas de cultivos, etapas, riegos y cosechas de la API.
+     * @param [filtro] - Identificador del cultivo que se desea mostrar.
+     */
     function construirEventos(fuentes, filtro) {
         const eventos = [];
         const coincide = function (idCultivo) { return !filtro || String(idCultivo) === String(filtro); };
@@ -164,7 +208,12 @@ function crearLogicaCalendario() {
         return eventos;
     }
 
-    /* Datos: esta función busca la etapa pendiente más cercana. Recibe las etapas del cultivo y la fecha de hoy. */
+    /**
+     * Busca la etapa pendiente más cercana.
+     *
+     * @param etapasCultivo - Etapas programadas para el cultivo.
+     * @param hoy - Fecha actual en formato AAAA-MM-DD.
+     */
     function proximaEtapa(etapasCultivo, hoy) {
         const pendientes = (etapasCultivo || []).filter(function (e) { return e.estado !== 'completada'; });
         pendientes.sort(function (a, b) { return indiceEtapa(a.etapa) - indiceEtapa(b.etapa); });

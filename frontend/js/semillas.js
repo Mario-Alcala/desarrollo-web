@@ -1,4 +1,8 @@
-/* Datos: este archivo muestra el banco de semillas y registra entradas y salidas de los lotes. No recibe atributos. */
+/**
+ * @file Muestra el banco de semillas y registra entradas y salidas de los lotes.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const usuarioSemillas = usuarioActual();
 const formSemilla = document.getElementById('formulario-semilla');
@@ -16,7 +20,9 @@ let semillasPorId = {};
 let proveedoresSemilla = {};
 let movimientosSemilla = [];
 
-/* Datos: esta función consulta lotes de semillas, insumos, proveedores, movimientos y cultivos desde la API. No recibe atributos. */
+/**
+ * Consulta lotes de semillas, insumos, proveedores, movimientos y cultivos desde la API.
+ */
 function cargarBanco() {
     mensajeSemillas.textContent = 'Cargando…';
     return Promise.all([
@@ -44,7 +50,9 @@ function cargarBanco() {
     });
 }
 
-/* Datos: esta función muestra los lotes que coinciden con la búsqueda y el filtro. No recibe atributos. */
+/**
+ * Muestra los lotes que coinciden con la búsqueda y el filtro.
+ */
 function dibujarBanco() {
     const cuerpo = document.getElementById('lista-semillas');
     cuerpo.innerHTML = '';
@@ -84,7 +92,9 @@ function dibujarBanco() {
     document.getElementById('total-semillas').textContent = partes.length ? partes.join(' · ') : '—';
 }
 
-/* Datos: esta función muestra los movimientos recientes de semillas. No recibe atributos. */
+/**
+ * Muestra los movimientos recientes de semillas.
+ */
 function dibujarMovimientosSemilla() {
     const cuerpo = document.getElementById('lista-movimientos-semilla');
     cuerpo.innerHTML = '';
@@ -104,12 +114,21 @@ function dibujarMovimientosSemilla() {
     }
 }
 
-/* Datos: esta función busca un lote de semillas. Recibe el ID del lote. */
+/**
+ * Busca un lote de semillas.
+ *
+ * @param id - El ID del lote.
+ */
 function loteSemilla(id) {
     return lotesSemilla.find(lote => String(lote.idInventario) === String(id)) || null;
 }
 
-/* Datos: esta función determina la disponibilidad de un lote de semillas. Recibe el lote y la fecha de hoy. */
+/**
+ * Determina la disponibilidad de un lote de semillas.
+ *
+ * @param lote - Lote de inventario que se está consultando.
+ * @param hoy - Fecha actual en formato AAAA-MM-DD.
+ */
 function estadoSemilla(lote, hoy) {
     if (Number(lote.cantidad) <= 0) {
         return { texto: 'Agotada', clase: 'peligro', vigente: false, conExistencia: false };
@@ -123,13 +142,19 @@ function estadoSemilla(lote, hoy) {
     return { texto: 'Vigente', clase: 'listo', vigente: true, conExistencia: true };
 }
 
-/* Datos: esta función busca el proveedor del lote. Recibe el lote de semillas. */
+/**
+ * Busca el proveedor del lote.
+ *
+ * @param lote - El lote de semillas.
+ */
 function proveedorDeSemilla(lote) {
     const semilla = semillasPorId[lote.idInsumo];
     return semilla ? proveedoresSemilla[semilla.idProveedor] || '' : '';
 }
 
-/* Datos: esta función llena el selector con los lotes que admite el tipo de movimiento. No recibe atributos. */
+/**
+ * Llena el selector con los lotes que admite el tipo de movimiento.
+ */
 function llenarLotesSemilla() {
     const hoy = Validacion.hoy();
     const esSalida = selectTipoSemilla.value === 'salida';
@@ -150,7 +175,9 @@ function llenarLotesSemilla() {
     mostrarDisponibleSemilla();
 }
 
-/* Datos: esta función muestra la cantidad disponible del lote de semillas elegido. No recibe atributos. */
+/**
+ * Muestra la cantidad disponible del lote de semillas elegido.
+ */
 function mostrarDisponibleSemilla() {
     const lote = loteSemilla(selectLoteSemilla.value);
     document.getElementById('s-disponible').textContent = lote
@@ -158,7 +185,11 @@ function mostrarDisponibleSemilla() {
         : '';
 }
 
-/* Datos: esta función registra una entrada o salida de semillas. Recibe el evento del formulario. */
+/**
+ * Registra una entrada o salida de semillas.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarMovimientoSemilla(evento) {
     evento.preventDefault();
     mensajeFormSemilla.textContent = '';
@@ -211,7 +242,9 @@ function guardarMovimientoSemilla(evento) {
     });
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarSemillas() {
     formSemilla.addEventListener('submit', guardarMovimientoSemilla);
     selectTipoSemilla.addEventListener('change', llenarLotesSemilla);

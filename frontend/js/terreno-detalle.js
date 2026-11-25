@@ -1,4 +1,8 @@
-/* Datos: muestra un terreno, sus parcelas y su bitácora, y conecta los formularios de edición. No recibe atributos. */
+/**
+ * @file Muestra un terreno, sus parcelas y su bitácora, y conecta los formularios de edición.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API = "http://localhost:8081/api";
 const idTerreno = new URLSearchParams(location.search).get("id");
@@ -20,14 +24,20 @@ const dialogoCultivo = document.getElementById("dialogo-cultivo");
 const formularioCultivo = document.getElementById("formulario-cultivo-parcela");
 const mensajeCultivo = document.getElementById("mensaje-cultivo-parcela");
 
-/* Datos: consulta una ruta de la API del proyecto. Recibe la ruta. */
+/**
+ * Consulta una ruta de la API del proyecto.
+ *
+ * @param ruta - La ruta.
+ */
 async function pedir(ruta) {
     const respuesta = await fetch(`${API}${ruta}`);
     if (!respuesta.ok) throw new Error(`Error ${respuesta.status}`);
     return respuesta.json();
 }
 
-/* Datos: combina el terreno y sus parcelas con los registros de la bitácora. No recibe atributos. */
+/**
+ * Combina el terreno y sus parcelas con los registros de la bitácora.
+ */
 async function cargarTerreno() {
     try {
         const registro = await pedir(`/terrenos/${encodeURIComponent(idTerreno)}`);
@@ -111,7 +121,9 @@ async function cargarTerreno() {
     }
 }
 
-/* Datos: consulta la temperatura y precipitación del terreno con Open-Meteo. No recibe atributos. */
+/**
+ * Consulta la temperatura y precipitación del terreno con Open-Meteo.
+ */
 async function cargarClima() {
     const detalle = document.getElementById("clima-detalle");
     const temp = document.getElementById("clima-temp");
@@ -129,7 +141,11 @@ async function cargarClima() {
     }
 }
 
-/* Datos: envía los cambios del terreno a la API. Recibe el evento del formulario. */
+/**
+ * Envía los cambios del terreno a la API.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarTerrenoEditado(evento) {
     evento.preventDefault();
     mensajeEditarTerreno.textContent = "";
@@ -167,7 +183,11 @@ async function guardarTerrenoEditado(evento) {
     }
 }
 
-/* Datos: registra una parcela dentro del terreno. Recibe el evento del formulario. */
+/**
+ * Registra una parcela dentro del terreno.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarParcela(evento) {
     evento.preventDefault();
     mensajeParcela.textContent = "";
@@ -196,7 +216,11 @@ async function guardarParcela(evento) {
     }
 }
 
-/* Datos: guarda los datos del cultivo de la parcela elegida. Recibe el evento del formulario. */
+/**
+ * Guarda los datos del cultivo de la parcela elegida.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarCultivo(evento) {
     evento.preventDefault();
     if (!parcelaActual) return;
@@ -240,7 +264,11 @@ async function guardarCultivo(evento) {
     }
 }
 
-/* Datos: guarda una observación, una incidencia o un riego. Recibe el evento del formulario. */
+/**
+ * Guarda una observación, una incidencia o un riego.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarRegistroBitacora(evento) {
     evento.preventDefault();
     if (!registroBitacoraActual) return;
@@ -297,7 +325,11 @@ async function guardarRegistroBitacora(evento) {
     }
 }
 
-/* Datos: muestra la pestaña elegida de la parcela. Recibe el evento del botón. */
+/**
+ * Muestra la pestaña elegida de la parcela.
+ *
+ * @param e - El evento del botón.
+ */
 function cambiarPestanaParcela(e) {
     if (e.target.dataset.tab && parcelaActual) {
         pestana = e.target.dataset.tab;
@@ -305,7 +337,9 @@ function cambiarPestanaParcela(e) {
     }
 }
 
-/* Datos: rellena y abre el formulario de edición de terreno. No recibe atributos. */
+/**
+ * Rellena y abre el formulario de edición de terreno.
+ */
 function abrirEdicionTerreno() {
     if (!terreno) return;
     mensajeEditarTerreno.textContent = "";
@@ -318,7 +352,9 @@ function abrirEdicionTerreno() {
     dialogoEditarTerreno.showModal();
 }
 
-/* Datos: muestra el formulario y calcula la superficie libre. No recibe atributos. */
+/**
+ * Muestra el formulario y calcula la superficie libre.
+ */
 function abrirNuevaParcela() {
     if (!terreno) return;
     mensajeParcela.textContent = "";
@@ -337,7 +373,9 @@ function abrirNuevaParcela() {
     dialogoParcela.showModal();
 }
 
-/* Datos: carga las variedades y abre el formulario del cultivo. No recibe atributos. */
+/**
+ * Carga las variedades y abre el formulario del cultivo.
+ */
 async function abrirFormularioCultivo() {
     if (!parcelaActual) return;
     mensajeCultivo.textContent = "";
@@ -371,7 +409,13 @@ async function abrirFormularioCultivo() {
     dialogoCultivo.showModal();
 }
 
-/* Datos: crea un elemento HTML. Recibe etiqueta, texto y clase. */
+/**
+ * Crea un elemento HTML.
+ *
+ * @param etiqueta - Nombre de la etiqueta HTML.
+ * @param [texto] - Contenido visible del elemento.
+ * @param [clase] - Clase CSS que se asigna al elemento.
+ */
 function crear(etiqueta, texto, clase) {
     const el = document.createElement(etiqueta);
     if (texto !== undefined && texto !== null) el.textContent = texto;
@@ -379,18 +423,30 @@ function crear(etiqueta, texto, clase) {
     return el;
 }
 
-/* Datos: pone en mayúscula la primera letra. Recibe el texto. */
+/**
+ * Pone en mayúscula la primera letra.
+ *
+ * @param texto - El texto.
+ */
 function capitalizar(texto) {
     const valor = String(texto || "");
     return valor.charAt(0).toUpperCase() + valor.slice(1);
 }
 
-/* Datos: convierte una superficie de hectáreas a metros cuadrados. Recibe la superficie en hectáreas. */
+/**
+ * Convierte una superficie de hectáreas a metros cuadrados.
+ *
+ * @param ha - La superficie en hectáreas.
+ */
 function m2(ha) {
     return ha == null ? "—" : Math.round(ha * 10000).toLocaleString("es-MX") + " m²";
 }
 
-/* Datos: da formato a una fecha de la parcela. Recibe la fecha. */
+/**
+ * Da formato a una fecha de la parcela.
+ *
+ * @param fecha - La fecha.
+ */
 function fechaCorta(fecha) {
     if (!fecha) return "Sin registrar";
     const partes = String(fecha).slice(0, 10).split("-");
@@ -400,7 +456,12 @@ function fechaCorta(fecha) {
     return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX");
 }
 
-/* Datos: lee un mensaje de error devuelto por el backend. Recibe la respuesta y el texto predeterminado. */
+/**
+ * Lee un mensaje de error devuelto por el backend.
+ *
+ * @param respuesta - Respuesta recibida de la API.
+ * @param mensajePredeterminado - Mensaje que se usa si la respuesta no trae un detalle.
+ */
 async function mensajeError(respuesta, mensajePredeterminado) {
     try {
         const error = await respuesta.json();
@@ -410,7 +471,9 @@ async function mensajeError(respuesta, mensajePredeterminado) {
     }
 }
 
-/* Datos: muestra los datos y conteos del terreno. No recibe atributos. */
+/**
+ * Muestra los datos y conteos del terreno.
+ */
 function dibujarTerreno() {
     document.getElementById("miga-terreno").textContent = terreno.nombre;
     document.getElementById("nombre-terreno").textContent = terreno.nombre;
@@ -436,7 +499,9 @@ function dibujarTerreno() {
     cargarClima();
 }
 
-/* Datos: dibuja la lista de parcelas del terreno. No recibe atributos. */
+/**
+ * Dibuja la lista de parcelas del terreno.
+ */
 function dibujarParcelas() {
     const cont = document.getElementById("lista-parcelas");
     cont.replaceChildren();
@@ -467,7 +532,9 @@ function dibujarParcelas() {
     }
 }
 
-/* Datos: muestra el cultivo y la bitácora de la parcela elegida. No recibe atributos. */
+/**
+ * Muestra el cultivo y la bitácora de la parcela elegida.
+ */
 function dibujarPanelParcela() {
     const p = parcelaActual;
     const botonCultivo = document.getElementById("gestionar-cultivo");
@@ -531,7 +598,11 @@ function dibujarPanelParcela() {
     }
 }
 
-/* Datos: prepara el formulario para editar el registro elegido. Recibe la entrada de bitácora. */
+/**
+ * Prepara el formulario para editar el registro elegido.
+ *
+ * @param bitacora - La entrada de bitácora.
+ */
 function abrirEdicionBitacora(bitacora) {
     registroBitacoraActual = bitacora;
     const r = bitacora.registro;
@@ -568,7 +639,9 @@ function abrirEdicionBitacora(bitacora) {
     dialogoBitacora.showModal();
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarDetalleTerreno() {
     document.getElementById("cancelar-bitacora").addEventListener("click", function () { dialogoBitacora.close(); });
 

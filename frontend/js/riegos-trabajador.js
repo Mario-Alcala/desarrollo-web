@@ -1,4 +1,8 @@
-/* Datos: este archivo consulta los riegos y permite registrar riegos de cultivos activos. No recibe atributos. */
+/**
+ * @file Consulta los riegos y permite registrar riegos de cultivos activos.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const usuarioRiego = usuarioActual();
 const formRiego = document.getElementById('formulario-riego');
@@ -14,7 +18,9 @@ const filtroRiegos = document.getElementById('filtro-cultivo');
 let riegos = [];
 let nombresUsuarios = {};
 
-/* Datos: esta función consulta los cultivos, riegos y responsables desde la API. No recibe atributos. */
+/**
+ * Consulta los cultivos, riegos y responsables desde la API.
+ */
 function cargarRiegos() {
     mensajeGeneral.textContent = 'Cargando…';
     return Promise.all([Campo.cargar(), pedirApi('/riegos'), Campo.cargarNombresUsuarios()])
@@ -32,7 +38,9 @@ function cargarRiegos() {
         });
 }
 
-/* Datos: esta función muestra los riegos del cultivo que coincide con el filtro. No recibe atributos. */
+/**
+ * Muestra los riegos del cultivo que coincide con el filtro.
+ */
 function dibujarRiegos() {
     const cuerpo = document.getElementById('lista-riegos');
     cuerpo.innerHTML = '';
@@ -61,7 +69,9 @@ function dibujarRiegos() {
     document.getElementById('total-agua').textContent = partes.length ? partes.join(' · ') : '—';
 }
 
-/* Datos: esta función muestra la parcela y el terreno del cultivo seleccionado. No recibe atributos. */
+/**
+ * Muestra la parcela y el terreno del cultivo seleccionado.
+ */
 function mostrarUbicacion() {
     const cultivo = Campo.cultivoPorId(selectCultivoRiego.value);
     document.getElementById('riego-ubicacion').textContent = cultivo
@@ -70,7 +80,11 @@ function mostrarUbicacion() {
     campoFechaRiego.min = cultivo && cultivo.fechaSiembra ? cultivo.fechaSiembra : '';
 }
 
-/* Datos: esta función valida y registra un riego. Recibe el evento del formulario. */
+/**
+ * Valida y registra un riego.
+ *
+ * @param evento - El evento del formulario.
+ */
 function guardarRiego(evento) {
     evento.preventDefault();
     mensajeRiego.textContent = '';
@@ -117,7 +131,9 @@ function guardarRiego(evento) {
     });
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarRiegosTrabajador() {
     formRiego.addEventListener('submit', guardarRiego);
     selectCultivoRiego.addEventListener('change', mostrarUbicacion);

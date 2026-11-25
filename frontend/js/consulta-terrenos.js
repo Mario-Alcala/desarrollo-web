@@ -1,11 +1,17 @@
-/* Datos: este archivo consulta terrenos y permite ver las parcelas de cada uno. No recibe atributos. */
+/**
+ * @file Consulta terrenos y permite ver las parcelas de cada uno.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const mensajeTerrenos = document.getElementById('mensaje-operacion');
 const cuerpoTerrenos = document.getElementById('registros-terrenos');
 const cuerpoParcelas = document.getElementById('registros-parcelas');
 const tituloParcelas = document.getElementById('titulo-parcelas');
 
-/* Datos: esta función consulta los terrenos de la API y actualiza la tabla. No recibe atributos. */
+/**
+ * Consulta los terrenos de la API y actualiza la tabla.
+ */
 function cargarTerrenos() {
     mensajeTerrenos.textContent = 'Cargando...';
     tituloParcelas.textContent = 'Parcelas';
@@ -22,7 +28,12 @@ function cargarTerrenos() {
         });
 }
 
-/* Datos: esta función consulta las parcelas del terreno seleccionado. Recibe el terreno y el botón. */
+/**
+ * Consulta las parcelas del terreno seleccionado.
+ *
+ * @param terreno - Terreno al que pertenecen las parcelas.
+ * @param boton - Botón asociado a la acción.
+ */
 function verParcelas(terreno, boton) {
     boton.disabled = true;
     mensajeTerrenos.textContent = '';
@@ -38,7 +49,11 @@ function verParcelas(terreno, boton) {
         });
 }
 
-/* Datos: esta función muestra la tabla de terrenos. Recibe la lista de la API. */
+/**
+ * Muestra la tabla de terrenos.
+ *
+ * @param terrenos - La lista de la API.
+ */
 function dibujarTerrenos(terrenos) {
     cuerpoTerrenos.innerHTML = '';
 
@@ -68,7 +83,12 @@ function dibujarTerrenos(terrenos) {
     }
 }
 
-/* Datos: esta función muestra las parcelas del terreno. Recibe el terreno y su lista de parcelas. */
+/**
+ * Muestra las parcelas del terreno.
+ *
+ * @param terreno - Terreno al que pertenecen las parcelas.
+ * @param parcelas - Parcelas registradas en el terreno.
+ */
 function dibujarParcelas(terreno, parcelas) {
     tituloParcelas.textContent = 'Parcelas de ' + terreno.nombre;
     cuerpoParcelas.innerHTML = '';
@@ -88,7 +108,11 @@ function dibujarParcelas(terreno, parcelas) {
     }
 }
 
-/* Datos: esta función prepara un mensaje para errores de consulta o guardado. Recibe el error. */
+/**
+ * Prepara un mensaje para errores de consulta o guardado.
+ *
+ * @param error - El error.
+ */
 function textoError(error) {
     if (error instanceof TypeError) {
         return 'No hay conexión con el servidor. Revisa que el backend esté corriendo.';
@@ -96,7 +120,11 @@ function textoError(error) {
     return error.message || 'No se pudo cargar la información.';
 }
 
-/* Datos: esta función convierte la superficie a metros cuadrados. Recibe el valor en hectáreas. */
+/**
+ * Convierte la superficie a metros cuadrados.
+ *
+ * @param ha - El valor en hectáreas.
+ */
 function m2DesdeHectareas(ha) {
     if (ha === null || ha === undefined || ha === '') {
         return '—';
@@ -104,7 +132,11 @@ function m2DesdeHectareas(ha) {
     return Math.round(Number(ha) * 10000).toLocaleString('es-MX') + ' m²';
 }
 
-/* Datos: esta función formatea la superficie de una parcela. Recibe el valor en metros cuadrados. */
+/**
+ * Formatea la superficie de una parcela.
+ *
+ * @param valor - El valor en metros cuadrados.
+ */
 function m2Parcela(valor) {
     if (valor === null || valor === undefined || valor === '') {
         return '—';
@@ -112,14 +144,25 @@ function m2Parcela(valor) {
     return Number(valor).toLocaleString('es-MX', { maximumFractionDigits: 2 }) + ' m²';
 }
 
-/* Datos: esta función agrega una celda de texto. Recibe una fila y su texto. */
+/**
+ * Agrega una celda de texto.
+ *
+ * @param fila - Fila de la tabla que recibe la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function agregarCelda(fila, texto) {
     const celda = document.createElement('td');
     celda.textContent = texto === null || texto === undefined || texto === '' ? '—' : texto;
     fila.appendChild(celda);
 }
 
-/* Datos: esta función muestra un mensaje en una fila. Recibe el cuerpo de la tabla, las columnas y el texto. */
+/**
+ * Muestra un mensaje en una fila.
+ *
+ * @param cuerpo - Cuerpo de la tabla.
+ * @param columnas - Cantidad de columnas que cubre la celda.
+ * @param texto - Texto que se quiere mostrar.
+ */
 function filaMensaje(cuerpo, columnas, texto) {
     const fila = document.createElement('tr');
     const celda = document.createElement('td');
@@ -129,7 +172,9 @@ function filaMensaje(cuerpo, columnas, texto) {
     cuerpo.appendChild(fila);
 }
 
-/* Datos: esta función conecta los eventos de esta pantalla y carga los datos. No recibe atributos. */
+/**
+ * Conecta los eventos de esta pantalla y carga los datos.
+ */
 function iniciarConsultaTerrenos() {
     document.getElementById('actualizar-operacion').onclick = cargarTerrenos;
     cargarTerrenos();

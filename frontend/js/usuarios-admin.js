@@ -1,4 +1,8 @@
-/* Datos: consulta, filtra y guarda usuarios mediante la API. No recibe atributos. */
+/**
+ * @file Consulta, filtra y guarda usuarios mediante la API.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_USUARIOS = "http://localhost:8081/api/usuarios";
 
@@ -23,7 +27,13 @@ let usuarios = [];
 let rolActivo = "todos";
 let editandoIdUsuario = null;
 
-/* Datos: valida nombre, correo, contraseña y rol. Recibe los datos, la lista de usuarios y el ID en edición. */
+/**
+ * Valida nombre, correo, contraseña y rol.
+ *
+ * @param datos - Datos de la cuenta que se va a registrar o editar.
+ * @param lista - Usuarios consultados en la API.
+ * @param idEditando - Identificador del usuario que se está editando.
+ */
 function validarUsuario(datos, lista, idEditando) {
     const nombre = (datos.nombreUsuario || "").trim();
     const correo = (datos.correoElectronico || "").trim().toLowerCase();
@@ -46,7 +56,13 @@ function validarUsuario(datos, lista, idEditando) {
     return "";
 }
 
-/* Datos: selecciona usuarios por rol, nombre o correo. Recibe la lista, el rol y el texto de búsqueda. */
+/**
+ * Selecciona usuarios por rol, nombre o correo.
+ *
+ * @param lista - Usuarios consultados en la API.
+ * @param rol - Rol elegido en el filtro.
+ * @param texto - Texto de búsqueda para el nombre y el correo.
+ */
 function filtrarUsuarios(lista, rol, texto) {
     const q = (texto || "").trim().toLowerCase();
     return lista.filter(u =>
@@ -55,7 +71,9 @@ function filtrarUsuarios(lista, rol, texto) {
     );
 }
 
-/* Datos: actualiza la tabla con la lista recibida de la API. No recibe atributos. */
+/**
+ * Actualiza la tabla con la lista recibida de la API.
+ */
 async function cargarUsuarios() {
     try {
         const r = await fetch(API_USUARIOS);
@@ -74,7 +92,11 @@ async function cargarUsuarios() {
     }
 }
 
-/* Datos: arma una fila de la tabla. Recibe un usuario con su ID, nombre, correo y rol. */
+/**
+ * Arma una fila de la tabla.
+ *
+ * @param u - Un usuario con su ID, nombre, correo y rol.
+ */
 function filaUsuario(u) {
     const fila = document.createElement("tr");
     const nombre = document.createElement("td");
@@ -102,7 +124,9 @@ function filaUsuario(u) {
     return fila;
 }
 
-/* Datos: dibuja los usuarios visibles según el filtro actual. No recibe atributos. */
+/**
+ * Dibuja los usuarios visibles según el filtro actual.
+ */
 function dibujarUsuarios() {
     const visibles = filtrarUsuarios(usuarios, rolActivo, buscadorUsuarios ? buscadorUsuarios.value : "");
     tabla.replaceChildren(...visibles.map(filaUsuario));
@@ -111,12 +135,21 @@ function dibujarUsuarios() {
     else if (mensajeUsuarios.textContent === "No hay usuarios para mostrar.") mensajeUsuarios.textContent = "";
 }
 
-/* Datos: busca un campo en las dos vistas existentes de Usuarios. Recibe el ID y el ID alternativo. */
+/**
+ * Busca un campo en las dos vistas existentes de Usuarios.
+ *
+ * @param id - Identificador del elemento HTML.
+ * @param [alternativo] - Identificador de respaldo en la otra vista.
+ */
 function campo(id, alternativo) {
     return document.getElementById(id) || (alternativo ? document.getElementById(alternativo) : null);
 }
 
-/* Datos: prepara el formulario de alta o edición. Recibe el usuario a editar o null para dar de alta. */
+/**
+ * Prepara el formulario de alta o edición.
+ *
+ * @param usuario - Cuenta que se edita o null para registrar una nueva.
+ */
 function abrirFormularioUsuario(usuario) {
     editandoIdUsuario = usuario ? usuario.idUsuario : null;
     campo("titulo-dialogo-usuario", "titulo-formulario").textContent = usuario ? "Editar usuario" : "Agregar usuario";
@@ -149,13 +182,19 @@ function abrirFormularioUsuario(usuario) {
     }
 }
 
-/* Datos: oculta el formulario de Usuarios. No recibe atributos. */
+/**
+ * Oculta el formulario de Usuarios.
+ */
 function cerrarFormularioUsuario() {
     if (dialogoUsuario) dialogoUsuario.close();
     else panelUsuario.hidden = true;
 }
 
-/* Datos: envía el alta o la edición a la API. Recibe el evento de envío del formulario. */
+/**
+ * Envía el alta o la edición a la API.
+ *
+ * @param evento - El evento de envío del formulario.
+ */
 async function guardarUsuario(evento) {
     evento.preventDefault();
     mensajeFormularioUsuario.textContent = "";
@@ -195,13 +234,19 @@ async function guardarUsuario(evento) {
     }
 }
 
-/* Datos: actualiza el rol visible en la tabla. Recibe el valor elegido en el filtro. */
+/**
+ * Actualiza el rol visible en la tabla.
+ *
+ * @param valorFiltro - El valor elegido en el filtro.
+ */
 function elegirRol(valorFiltro) {
     rolActivo = valorFiltro;
     dibujarUsuarios();
 }
 
-/* Datos: conecta los controles que ya existen en ambas vistas y carga la tabla. No recibe atributos. */
+/**
+ * Conecta los controles que ya existen en ambas vistas y carga la tabla.
+ */
 function iniciarUsuarios() {
     formularioUsuario.addEventListener("submit", guardarUsuario);
     campo("agregar-usuario", "mostrar-formulario").addEventListener("click", function () {

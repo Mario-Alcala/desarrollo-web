@@ -1,8 +1,14 @@
-/* Datos: abre el catálogo que reemplaza al gestor antiguo. No recibe atributos. */
+/**
+ * @file Abre el catálogo que reemplaza al gestor antiguo.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const rutaCatalogoGestor = 'catalogo-admin.html';
 
-/* Datos: dirige al catálogo de administración. No recibe atributos. */
+/**
+ * Dirige al catálogo de administración.
+ */
 function abrirCatalogoGestor() {
     window.location.replace(rutaCatalogoGestor);
 }

@@ -1,10 +1,21 @@
-/* Datos: este archivo valida y registra lotes de cosecha del trabajador. No recibe atributos. */
+/**
+ * @file Valida y registra lotes de cosecha del trabajador.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const MADURACIONES = ['verde', 'maduro'];
 const MAX_KILOS = 99999999.99;
 const MAX_UBICACION = 100;
 
-/* Datos: esta función valida y envía el registro de cosecha. Recibe los datos, el usuario, la fecha de hoy y la función de la API. */
+/**
+ * Valida y envía el registro de cosecha.
+ *
+ * @param datos - Datos que se van a validar o guardar.
+ * @param usuario - Trabajador que registra la cosecha.
+ * @param hoy - Fecha actual en formato AAAA-MM-DD.
+ * @param api - Función para enviar la petición a la API.
+ */
 function registrarCosecha(datos, usuario, hoy, api) {
     if (!usuario) {
         return Promise.resolve({ ok: false, error: 'Inicia sesión para registrar una cosecha.' });
@@ -18,18 +29,28 @@ function registrarCosecha(datos, usuario, hoy, api) {
         .catch(function (fallo) { return { ok: false, error: mensajeError(fallo) }; });
 }
 
-/* Datos: esta función formatea un número con dos dígitos. Recibe un número. */
+/**
+ * Formatea un número con dos dígitos.
+ *
+ * @param n - Un número.
+ */
 function dosDigitos(n) {
     return (n < 10 ? '0' : '') + n;
 }
 
-/* Datos: esta función obtiene la fecha local actual en formato año, mes y día. No recibe atributos. */
+/**
+ * Obtiene la fecha local actual en formato año, mes y día.
+ */
 function hoyLocal() {
     const d = new Date();
     return d.getFullYear() + '-' + dosDigitos(d.getMonth() + 1) + '-' + dosDigitos(d.getDate());
 }
 
-/* Datos: esta función comprueba que el texto representa una fecha válida. Recibe el texto de la fecha. */
+/**
+ * Comprueba que el texto representa una fecha válida.
+ *
+ * @param texto - El texto de la fecha.
+ */
 function fechaExiste(texto) {
     const p = texto.split('-');
     const anio = Number(p[0]);
@@ -39,7 +60,12 @@ function fechaExiste(texto) {
     return d.getUTCFullYear() === anio && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
 }
 
-/* Datos: esta función valida cultivo, fecha, kilos, maduración y ubicación. Recibe los datos y la fecha de hoy. */
+/**
+ * Valida cultivo, fecha, kilos, maduración y ubicación.
+ *
+ * @param datos - Datos que se van a validar o guardar.
+ * @param hoy - Fecha actual en formato AAAA-MM-DD.
+ */
 function validarCosecha(datos, hoy) {
     const cultivo = Number(datos.idCultivo);
     if (!datos.idCultivo || !Number.isInteger(cultivo) || cultivo <= 0) {
@@ -82,7 +108,12 @@ function validarCosecha(datos, hoy) {
     return '';
 }
 
-/* Datos: esta función prepara el registro con los kilos disponibles y el trabajador. Recibe los datos y el usuario. */
+/**
+ * Prepara el registro con los kilos disponibles y el trabajador.
+ *
+ * @param datos - Datos que se van a validar o guardar.
+ * @param usuario - Trabajador que registra la cosecha.
+ */
 function armarCosecha(datos, usuario) {
     const kilos = Number(String(datos.kilos).trim());
     return {
@@ -96,7 +127,11 @@ function armarCosecha(datos, usuario) {
     };
 }
 
-/* Datos: esta función prepara el texto del error de cosecha. Recibe el error. */
+/**
+ * Prepara el texto del error de cosecha.
+ *
+ * @param error - El error.
+ */
 function mensajeError(error) {
     if (error && error.name === 'TypeError') {
         return 'No se pudo conectar con el backend (¿está encendido en el puerto 8081?).';
@@ -104,7 +139,11 @@ function mensajeError(error) {
     return error && error.message ? error.message : 'No se pudo registrar la cosecha.';
 }
 
-/* Datos: esta función prepara las opciones de cultivos no finalizados. Recibe la lista de cultivos. */
+/**
+ * Prepara las opciones de cultivos no finalizados.
+ *
+ * @param lista - La lista de cultivos.
+ */
 function opcionesCultivos(lista) {
     return (lista || [])
         .filter(function (c) { return c.estado !== 'finalizado'; })
@@ -118,7 +157,13 @@ function opcionesCultivos(lista) {
         });
 }
 
-/* Datos: esta función filtra y ordena los lotes del trabajador. Recibe la lista, el ID del usuario y el máximo de lotes. */
+/**
+ * Filtra y ordena los lotes del trabajador.
+ *
+ * @param lista - Lotes de cosecha devueltos por la API.
+ * @param idUsuario - Identificador del trabajador.
+ * @param [maximo] - Cantidad máxima de lotes que se deben mostrar.
+ */
 function lotesDelUsuario(lista, idUsuario, maximo) {
     return (lista || [])
         .filter(function (c) { return c.idUsuario === idUsuario; })
@@ -126,7 +171,9 @@ function lotesDelUsuario(lista, idUsuario, maximo) {
         .slice(0, maximo || 10);
 }
 
-/* Datos: esta función prepara el formulario y carga cultivos y cosechas. No recibe atributos. */
+/**
+ * Prepara el formulario y carga cultivos y cosechas.
+ */
 function iniciarRegistroCosecha() {
     const formulario = document.getElementById('formulario-cosecha');
     if (!formulario) {
@@ -153,7 +200,11 @@ function iniciarRegistroCosecha() {
         boton.disabled = true;
     }
 
-    /* Datos: esta función muestra los lotes del trabajador. Recibe la lista de cosechas de la API. */
+    /**
+     * Muestra los lotes del trabajador.
+     *
+     * @param lista - La lista de cosechas de la API.
+     */
     function dibujarLotes(lista) {
         cuerpoLotes.innerHTML = '';
         const lotes = usuario ? lotesDelUsuario(lista, usuario.idUsuario, 10) : [];
@@ -177,14 +228,18 @@ function iniciarRegistroCosecha() {
         }
     }
 
-    /* Datos: esta función consulta la API y muestra los lotes. No recibe atributos. */
+    /**
+     * Consulta la API y muestra los lotes.
+     */
     function cargarLotes() {
         return pedirApi('/cosechas').then(dibujarLotes).catch(function (error) {
             mensaje.textContent = mensajeError(error);
         });
     }
 
-    /* Datos: esta función consulta la API y llena el selector de cultivos. No recibe atributos. */
+    /**
+     * Consulta la API y llena el selector de cultivos.
+     */
     function cargarCultivos() {
         return pedirApi('/cultivos').then(function (lista) {
             const opciones = opcionesCultivos(lista);

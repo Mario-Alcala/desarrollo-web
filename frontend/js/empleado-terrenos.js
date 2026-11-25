@@ -1,10 +1,16 @@
-/* Datos: este archivo muestra los terrenos y parcelas registrados para el empleado. No recibe atributos. */
+/**
+ * @file Muestra los terrenos y parcelas registrados para el empleado.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_TERRENOS_EMPLEADO = 'http://localhost:8081/api';
 const listaTerrenosEmpleado = document.getElementById('terrenos-empleado');
 const mensajeTerrenosEmpleado = document.getElementById('mensaje-terrenos-empleado');
 
-/* Datos: esta función consulta los terrenos y las parcelas de cada terreno desde la API. No recibe atributos. */
+/**
+ * Consulta los terrenos y las parcelas de cada terreno desde la API.
+ */
 async function cargarTerrenosEmpleado() {
     mensajeTerrenosEmpleado.textContent = 'Cargando terrenos y parcelas…';
     listaTerrenosEmpleado.replaceChildren();
@@ -50,7 +56,12 @@ async function cargarTerrenosEmpleado() {
     }
 }
 
-/* Datos: esta función muestra un dato del terreno o parcela. Recibe la etiqueta y el valor. */
+/**
+ * Muestra un dato del terreno o parcela.
+ *
+ * @param etiqueta - Nombre que se muestra antes del dato.
+ * @param valor - Dato que se va a mostrar.
+ */
 function lineaDetalle(etiqueta, valor) {
     const p = document.createElement('p');
     const fuerte = document.createElement('strong');

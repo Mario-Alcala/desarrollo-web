@@ -1,4 +1,8 @@
-/* Datos: consulta, busca y guarda proveedores mediante la API. No recibe atributos. */
+/**
+ * @file Consulta, busca y guarda proveedores mediante la API.
+ *
+ * @author Equipo de Gestión de Cultivos
+ */
 
 const API_PROVEEDORES = "http://localhost:8081/api/proveedores";
 const buscador = document.querySelector("#topbar input");
@@ -11,7 +15,9 @@ const msgFormulario = document.getElementById("mensaje-proveedor");
 let proveedores = [];
 let editando = null;
 
-/* Datos: consulta los proveedores y actualiza la tabla. No recibe atributos. */
+/**
+ * Consulta los proveedores y actualiza la tabla.
+ */
 async function cargarProveedores() {
     mensaje.textContent = "Cargando proveedores…";
     try {
@@ -26,7 +32,11 @@ async function cargarProveedores() {
     }
 }
 
-/* Datos: envía el proveedor nuevo o editado a la API. Recibe el evento del formulario. */
+/**
+ * Envía el proveedor nuevo o editado a la API.
+ *
+ * @param evento - El evento del formulario.
+ */
 async function guardarProveedor(evento) {
     evento.preventDefault();
     msgFormulario.textContent = "";
@@ -55,7 +65,9 @@ async function guardarProveedor(evento) {
     }
 }
 
-/* Datos: muestra los proveedores que coinciden con el texto buscado. No recibe atributos. */
+/**
+ * Muestra los proveedores que coinciden con el texto buscado.
+ */
 function dibujar() {
     const q = buscador.value.trim().toLowerCase();
     const visibles = [];
@@ -89,7 +101,11 @@ function dibujar() {
     else if (!mensaje.textContent.startsWith("No se pudieron")) mensaje.textContent = "No hay proveedores para mostrar.";
 }
 
-/* Datos: abre el formulario de proveedor. Recibe el proveedor a editar o null para crear. */
+/**
+ * Abre el formulario de proveedor.
+ *
+ * @param p - El proveedor a editar o null para crear.
+ */
 function abrir(p) {
     editando = p ? p.idProveedor : null;
     document.getElementById("titulo-proveedor").textContent = p ? "Editar proveedor" : "Agregar proveedor";
@@ -105,7 +121,9 @@ function abrir(p) {
     dialogo.showModal();
 }
 
-/* Datos: conecta los controles de la página y ejecuta la carga inicial. No recibe atributos. */
+/**
+ * Conecta los controles de la página y ejecuta la carga inicial.
+ */
 function iniciarProveedores() {
     formulario.addEventListener("submit", guardarProveedor);
     document.getElementById("agregar-proveedor").addEventListener("click", function () { abrir(null); });
