@@ -197,38 +197,9 @@ Inicia sesión con `empleado.prueba@local.test` / `Prueba123!`. Todas usan Fetch
 | Distribución | `distribucion.html` | Empacador asigna kilos de lotes; cargador registra salida o "listo para recoger"; chofer confirma entrega |
 | Calendario | `calendario.html`, `etapas.html` | Etapas guardadas en el servidor; al completarlas se actualiza la etapa del cultivo |
 
-Pruebas de la lógica del frontend (validaciones, calendario, cosecha, usuarios):
-
-```bash
-node --test frontend/pruebas/*.test.js
-```
-
 > **Si tu base se creó con una versión anterior de `init.sql`** (por ejemplo, `riegos` con `id_terreno`),
 > vuelve a crearla: `sudo mysql -e "DROP DATABASE gestion_cultivos;" && sudo mysql < database/init.sql`.
 > El script también agrega por sí solo la columna `estado` de `incidencias_cultivo` y la tabla `etapas_cultivo`.
-
-### Pruebas del backend con MySQL
-
-Las pruebas de pedidos preparan y limpian sus propios registros. Usan `gestion_cultivos_pruebas` y una cuenta con permisos sobre ese esquema. El proyecto sigue usando `database/init.sql` para preparar la base de trabajo `gestion_cultivos`.
-
-Desde WSL, con MySQL iniciado, prepara la base y la cuenta de pruebas una sola vez:
-
-```bash
-sudo mysql <<'SQL'
-CREATE DATABASE IF NOT EXISTS gestion_cultivos_pruebas CHARACTER SET utf8mb4;
-CREATE USER IF NOT EXISTS 'cultivos_pruebas'@'localhost' IDENTIFIED BY RANDOM PASSWORD;
-GRANT ALL PRIVILEGES ON gestion_cultivos_pruebas.* TO 'cultivos_pruebas'@'localhost';
-SQL
-```
-
-Desde `backend/`, captura la contraseña que MySQL generó para esa cuenta y ejecuta las pruebas:
-
-```bash
-read -rsp 'Contraseña de cultivos_pruebas: ' MYSQL_PRUEBAS_CONTRASENA
-echo
-MYSQL_PRUEBAS_CONTRASENA="$MYSQL_PRUEBAS_CONTRASENA" ./mvnw test
-unset MYSQL_PRUEBAS_CONTRASENA
-```
 
 ## 9. Solución de problemas
 
@@ -240,4 +211,3 @@ unset MYSQL_PRUEBAS_CONTRASENA
 | `Port 8081 was already in use` | Usa `bash iniciar-api.sh` desde `backend/`; si ya hay una instancia respondiendo, la reutiliza y no inicia otra. Si el puerto está ocupado sin que responda el API, revisa el proceso con `sudo ss -ltnp \| grep :8081` antes de detenerlo. |
 | El frontend dice "Sin conexión con el backend" | Verifica que el backend esté corriendo y que abras `http://localhost:5500` (no `file://`) |
 | Error de versión de Java al compilar | Necesitas Java 17+: `sudo apt install openjdk-17-jdk` y `sudo update-alternatives --config java` |
-| `./mvnw test` no conecta a MySQL | Inicia MySQL y prepara `gestion_cultivos_pruebas` con los pasos de la sección de pruebas del backend. |

@@ -1,14 +1,28 @@
 /**
- * @file Abre el catálogo que reemplaza al gestor antiguo.
+ * @file Define el acceso al Catálogo desde la dirección antigua del gestor.
  *
  * @author Equipo de Gestión de Cultivos
  */
 
-const rutaCatalogoGestor = 'catalogo-admin.html';
-
 /**
- * Dirige al catálogo de administración.
+ * Abre el catálogo de administración al entrar al gestor anterior.
  */
-function abrirCatalogoGestor() {
-    window.location.replace(rutaCatalogoGestor);
+class AccesoGestor {
+    /**
+     * Guarda la página de destino.
+     *
+     * @param {string} rutaCatalogo - Ruta del Catálogo de administración.
+     */
+    constructor(rutaCatalogo) {
+        this.rutaCatalogo = rutaCatalogo;
+    }
+
+    /**
+     * Abre el catálogo real.
+     */
+    abrirCatalogo() {
+        window.location.replace(this.rutaCatalogo);
+    }
 }
+
+const accesoGestor = new AccesoGestor('catalogo-admin.html');

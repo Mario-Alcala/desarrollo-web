@@ -1,73 +1,83 @@
 /**
- * @file Muestra los terrenos y parcelas registrados para el empleado.
+ * Muestra los terrenos y parcelas registrados para el empleado.
  *
  * @author Equipo de Gestión de Cultivos
  */
+class TerrenosEmpleado {
+    /**
+     * Ubica la lista de terrenos y el campo donde aparecen los avisos.
+     */
+    constructor() {
+        this.listaTerrenosEmpleado = document.getElementById('terrenos-empleado');
+        this.mensajeTerrenosEmpleado = document.getElementById('mensaje-terrenos-empleado');
+    }
 
-const API_TERRENOS_EMPLEADO = 'http://localhost:8081/api';
-const listaTerrenosEmpleado = document.getElementById('terrenos-empleado');
-const mensajeTerrenosEmpleado = document.getElementById('mensaje-terrenos-empleado');
-
-/**
- * Consulta los terrenos y las parcelas de cada terreno desde la API.
- */
-async function cargarTerrenosEmpleado() {
-    mensajeTerrenosEmpleado.textContent = 'Cargando terrenos y parcelas…';
-    listaTerrenosEmpleado.replaceChildren();
-    try {
-        const respuesta = await fetch(API_TERRENOS_EMPLEADO + '/terrenos');
-        if (!respuesta.ok) throw new Error('No se pudieron consultar los terrenos.');
-        const terrenos = await respuesta.json();
-        if (terrenos.length === 0) mensajeTerrenosEmpleado.textContent = 'No hay terrenos registrados.';
-        for (const terreno of terrenos) {
-            const tarjeta = document.createElement('section');
-            tarjeta.className = 'panel espacio';
-            const titulo = document.createElement('h2');
-            titulo.textContent = terreno.nombre;
-            tarjeta.append(titulo,
-                lineaDetalle('Ubicación', terreno.ubicacion),
-                lineaDetalle('Superficie total', Number(terreno.superficieM2 || 0).toLocaleString('es-MX') + ' m²'),
-                lineaDetalle('Tipo de suelo', terreno.tipoSuelo),
-                lineaDetalle('Estado', terreno.estado));
-            const tituloParcelas = document.createElement('h3');
-            tituloParcelas.textContent = 'Parcelas';
-            tarjeta.appendChild(tituloParcelas);
-            const respuestaParcelas = await fetch(API_TERRENOS_EMPLEADO + '/parcelas/terreno/' + encodeURIComponent(terreno.id));
-            if (!respuestaParcelas.ok) throw new Error('No se pudieron consultar las parcelas de ' + terreno.nombre + '.');
-            const parcelas = await respuestaParcelas.json();
-            if (parcelas.length === 0) tarjeta.appendChild(lineaDetalle('Parcelas', 'No hay parcelas registradas'));
-            parcelas.forEach(function (parcela) {
-                const bloque = document.createElement('article');
-                bloque.className = 'panel';
-                const nombre = document.createElement('h3');
-                nombre.textContent = parcela.nombre;
-                bloque.append(nombre,
-                    lineaDetalle('Superficie', Number(parcela.superficieM2 || 0).toLocaleString('es-MX') + ' m²'),
-                    lineaDetalle('Estado', parcela.estado),
-                    lineaDetalle('Cultivo', parcela.cultivoNombre || 'Sin cultivo asignado'),
-                    lineaDetalle('Etapa', parcela.etapaFenologica));
-                tarjeta.appendChild(bloque);
-            });
-            listaTerrenosEmpleado.appendChild(tarjeta);
+    /**
+     * Consulta los terrenos y las parcelas de cada terreno desde la API.
+     */
+    async cargarTerrenosEmpleado() {
+        const pantalla = this;
+        this.mensajeTerrenosEmpleado.textContent = 'Cargando terrenos y parcelas…';
+        this.listaTerrenosEmpleado.replaceChildren();
+        try {
+            const respuesta = await fetch(API_TERRENOS_EMPLEADO + '/terrenos');
+            if (!respuesta.ok) throw new Error('No se pudieron consultar los terrenos.');
+            const terrenos = await respuesta.json();
+            if (terrenos.length === 0) this.mensajeTerrenosEmpleado.textContent = 'No hay terrenos registrados.';
+            for (const terreno of terrenos) {
+                const tarjeta = document.createElement('section');
+                tarjeta.className = 'panel espacio';
+                const titulo = document.createElement('h2');
+                titulo.textContent = terreno.nombre;
+                tarjeta.append(titulo,
+                    this.lineaDetalle('Ubicación', terreno.ubicacion),
+                    this.lineaDetalle('Superficie total', Number(terreno.superficieM2 || 0).toLocaleString('es-MX') + ' m²'),
+                    this.lineaDetalle('Tipo de suelo', terreno.tipoSuelo),
+                    this.lineaDetalle('Estado', terreno.estado));
+                const tituloParcelas = document.createElement('h3');
+                tituloParcelas.textContent = 'Parcelas';
+                tarjeta.appendChild(tituloParcelas);
+                const respuestaParcelas = await fetch(API_TERRENOS_EMPLEADO + '/parcelas/terreno/' + encodeURIComponent(terreno.id));
+                if (!respuestaParcelas.ok) throw new Error('No se pudieron consultar las parcelas de ' + terreno.nombre + '.');
+                const parcelas = await respuestaParcelas.json();
+                if (parcelas.length === 0) tarjeta.appendChild(this.lineaDetalle('Parcelas', 'No hay parcelas registradas'));
+                parcelas.forEach(function (parcela) {
+                    const bloque = document.createElement('article');
+                    bloque.className = 'panel';
+                    const nombre = document.createElement('h3');
+                    nombre.textContent = parcela.nombre;
+                    bloque.append(nombre,
+                        pantalla.lineaDetalle('Superficie', Number(parcela.superficieM2 || 0).toLocaleString('es-MX') + ' m²'),
+                        pantalla.lineaDetalle('Estado', parcela.estado),
+                        pantalla.lineaDetalle('Cultivo', parcela.cultivoNombre || 'Sin cultivo asignado'),
+                        pantalla.lineaDetalle('Etapa', parcela.etapaFenologica));
+                    tarjeta.appendChild(bloque);
+                });
+                this.listaTerrenosEmpleado.appendChild(tarjeta);
+            }
+            if (terrenos.length) this.mensajeTerrenosEmpleado.textContent = '';
+        } catch (error) {
+            this.mensajeTerrenosEmpleado.textContent = error.message;
         }
-        if (terrenos.length) mensajeTerrenosEmpleado.textContent = '';
-    } catch (error) {
-        mensajeTerrenosEmpleado.textContent = error.message;
+    }
+
+    /**
+     * Muestra un dato del terreno o parcela.
+     *
+     * @param etiqueta - Nombre que se muestra antes del dato.
+     * @param valor - Dato que se va a mostrar.
+     */
+    lineaDetalle(etiqueta, valor) {
+        const p = document.createElement('p');
+        const fuerte = document.createElement('strong');
+        fuerte.textContent = etiqueta + ': ';
+        p.append(fuerte, document.createTextNode(valor == null ? '—' : valor));
+        return p;
     }
 }
 
-/**
- * Muestra un dato del terreno o parcela.
- *
- * @param etiqueta - Nombre que se muestra antes del dato.
- * @param valor - Dato que se va a mostrar.
- */
-function lineaDetalle(etiqueta, valor) {
-    const p = document.createElement('p');
-    const fuerte = document.createElement('strong');
-    fuerte.textContent = etiqueta + ': ';
-    p.append(fuerte, document.createTextNode(valor == null ? '—' : valor));
-    return p;
-}
+const API_TERRENOS_EMPLEADO = 'http://localhost:8081/api';
 
-cargarTerrenosEmpleado();
+const terrenosEmpleado = new TerrenosEmpleado();
+
+terrenosEmpleado.cargarTerrenosEmpleado();
